@@ -1,0 +1,17 @@
+#include "stlx/cstdlib.hxx"
+
+#if 0
+
+#ifndef NTLX__NOAPI
+#include "api/stdlib.hxx"
+#endif
+
+#ifndef NTLX__NONT
+#include "km/stdlib.hxx"
+#endif
+
+#ifndef NTLX__NOKM
+#include "nt/stdlib.hxx"
+#endif
+
+#endif
