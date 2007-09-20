@@ -48,7 +48,7 @@ enum duplicate_options
   duplicate_same_attributes = 4
 };
 
-duplicate_options operator|(duplicate_options m, duplicate_options m2) 
+static inline duplicate_options operator|(duplicate_options m, duplicate_options m2) 
 { 
   return bitwise_or(m, m2);
 }
@@ -61,7 +61,7 @@ enum handle_attributes
   handle_flag_protect_from_close  = 2,
 };
 
-handle_attributes operator|(handle_attributes m, handle_attributes m2) 
+static inline handle_attributes operator|(handle_attributes m, handle_attributes m2) 
 { 
   return bitwise_or(m, m2);
 }
