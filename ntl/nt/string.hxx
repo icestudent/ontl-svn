@@ -72,11 +72,12 @@ class native_string
       buffer_(&str[0])
     {/**/}
 
-    const native_string operator=(const native_string & s)
+    const native_string& operator=(const native_string & s)
     {
       length_ = s.length_;
       maximum_length_ = s.maximum_length_;
       buffer_ = s.buffer_;
+	  return *this;
     }
     
     ///\name  native_string connversions
