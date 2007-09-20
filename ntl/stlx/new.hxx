@@ -81,12 +81,14 @@ void* operator new[]    (std::size_t size, const std::nothrow_t&) throw();
 void  operator delete[] (void* ptr, const std::nothrow_t&) throw();
 
 ///\name  Placement forms [18.4.1.3 lib.new.delete.placement]
+///\note inline isn't comform to the standart here,
+/// but this library don't have cpp-files for definitions.
 
-void* operator new      (std::size_t, void* ptr) throw()  { return ptr; }
-void  operator delete   (void*, void*) throw()            {}
+inline void* operator new      (std::size_t, void* ptr) throw()  { return ptr; }
+inline void  operator delete   (void*, void*) throw()            {}
 
-void* operator new[]    (std::size_t, void* ptr) throw()  { return ptr; }
-void  operator delete[] (void*, void*) throw()            {}
+inline void* operator new[]    (std::size_t, void* ptr) throw()  { return ptr; }
+inline void  operator delete[] (void*, void*) throw()            {}
 
 #undef operator
 
