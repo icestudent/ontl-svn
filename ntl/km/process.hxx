@@ -22,6 +22,7 @@ namespace km {
 
 
 struct kprocess;
+struct eprocess;
 
 NTL__EXTERNAPI
 kprocess * __stdcall

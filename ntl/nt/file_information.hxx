@@ -227,6 +227,17 @@ struct file_end_of_file_information
   int64_t EndOfFile;
 };
 
+///\name FileNetworkOpenInformation == 34
+struct file_network_open_information {
+	int64_t CreationTime;
+	int64_t LastAccessTime;
+	int64_t LastWriteTime;
+	int64_t ChangeTime;
+	int64_t AllocationSize;
+	int64_t EndOfFile;
+	uint32_t FileAttributes;
+};
+
 
 ///}
 

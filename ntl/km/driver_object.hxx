@@ -17,6 +17,7 @@ namespace km {
 
 struct device_object;
 struct driver_object;
+struct fast_io_dispatch_t;
 
 struct driver_extension
 {
@@ -41,12 +42,11 @@ struct driver_object
   driver_extension *          DriverExtension;
   unicode_string              DriverName;
   unicode_string *            HardwareDatabase;
-  struct _FAST_IO_DISPATCH *  FastIoDispatch;
+  fast_io_dispatch_t *        FastIoDispatch;
   ntstatus(__stdcall *        DriverInit)(driver_object*, unicode_string*);
   void    (__stdcall *        DriverStartIo)(driver_object*, irp*);
   void    (__stdcall *        DriverUnload)(driver_object*);
-  typedef ntstatus dispatch_t(const device_object * DeviceObject, const irp *);
-  dispatch_t *                MajorFunction[28];
+  driver_dispatch_t*          MajorFunction[28];
 };
 
 STATIC_ASSERT(sizeof(driver_object) == 0xa8);

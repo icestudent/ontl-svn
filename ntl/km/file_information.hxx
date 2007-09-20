@@ -22,6 +22,7 @@ namespace km {
 
 using nt::file_information_class;
 using nt::file_standard_information;
+using nt::file_network_open_information;
 
 using nt::query_information_file_t;
 using nt::set_information_file_t;
