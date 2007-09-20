@@ -71,6 +71,76 @@ ntstatus
 }
 
 
+struct object_type;
+#if 0
+{
+  // non-static data --------------------------------
+  /*<thisrel this+0x0>*/ /*|0x38|*/ struct _ERESOURCE Mutex;
+  /*<thisrel this+0x38>*/ /*|0x8|*/ struct _LIST_ENTRY TypeList;
+  /*<thisrel this+0x40>*/ /*|0x8|*/ struct _UNICODE_STRING Name;
+  /*<thisrel this+0x48>*/ /*|0x4|*/ void* DefaultObject;
+  /*<thisrel this+0x4c>*/ /*|0x4|*/ unsigned long Index;
+  /*<thisrel this+0x50>*/ /*|0x4|*/ unsigned long TotalNumberOfObjects;
+  /*<thisrel this+0x54>*/ /*|0x4|*/ unsigned long TotalNumberOfHandles;
+  /*<thisrel this+0x58>*/ /*|0x4|*/ unsigned long HighWaterNumberOfObjects;
+  /*<thisrel this+0x5c>*/ /*|0x4|*/ unsigned long HighWaterNumberOfHandles;
+  /*<thisrel this+0x60>*/ /*|0x4c|*/ struct _OBJECT_TYPE_INITIALIZER TypeInfo;
+  /*<thisrel this+0xac>*/ /*|0x4|*/ unsigned long Key;
+  /*<thisrel this+0xb0>*/ /*|0xe0|*/ struct _ERESOURCE ObjectLocks[4];
+};
+STATIC_ASSERT(sizeof(object_type) ==0x190);
+#endif
+
+struct object_handle_information
+{
+  uint32_t HandleAttributes;
+  uint32_t GrantedAccess;
+};
+
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  ObReferenceObjectByHandle (
+    legacy_handle               Handle,
+    access_mask                 DesiredAccess,
+    const object_type *         ObjectType      __optional,
+    kprocessor_mode             AccessMode,
+    void *                      Object,
+    object_handle_information * HandleInformation __optional
+    );
+
+template<typename ObjectType>
+static __forceinline
+ObjectType *
+  reference_object(
+    const handle &      hndl,
+    access_mask         desired_access  = generic_read,
+    const object_type * obj_type        = 0,
+    kprocessor_mode     access_mode     = KernelMode
+    )
+{
+  ObjectType * ptr;
+  return nt::success(ObReferenceObjectByHandle(hndl.get(), desired_access,
+                                      obj_type, access_mode, &ptr, 0))
+          ? ptr
+          : 0;
+}
+
+template<typename ObjectType>
+static __forceinline
+ObjectType *
+  reference_object(
+    const nt::handle &  hndl,
+    access_mask         desired_access  = generic_read,
+    const object_type * obj_type        = 0,
+    kprocessor_mode     access_mode     = KernelMode
+    )
+{
+  return reference_object<ObjectType>(*reinterpret_cast<const km::handle*>(&hndl),
+                                        desired_access, obj_type, access_mode);
+}
+
+
 NTL__EXTERNAPI
 void __fastcall
   ObfDereferenceObject(void * Object);

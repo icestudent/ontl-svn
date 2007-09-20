@@ -71,15 +71,13 @@ struct teb : public tib
     intrinsic::__writefsdword(offset, value);
   }
 
-
-
   static __forceinline
   teb & instance() { return *static_cast<teb*>(get(&tib::Self)); }
 
   /* 0x1c */  void *    EnvironmentPointer;
   /* 0x20 */  client_id ClientId;
   /* 0x28 */  void *    ActiveRpcHandle;
-  /* 0x2c */  void*     ThreadLocalStoragePointer;
+  /* 0x2c */  void *    ThreadLocalStoragePointer;
   /* 0x30 */  peb *     ProcessEnvironmentBlock;
   /* 0x34 */  uint32_t  LastErrorValue;
 #if 0

@@ -21,37 +21,37 @@ namespace ntl {
 namespace km {
 
 
+struct kprocess;
+
+NTL__EXTERNAPI
+kprocess * __stdcall
+  IoGetCurrentProcess();
+
+
 struct kprocess
 {
-
-  typedef kprocess * get_current_t();
-
-  static 
-  get_current_t * get_current_fn(get_current_t * ptr = 0)
-  {
-    static get_current_t * get_current_fn_;
-    if ( ptr ) get_current_fn_ = ptr;
-    return get_current_fn_ ;
-  }
-
   static 
   kprocess * get_current()
   {
 #ifndef NTL_SUPPRESS_IMPORT
-    if ( get_current_fn() ) return (*get_current_fn())();
-#endif
+    return IoGetCurrentProcess();
+#else
     return kthread::get_current()->ApcState.Process;    
+#endif
   }
 
 };
+
+
 //struct eprocess;
 
 
+///\note XP+ only, use IoGetCurrentProcess instead
 NTL__EXTERNAPI
 kprocess * __stdcall
   PsGetCurrentProcess();
 
-
+///\note XP+ only
 NTL__EXTERNAPI
 char * __stdcall
   PsGetProcessImageFileName(kprocess *);

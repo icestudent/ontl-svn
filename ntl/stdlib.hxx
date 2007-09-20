@@ -202,6 +202,21 @@ bool binary_equal(const type & o, const type & o2)
 }
 
 
+template<typename T, typename T2>
+static inline
+T align_up(T what, T2 alignment)
+{
+  return ((what + alignment - 1) / alignment) * alignment;
+}
+
+template<typename T, typename T2>
+static inline
+T align_down(T what, T2 alignment)
+{
+  return (what / alignment) * alignment;
+}
+
+
 ///@}
 
 

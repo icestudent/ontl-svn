@@ -20,32 +20,6 @@ struct rtl_critacal_section;
 struct rtl_heap;
 
 
-struct ldr_data_table_entry
-{
-  /* 0x00 */ list_entry           InLoadOrderLinks;
-  /* 0x08 */ list_entry           InMemoryOrderLinks;
-  /* 0x10 */ list_entry           InInitializationOrderLinks;
-  /* 0x18 */ pe::image *          DllBase;
-  /* 0x1c */ void *               EntryPoint;
-  /* 0x20 */ uint32_t             SizeOfImage;
-  /* 0x24 */ const_unicode_string FullDllName;
-  /* 0x2c */ const_unicode_string BaseDllName;
-  /* 0x34 */ uint32_t             Flags;
-  /* 0x38 */ uint16_t             LoadCount;
-  /* 0x3a */ uint16_t             TlsIndex;
-//  /* 0x3c */ list_entry           HashLinks;
-  /* 0x3c */ void *               SectionPointer;
-  /* 0x40 */ uint32_t             CheckSum;
-  union {
-  /* 0x44 */ uint32_t             TimeDateStamp;
-  /* 0x44 */ void *               LoadedImports;
-  };
-  /* 0x48 */ void *               EntryPointActivationContext;
-  /* 0x4c */ void *               PatchInformation;
-};
-STATIC_ASSERT(sizeof(ldr_data_table_entry) == 0x50);
-
-
 struct peb
 {
   struct ldr_data
@@ -57,6 +31,20 @@ struct peb
     /* 0x14 */  list_head     InMemoryOrderModuleList;
     /* 0x1c */  list_head     InInitializationOrderModuleList;
     /* 0x24 */  void *        EntryInProgress;
+  };
+
+  struct find_dll
+  {
+    find_dll(nt::peb * peb) : peb(peb) {}
+
+    nt::peb * peb;
+
+    const pe::image * operator()(const char name[]) const
+    {
+      if ( !peb ) return 0;
+      nt::ldr_data_table_entry::find_dll find_dll(&peb->Ldr->InLoadOrderModuleList);
+      return find_dll(name);
+    }
   };
 
   typedef void __stdcall lock_routine_t(rtl_critacal_section * PebLock);  
@@ -73,7 +61,7 @@ struct peb
   /* 0x02 */  bool                    BeingDebugged;
   /* 0x03 */  bool                    SpareBool;
   /* 0x04 */  legacy_handle           Mutant;
-  /* 0x08 */  void *                  ImageBaseAddress;
+  /* 0x08 */  pe::image *             ImageBaseAddress;
   /* 0x0c */  ldr_data *              Ldr;
   /* 0x10 */  rtl_user_process_parameters* ProcessParameters;
   /* 0x14 */  void *                  SubSystemData;

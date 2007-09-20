@@ -30,6 +30,10 @@ NTL__EXTERNAPI query_information_file_t ZwQueryInformationFile;
 NTL__EXTERNAPI set_information_file_t   ZwSetInformationFile;
 
 
+using nt::file_basic_information;
+using nt::file_disposition_information;
+
+
 template<class InformationClass>
 struct file_information
 : public nt::file_information_base <InformationClass,

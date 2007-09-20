@@ -21,7 +21,7 @@ namespace nt {
 
 template <class charT,
           class traits    = std::char_traits<std::remove_const<charT>::type>,
-          class Allocator = std::allocator<std::remove_const<charT>::type> >
+          class Allocator = std::allocator<charT> >
 class native_string
 {
 
@@ -59,9 +59,15 @@ class native_string
       buffer_(str.begin())
     {/**/}
 
-    template<uint16_t size>
-    native_string(const value_type (&str)[size])
-    : length_((size - 1) * sizeof(value_type)),
+    native_string(charT* s, size_t n)
+    : length_(size_type(n) * sizeof(value_type)),
+      maximum_length_(size_type(n) * sizeof(value_type)), 
+      buffer_(s)
+    {/**/}
+
+    template<uint16_t Size>
+    native_string(const charT (&str)[Size])
+    : length_((Size - 1) * sizeof(value_type)),
       maximum_length_(length_ + sizeof(value_type)),
       buffer_(&str[0])
     {/**/}
@@ -75,10 +81,10 @@ class native_string
     
     ///\name  native_string connversions
 
-    std::basic_string<value_type>&
-    get_string() const
+    std::basic_string<value_type>
+      get_string() const
     {
-      return std::basic_string<charT>(begin(), size());
+      return std::basic_string<value_type>(begin(), size());
     }
 
     operator 
@@ -114,8 +120,12 @@ class native_string
 
     const_reference operator[](size_type pos) const
     {
+#if 0
       static const charT nullchar;
       return pos < size() ? buffer_[pos] : nullchar;
+#else
+      return buffer_[pos];
+#endif
     }
 
     reference operator[](size_type pos)   { return buffer_[pos];  }
@@ -143,14 +153,16 @@ class native_string
     ///\name  native_string string operations
     const charT * data() const
     {
+#if 0
       static const charT empty;
       return begin() ? begin() : &empty;
+#else
+      return begin();
+#endif
     }
 
     ///\name  compare
-    bool compare(const native_string& str) const;
-
-    ///}
+    int compare(const native_string& str) const;
 
     ///\name  operator== 
     friend
@@ -167,11 +179,13 @@ class native_string
         return ! (lhs == rhs);
       }
 
+    ///}
+
   private:
 
-    const uint16_t  length_;
-    const uint16_t  maximum_length_;
-    charT   * const buffer_;
+    uint16_t  length_;
+    uint16_t  maximum_length_;
+    charT   * buffer_;
 
     void check_bounds(size_type n) const throw(std::out_of_range)
     {

@@ -34,7 +34,9 @@ class bad_alloc : public exception
 };
 
 struct  nothrow_t {};
-extern const nothrow_t nothrow;
+__declspec(selectany)
+extern
+const nothrow_t nothrow;
 
 /// Type new_handler [18.4.2.2 lib.new.handler]
 typedef void (*new_handler)();

@@ -254,6 +254,7 @@ NTL__CRTCALL
 
 
 // functions exported by ntdll.dll and ntoskrnl.exe
+#ifndef _INC_STDLIB// MSVC compatibility
 
 NTL__EXTERNAPI
 int __cdecl
@@ -285,5 +286,6 @@ int __cdecl
     size_t          n 
     );
 
+#endif // #ifndef _INC_STDLIB
 
 #endif//#ifndef NTL__STLX_CSTRING

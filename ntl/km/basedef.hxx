@@ -23,8 +23,11 @@ using nt::single_list_entry;
 using nt::slist_entry;
 using nt::list_entry;
 using nt::list_head;
-using nt::access_mask;
 using nt::status;
+
+using nt::access_mask;
+using nt::synchronize;
+using nt::generic_read;
 
 using nt::io_status_block;
 using nt::io_apc_routine;
@@ -74,7 +77,17 @@ bool get_version(uint32_t & major_version, uint32_t & minor_version)
   return PsGetVersion(&major_version, &minor_version, 0, 0);
 }
 
- 
+NTL__EXTERNAPI
+ntstatus __stdcall
+  ZwYieldExecution();
+
+static inline
+ntstatus yield_execution()
+{
+  return ZwYieldExecution();
+}
+
+
 NTL__EXTERNAPI
 ntstatus __stdcall
   KeDelayExecutionThread(
@@ -83,13 +96,37 @@ ntstatus __stdcall
     const int64_t * Interval
     );
 
+enum times
+{
+  nanoseconds   = 1,
+  microseconds  = 10   * nanoseconds,
+  milliseconds  = 1000 * microseconds,
+  seconds       = 1000 * milliseconds,
+  minutes       = 60   * seconds, 
+//  hours         = int64_t(60)   * minutes,
+//  days          = int64_t(24)   * hours,
+};
+
+
+template<times TimeResolution>
 static inline
 ntstatus sleep(
-  uint32_t        milliseconds,
+  uint32_t        time_resolution,
   bool            alertable = false,
   kprocessor_mode wait_mode = KernelMode)
 {
-  const int64_t interval = -10 * milliseconds;
+  const int64_t interval = int64_t(-1) * TimeResolution * time_resolution;
+  return KeDelayExecutionThread(wait_mode, alertable, &interval);
+}
+
+/// default milliseconds
+static inline
+ntstatus sleep(
+  uint32_t        ms,
+  bool            alertable = false,
+  kprocessor_mode wait_mode = KernelMode)
+{
+  const int64_t interval = int64_t(-1) * milliseconds * ms;
   return KeDelayExecutionThread(wait_mode, alertable, &interval);
 }
 

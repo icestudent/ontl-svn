@@ -10,6 +10,7 @@
 
 #include "cstddef.hxx"
 #include "iterator.hxx"
+#include "type_traits.hxx"
 #include "utility.hxx"
 #include "new.hxx"
 
@@ -58,7 +59,10 @@ class allocator
     ///\name  allocator members [20.4.1.1 lib.allocator.members]
 
 #ifndef NTL_STLEXT
-    pointer address(reference x) const { return &x; }
+    pointer address(typename add_reference<typename remove_const<typename remove_reference<reference>::type>::type>::type x) const
+    { 
+      return &x;
+    }
     const_pointer address(const_reference x) const { return &x; }
 #else
     template<typename value_type>

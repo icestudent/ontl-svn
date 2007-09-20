@@ -229,7 +229,18 @@ class basic_string
 
     basic_string& operator+=(const basic_string& str) { return append(str);   }
     basic_string& operator+=(const charT* s)          { return append(s);     }
-    basic_string& operator+=(charT c)                 { return push_back(c);  }
+    basic_string& operator+=(charT c) { push_back(c); return *this; }
+
+#ifndef NTL__STRICT_STRING
+
+  template<class String>
+    basic_string& operator+=(const String& str)
+    { 
+      return append(str.data(), str.size());
+    }
+
+#endif
+
 
     ///\name  basic_string::append [21.3.5.2 lib.string::append]
 
@@ -612,7 +623,7 @@ class basic_string
 
     iterator max__it(size_type pos, size_type n) const
     {
-      return n < str.size() - pos ? str.begin() + pos + n : str.end()
+      return n < str.size() - pos ? str.begin() + pos + n : str.end();
     }
 
     void append_to__reserved(charT c)

@@ -201,8 +201,8 @@ class image
       file_header         FileHeader;
       union 
       {
-        optional_header32  OptionalHeader32;
-        optional_header64  OptionalHeader64;
+        optional_header32 OptionalHeader32;
+        optional_header64 OptionalHeader64;
       };
 
       image::optional_header32 * optional_header32()
@@ -430,8 +430,8 @@ class image
       return in_range(ex, ex + export_table->Size, f) ? 0 : f;
     }
 
-    template<typename F>
-    void * find_export(const char * exp, F find_dll) const
+    template<typename DllFinder>
+    void * find_export(const char * exp, DllFinder find_dll) const
     {
       const data_directory * const export_table = 
                               get_data_directory(data_directory::export_table);
@@ -521,6 +521,36 @@ class image
       return null_import();
     }
     
+
+    template<typename DllFinder>
+    bool bind_import(const DllFinder & find_dll)
+    {
+      const data_directory * const import_table = 
+                     get_data_directory(data_directory::import_table);
+      if ( !import_table || !import_table->VirtualAddress )
+        return false;
+      for ( import_descriptor * import_entry = va<import_descriptor*>(import_table->VirtualAddress);
+            ! import_entry->is_terminating();
+            ++import_entry )
+      {
+        if ( ! import_entry->Name ) return false;
+        const image * const dll =
+                          find_dll(va<const char*>(import_entry->Name));
+        if ( ! dll ) return false;
+        void ** iat = va<void**>(import_entry->FirstThunk);
+        for ( int32_t * hint_name = va<int32_t*>(import_entry->OriginalFirstThunk);
+              *hint_name;
+              ++hint_name, ++iat )
+        {
+          *iat = *hint_name < 0
+            ? dll->find_export(static_cast<uint16_t>(*hint_name))
+            : dll->find_export(va<const char*>(*hint_name) + 2, find_dll);
+          if ( !*iat ) return false;
+        }
+      }
+      return true;
+    }
+
 
     ///\name  Relocations
 

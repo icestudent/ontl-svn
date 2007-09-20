@@ -69,7 +69,7 @@ enum system_information_class
   SystemKernelDebuggerInformation       = 35,
   SystemContextSwitchInformation        = 36,
   SystemRegistryQuotaInformation        = 37,
-  SystemExtendServiceTableInformation   = 38,
+  SystemExtendServiceTableInformation   = 38, ///< SystemLoadAndCallImage
   SystemPrioritySeperation              = 39,
   SystemVerifierAddDriverInformation    = 40,
   SystemVerifierRemoveDriverInformation = 41,
@@ -342,16 +342,16 @@ struct system_processes: public system_process_information
 struct rtl_process_module_information// RTL_PROCESS_MODULE_INFORMATION
 {
   static const uint32_t full_path_name_len = 256;
-  uint32_t  Section;
-  void *    MappedBase;
-  void *    ImageBase;
-  uint32_t  ImageSize;
-  uint32_t  Flags;
-  uint16_t  LoadOrderIndex;
-  uint16_t  InitOrderIndex;
-  uint16_t  LoadCount;
-  uint16_t  OffsetToFileName;
-  char      FullPathName[full_path_name_len];
+  uint32_t    Section;
+  void *      MappedBase;
+  pe::image * ImageBase;
+  uint32_t    ImageSize;
+  uint32_t    Flags;
+  uint16_t    LoadOrderIndex;
+  uint16_t    InitOrderIndex;
+  uint16_t    LoadCount;
+  uint16_t    OffsetToFileName;
+  char        FullPathName[full_path_name_len];
 
   pe::image * image() const
   { 

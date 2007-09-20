@@ -19,7 +19,7 @@
 namespace ntl {
 namespace nt {
 
-/**\addtogroup  io ********************* I/O API ****************************
+/**\addtogroup  registry **************** Registry API *********************
  *@{*/
 
 ///\note  Because ntoskernel does not export Nt* variants,
@@ -89,6 +89,18 @@ ntstatus __stdcall
     uint32_t                      DataSize
     );
 
+NTL__EXTERNAPI
+ntstatus __stdcall
+  ZwDeleteKey(
+    legacy_handle KeyHandle
+    );
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  ZwFlushKey(
+    legacy_handle KeyHandle
+    );
+
 enum key_information_class
 {
   KeyBasicInformation,
@@ -111,7 +123,7 @@ ntstatus __stdcall
 
 class key;
 
-/**@} io */
+/**@} registry */
 
 }//namespace nt
 
@@ -197,7 +209,7 @@ class key : public handle, public device_traits<key>
       /// Root key constructor
       key() {/**/}
 
-      key(const key&);
+//      key(const key&);
 
     bool
     __forceinline
@@ -264,6 +276,24 @@ class key : public handle, public device_traits<key>
       __assume(subkey_end_ == subkey_iterator());
     }
 
+    operator const handle &() const
+    {
+      return *this;
+    }
+
+    operator const void*() { return get(); } 
+
+    bool erase()
+    {
+      const ntstatus res = ZwDeleteKey(this->get());
+      this->handle::release();
+      return nt::success(res);
+    }
+
+    bool flush()
+    {
+      return nt::success(ZwFlushKey(this->get()));
+    }
 
     enum value_type
     {
@@ -310,7 +340,7 @@ class key : public handle, public device_traits<key>
     };
 
     ntstatus
-      query_value(
+      query(
         const const_unicode_string &  value_name,
         key_value_information_class   info_class,
         void *                        information,
@@ -324,7 +354,7 @@ class key : public handle, public device_traits<key>
 
     __forceinline
     bool
-      query_value(
+      query(
         const const_unicode_string &  value_name,
         std::wstring &                value_string
         )
@@ -334,7 +364,7 @@ class key : public handle, public device_traits<key>
       for ( ; ; )
       {
         uint8_t * const buf = new uint8_t[size];
-        const ntstatus s = query_value(value_name, KeyValuePartialInformation,
+        const ntstatus s = query(value_name, KeyValuePartialInformation,
                                        buf, size, size);
         const value_partial_information * const p =
                               reinterpret_cast<value_partial_information*>(buf);
@@ -345,7 +375,7 @@ class key : public handle, public device_traits<key>
             delete[] buf;
             continue;
           case status::success:
-            if ( p->Type == reg_sz || p->Type == reg_expand_sz ) // reg_multi_sz reg_link
+            if ( p->Type == reg_sz || p->Type == reg_expand_sz || p->Type == reg_multi_sz ) //reg_link
             {
               value_string.assign(reinterpret_cast<const wchar_t*>(&p->Data[0]),
                                   p->DataLength / sizeof(wchar_t));
@@ -361,7 +391,7 @@ class key : public handle, public device_traits<key>
 
     __forceinline
     bool
-      query_value(
+      query(
         const const_unicode_string &  value_name,
         std::vector<uint8_t> &        data
         )
@@ -370,7 +400,7 @@ class key : public handle, public device_traits<key>
       uint8_t * buf = 0;
       for ( ; ; )
       {
-        const ntstatus s = query_value(value_name, KeyValuePartialInformation,
+        const ntstatus s = query(value_name, KeyValuePartialInformation,
                                        buf, size, size);
         const value_partial_information * const p =
                               reinterpret_cast<value_partial_information*>(buf);
@@ -389,14 +419,14 @@ class key : public handle, public device_traits<key>
 
     __forceinline
     bool
-      query_value(
+      query(
         const const_unicode_string &  value_name,
         uint32_t &                    value
         )
     {
       uint32_t dummy_size;
       uint8_t buf[sizeof(value_partial_information)+sizeof(uint32_t)-sizeof(uint8_t)];
-      const ntstatus s = query_value(value_name, KeyValuePartialInformation,
+      const ntstatus s = query(value_name, KeyValuePartialInformation,
                                     buf, sizeof(buf), dummy_size);
       const value_partial_information * const p =
                         reinterpret_cast<value_partial_information*>(buf);
@@ -407,7 +437,7 @@ class key : public handle, public device_traits<key>
     }
 
     ntstatus
-      set_value(
+      set(
         const const_unicode_string &  value_name,
         value_type                    type,
         const void *                  information,
@@ -419,21 +449,31 @@ class key : public handle, public device_traits<key>
                               length);
     }
 
-    ntstatus
-      set_value(
+    bool
+      set(
         const const_unicode_string &  value_name,
         uint32_t                      value)
     {
-      return set_value(value_name, reg_dword_little_endian, &value, sizeof(value));
+      return nt::success(set(value_name, reg_dword_little_endian, &value, sizeof(value)));
     }
 
-    ntstatus
-      set_value(
+    bool
+      set(
         const const_unicode_string &  value_name,
         const const_unicode_string &  value)
     {
-      return set_value(value_name, reg_sz, value.begin(),
-                        value.size() * sizeof(const_unicode_string::value_type));
+      return nt::success(set(value_name, reg_sz, value.begin(),
+                        value.size() * sizeof(const_unicode_string::value_type)));
+    }
+
+    bool
+      set(
+        const const_unicode_string &  value_name,
+        const std::wstring &          value,
+        value_type                    type)
+    {
+      return nt::success(set(value_name, type, value.begin(),
+                              value.size() * sizeof(std::wstring::value_type)));
     }
 
 
@@ -445,6 +485,16 @@ class key : public handle, public device_traits<key>
       wchar_t   Name[1];  // variable-length string
     };
 
+    struct key_node_information
+    {
+      int64_t   LastWriteTime;
+      uint32_t  TitleIndex;
+      uint32_t  ClassOffset;
+      uint32_t  ClassLength;
+      uint32_t  NameLength;
+      wchar_t   Name[1];  //  Variable-length string
+    };
+    
     static
     ntstatus
       enumerate_key(

@@ -11,6 +11,7 @@
 #include "basedef.hxx"
 #include "apc.hxx"
 #include "object.hxx"
+#include "file_information.hxx"
 
 namespace ntl {
 namespace km {
@@ -27,6 +28,8 @@ ntstatus __stdcall
     void *          Context
     );
 
+#pragma pack(push)
+#pragma pack(4) ///\warning shall be 8 for 64bit 
 struct io_stack_location
 {
   enum control_flags
@@ -48,9 +51,63 @@ struct io_stack_location
   uint8_t                   MinorFunction;
   uint8_t                   Flags;
   uint8_t                   Control;
+
   union
   {
     uint8_t _[0x10];
+
+    struct
+    {
+      struct IO_SECURITY_CONTEXT *  SecurityContext;
+      uint32_t  Options     : 24;
+      uint32_t  Disposition : 8;
+      uint16_t  FileAttributes;
+      uint16_t  ShareAccess;
+      uint32_t  EaLength;
+    } Create;
+
+    struct
+    {
+      uint32_t  Length;
+      uint32_t  Key;
+      int64_t   ByteOffset;
+    } Read;
+
+    struct
+    {
+      uint32_t  Length;
+      uint32_t  Key;
+      int64_t   ByteOffset;
+    } Write;
+
+    struct
+    {
+      uint32_t                Length;
+      file_information_class  FileInformationClass;
+    } QueryFile;
+
+    struct
+    {
+      uint32_t                Length;
+      file_information_class  FileInformationClass;
+      file_object *           FileObject;
+      union {
+          struct _ {
+              bool  ReplaceIfExists;
+              bool  AdvanceOnly;
+          };
+          uint32_t ClusterCount;
+          legacy_handle DeleteHandle;
+      };
+    } SetFile;
+
+#if 0
+    struct
+    {
+      uint32_t                Length;
+      fs_information_class    FsInformationClass;
+    } QueryVolume;
+#endif
 
     struct
     {
@@ -59,12 +116,22 @@ struct io_stack_location
       uint32_t  IoControlCode;  // POINTER_ALIGNMENT
       void *    Type3InputBuffer;
     } DeviceIoControl;
+
+    struct
+    {
+      void *  Argument1;
+      void *  Argument2;
+      void *  Argument3;
+      void *  Argument4;
+    } Others;
   }                         Parameters;
+
   device_object *           DeviceObject;
   file_object *             FileObject;
   io_completion_routine_t * CompletionRoutine;
   void *                    Context;
 };
+#pragma pack(pop)
 STATIC_ASSERT(sizeof(io_stack_location) == 0x24);
 
 const io_stack_location::control_flags sl_invoke_on_cancel = io_stack_location::invoke_on_cancel;

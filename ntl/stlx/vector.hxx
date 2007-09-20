@@ -74,10 +74,11 @@ class vector
       end_ = i;
     }
 
-    template <class InputIterator>
-    void vector__disp(InputIterator first, InputIterator last,
+    template <class ForwardIterator>
+    void vector__disp(ForwardIterator first, ForwardIterator last,
                       const false_type&)
     {
+      ///\todo specialize for InputIterator category
       // distance SHOULD be allways positive
       capacity_ = static_cast<size_type>(distance(first, last));
       begin_ = array_allocator.allocate(capacity_);
@@ -355,7 +356,8 @@ class vector
     {
       for ( iterator i = last; i != first;  ) array_allocator.destroy(--i);
       iterator const tail = first;
-      for ( ; last != end_; ++last, ++first ) move(tail, first);
+      for ( ; last != end_; ++first, ++last ) move(first, last);
+      end_ = first;
       return tail;
     }
 

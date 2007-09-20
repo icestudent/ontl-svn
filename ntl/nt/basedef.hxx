@@ -11,6 +11,8 @@
 #include "status.hxx"
 #include "../basedef.hxx"
 #include "../stdlib.hxx"
+#include "string.hxx"
+#include "../pe/image.hxx"
 
 namespace ntl {
 namespace nt {
@@ -21,25 +23,19 @@ namespace nt {
 
 struct list_entry
 {
-  list_entry * Flink;
-  list_entry * Blink;
-
-  list_entry * next() const { return Flink; }
-  list_entry * prev() const { return Blink; }
-
-  void next(list_entry * p)  { Flink = p; }
-  void prev(list_entry * p)  { Blink = p; }
+  union { list_entry * Flink; list_entry * next; };
+  union { list_entry * Blink; list_entry * prev; };
 
   void link(list_entry * prev, list_entry * next)
   {
-    this->prev(prev); this->next(next);
-    prev->next(this); next->prev(this);
+    this->prev = prev; this->next = next;
+    prev->next = this; next->prev = this;
   }
 
   void unlink()
   {
-    next()->prev(prev());
-    prev()->next(next());
+    next->prev = prev;
+    prev->next = next;
   }
 };
 
@@ -48,30 +44,30 @@ struct list_head : public list_entry
 {
   list_head()
   {
-    next(this);
-    prev(this);
+    next = this;
+    prev = this;
   }
 
-  bool empty() const { return next() == this; }
+  bool empty() const { return next == this; }
 
   void insert(list_entry * position, list_entry * entry)
   {
-    entry->link(position, position->next());
+    entry->link(position, position->next);
   }
 
   list_entry * erase(list_entry * position)
   { 
-    list_entry * const next = position->next();
+    list_entry * const next = position->next;
     position->unlink();
     return next;
   }
 
   void insert_tail(list_entry * entry)
   {
-    entry->link(prev(), this);
+    entry->link(prev, this);
   }
 
-  list_entry * begin() { return next(); }
+  list_entry * begin() { return next; }
   list_entry * end()   { return this; }
   
 };
@@ -194,7 +190,59 @@ enum device_power_state
 };
 
 
-}//namespace ntl
+struct ldr_data_table_entry
+{
+  /* 0x00 */ list_entry           InLoadOrderLinks;
+  /* 0x08 */ list_entry           InMemoryOrderLinks;
+  /* 0x10 */ list_entry           InInitializationOrderLinks;
+  /* 0x18 */ pe::image *          DllBase;
+  /* 0x1c */ void *               EntryPoint;
+  /* 0x20 */ uint32_t             SizeOfImage;
+  /* 0x24 */ const_unicode_string FullDllName;
+  /* 0x2c */ const_unicode_string BaseDllName;
+  /* 0x34 */ uint32_t             Flags;
+  /* 0x38 */ uint16_t             LoadCount;
+  /* 0x3a */ uint16_t             TlsIndex;
+//  /* 0x3c */ list_entry           HashLinks;
+  /* 0x3c */ void *               SectionPointer;
+  /* 0x40 */ uint32_t             CheckSum;
+  union {
+  /* 0x44 */ uint32_t             TimeDateStamp;
+  /* 0x44 */ void *               LoadedImports;
+  };
+  /* 0x48 */ void *               EntryPointActivationContext;
+  /* 0x4c */ void *               PatchInformation;
+
+  struct find_dll
+  {
+    find_dll(list_head * head) : head(head) {}
+
+    list_head * head;
+
+    const pe::image * operator()(const char name[]) const
+    {
+      if ( head )
+        for ( list_entry * it = head->begin(); it != head->end(); it = it->next )
+        {
+          const ldr_data_table_entry * const entry = 
+                                    reinterpret_cast<ldr_data_table_entry *>(it);
+          for ( unsigned short i = 0; i != entry->BaseDllName.size(); ++i )
+          {
+            if ( (entry->BaseDllName[i] ^ name[i]) & 0x5F )
+              goto other_name;
+          }
+          return entry->DllBase;
+          other_name:;
+        }
+      return 0;
+    }
+  };
+
+};
+STATIC_ASSERT(sizeof(ldr_data_table_entry) == 0x50);
+
+
 }//namespace nt
+}//namespace ntl
 
 #endif//#ifndef NTL__NT_BASEDEF

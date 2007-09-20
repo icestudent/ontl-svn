@@ -11,7 +11,7 @@
 #include "cstddef.hxx"
 
 
-#ifndef _INC_STDLIB// MSVC compatobility
+#ifndef _INC_STDLIB// MSVC compatibility
 
 // ISO 9899
 //
@@ -33,45 +33,20 @@ long int
 NTL__CRTCALL
   atol(const char *nptr);
 
-/// 7.20.1.2 The atoll function
-long long int
-NTL__CRTCALL
-  atoll(const char *nptr);
-
 /// 7.20.1.3 The strtod function
 double
 NTL__CRTCALL
   strtod(const char * __restrict nptr, char ** __restrict endptr);
-
-/// 7.20.1.3 The strtof function
-float
-NTL__CRTCALL
-  strtof(const char * __restrict nptr, char ** __restrict endptr);
-
-/// 7.20.1.3 The strtold function
-long double
-NTL__CRTCALL
-  strtold(const char * __restrict nptr, char ** __restrict endptr);
 
 /// 7.20.1.4 The strtol function
 long int 
 NTL__CRTCALL
   strtol(const char * __restrict nptr, char ** __restrict endptr, int base);
 
-/// 7.20.1.4 The strtoll function
-long long int
-NTL__CRTCALL
-  strtoll(const char * __restrict nptr, char ** __restrict endptr, int base);
-
 /// 7.20.1.4 The strtoul function
 unsigned long int
 NTL__CRTCALL
   strtoul(const char * __restrict nptr, char ** __restrict endptr, int base);
-
-/// 7.20.1.4 The strtoull function
-unsigned long long int
-NTL__CRTCALL
-  strtoull(const char * __restrict nptr, char ** __restrict endptr, int base);
 
 
 ///\name  7.20.2 Pseudo-random sequence generation functions
@@ -140,11 +115,6 @@ void
 NTL__CRTCALL
   exit(int status);
 
-/// 7.20.4.4 The _Exit function
-void
-NTL__CRTCALL
-  _Exit(int status);
-
 /// 7.20.4.5 The getenv function
 char *
 NTL__CRTCALL
@@ -181,9 +151,6 @@ NTL__CRTCALL
 long int
 NTL__CRTCALL
   labs(long int j);
-long long int
-NTL__CRTCALL
-  llabs(long long int j);
 
 #if 0
 /// 7.20.6.2 The div, ldiv, and lldiv functions
@@ -223,8 +190,44 @@ size_t
 NTL__CRTCALL
   wcstombs(char * __restrict s, const wchar_t * __restrict pwcs, size_t n);
 
-///@}
 #endif// #ifndef _INC_STDLIB
+
+/// 7.20.1.2 The atoll function
+long long int
+NTL__CRTCALL
+  atoll(const char *nptr);
+
+/// 7.20.1.3 The strtof function
+float
+NTL__CRTCALL
+  strtof(const char * __restrict nptr, char ** __restrict endptr);
+
+
+/// 7.20.1.3 The strtold function
+long double
+NTL__CRTCALL
+  strtold(const char * __restrict nptr, char ** __restrict endptr);
+
+/// 7.20.1.4 The strtoll function
+long long int
+NTL__CRTCALL
+  strtoll(const char * __restrict nptr, char ** __restrict endptr, int base);
+
+/// 7.20.1.4 The strtoull function
+unsigned long long int
+NTL__CRTCALL
+  strtoull(const char * __restrict nptr, char ** __restrict endptr, int base);
+
+/// 7.20.4.4 The _Exit function
+void
+NTL__CRTCALL
+  _Exit(int status);
+
+long long int
+NTL__CRTCALL
+  llabs(long long int j);
+
+///@}
 
 
 namespace std {

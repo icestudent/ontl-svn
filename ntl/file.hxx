@@ -57,7 +57,7 @@ class basic_file : public traits
         const attributes            attr            = traits::attribute_default
         ) throw()
     {
-      f.create(object, cd, desired_access, share_access, co, attr);
+      return f.create(object, cd, desired_access, share_access, co, attr);
     }
 
     /*

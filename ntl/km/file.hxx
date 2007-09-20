@@ -164,6 +164,13 @@ class file_handler : public handle, public device_traits<file_handler>
 
     void close() { reset(); }
 
+    bool erase()
+    {
+      file_disposition_information<> del;
+      file_information<file_disposition_information<> > file_info(get(), del);
+      return file_info;
+    }
+
     bool
       read(
         void *            out_buf,

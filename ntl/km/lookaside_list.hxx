@@ -85,18 +85,20 @@ struct general_lookaside : public general_lookaside_pool {};
 #pragma warning(pop)
 
 
+template<typename CellType = void>
 struct npaged_lookaside_list : public general_lookaside
 {
     kspin_lock  Lock__ObsoleteButDoNotDelete;
 
+    typedef CellType  value_type;
+
   explicit 
   npaged_lookaside_list(
-    size_t                  Size,
     allocate_function_t *   Allocate    = 0,
     free_function_t *       Free        = 0,
     uint32_t                Tag         = NTL__POOL_TAG)
   {
-    _initialize(this, Size, Allocate, Free, Tag);
+    _initialize(this, Allocate, Free, Tag);
   }
 
   ~npaged_lookaside_list()
@@ -107,7 +109,6 @@ struct npaged_lookaside_list : public general_lookaside
   static __forceinline
   void _initialize(
     npaged_lookaside_list * Lookaside,
-    size_t                  Size,
     allocate_function_t *   Allocate    = 0,
     free_function_t *       Free        = 0,
     uint32_t                Tag         = NTL__POOL_TAG
@@ -116,7 +117,7 @@ struct npaged_lookaside_list : public general_lookaside
   static __forceinline
   void _delete(npaged_lookaside_list * Lookaside);
 
-  void * allocate()
+  value_type * allocate()
   {
     ++TotalAllocates;
     void * entry = ExInterlockedPopEntrySList(&ListHead, &Lock__ObsoleteButDoNotDelete);
@@ -125,7 +126,7 @@ struct npaged_lookaside_list : public general_lookaside
       ++AllocateMisses;
       entry = Allocate(Type, Size, Tag);
     }
-    return entry;
+    return reinterpret_cast<value_type*>(entry);
   }
 
   void free(void * entry)
@@ -147,9 +148,9 @@ struct npaged_lookaside_list : public general_lookaside
 NTL__EXTERNAPI
 void
   ExInitializeNPagedLookasideList(
-    npaged_lookaside_list *                       Lookaside,
-    npaged_lookaside_list::allocate_function_t *  Allocate  __optional,
-    npaged_lookaside_list::free_function_t *      Free      __optional,
+    general_lookaside *                       Lookaside,
+    general_lookaside::allocate_function_t *  Allocate  __optional,
+    general_lookaside::free_function_t *      Free      __optional,
     uint32_t            Flags,
     size_t              Size,
     uint32_t            Tag,
@@ -159,21 +160,22 @@ void
 NTL__EXTERNAPI
 void
   ExDeleteNPagedLookasideList(
-    npaged_lookaside_list * Lookaside);
+    general_lookaside * Lookaside);
 
-void npaged_lookaside_list::_delete(npaged_lookaside_list * Lookaside)
+template<typename CellType>
+void npaged_lookaside_list<CellType>::_delete(npaged_lookaside_list<CellType> * Lookaside)
 {
   ExDeleteNPagedLookasideList(Lookaside);
 }
 
-void npaged_lookaside_list::_initialize(
-  npaged_lookaside_list * Lookaside,
-  size_t                  Size,
-  allocate_function_t *   Allocate,
-  free_function_t *       Free,
-  uint32_t                Tag)
+template<typename CellType>
+void npaged_lookaside_list<CellType>::_initialize(
+  npaged_lookaside_list<CellType> * Lookaside,
+  allocate_function_t *             Allocate,
+  free_function_t *                 Free,
+  uint32_t                          Tag)
 {
-  ExInitializeNPagedLookasideList(Lookaside, Allocate, Free, 0, Size, Tag, 0);
+  ExInitializeNPagedLookasideList(Lookaside, Allocate, Free, 0, sizeof(CellType), Tag, 0);
 }
 
 
