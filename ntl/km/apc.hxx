@@ -141,7 +141,7 @@ struct apc : kapc
   }
 
 };
-STATIC_ASSERT(sizeof(kapc) == 0x30);
+STATIC_ASSERT(sizeof(kapc) == 0x30 || sizeof(kapc) == 0x58);
 
 
 NTL__EXTERNAPI

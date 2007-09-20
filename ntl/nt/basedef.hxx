@@ -239,7 +239,7 @@ struct ldr_data_table_entry
   };
 
 };
-STATIC_ASSERT(sizeof(ldr_data_table_entry) == 0x50);
+STATIC_ASSERT(sizeof(ldr_data_table_entry) == 0x50 || sizeof(ldr_data_table_entry) == 0x98);
 
 
 }//namespace nt

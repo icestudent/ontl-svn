@@ -192,7 +192,7 @@ struct io_stack_location
   void *                    Context;
 };
 #pragma pack(pop)
-STATIC_ASSERT(sizeof(io_stack_location) == 0x24);
+STATIC_ASSERT(sizeof(io_stack_location) == 0x24 || sizeof(io_stack_location) == 0x44);
 
 const io_stack_location::control_flags sl_invoke_on_cancel = io_stack_location::invoke_on_cancel;
 const io_stack_location::control_flags sl_invoke_on_success = io_stack_location::invoke_on_success;
@@ -342,8 +342,7 @@ struct irp
 
 }; // struct irp
 
-STATIC_ASSERT(sizeof(irp) == 0x70);
-
+STATIC_ASSERT(sizeof(irp) == 0x70 || sizeof(irp) == 0xC8);
 
 NTL__EXTERNAPI
 irp * __stdcall

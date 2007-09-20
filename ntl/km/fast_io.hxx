@@ -379,7 +379,7 @@ struct fast_io_dispatch_t {
 	fast_io_release_for_ccflush_t* ReleaseForCcFlush;
 };
 
-STATIC_ASSERT(sizeof(fast_io_dispatch_t) == 0x70);
+STATIC_ASSERT(sizeof(fast_io_dispatch_t) == 0x70 || sizeof(fast_io_dispatch_t) == 0xE0);
 
 	}//namespace km
 }//namespace ntl

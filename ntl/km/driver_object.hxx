@@ -49,8 +49,9 @@ struct driver_object
   driver_dispatch_t*          MajorFunction[28];
 };
 
-STATIC_ASSERT(sizeof(driver_object) == 0xa8);
-STATIC_ASSERT(offsetof(driver_object, MajorFunction) == 0x38);
+STATIC_ASSERT(sizeof(driver_object) == 0xA8 || sizeof(driver_object) == 0x150);
+
+STATIC_ASSERT(offsetof(driver_object, MajorFunction) == 0x38 || offsetof(driver_object, MajorFunction) == 0x70);
 
 
 }//namspace km
