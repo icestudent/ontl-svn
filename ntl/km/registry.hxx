@@ -100,7 +100,7 @@ struct cm_name_hash
   /* 0x08 */ uint16_t       NameLength;
   /* 0x0a */ wchar_t        Name[1];
 };
-//STATIC_ASSERT(sizeof(cm_name_hash) == 0xc);
+STATIC_ASSERT(sizeof(cm_name_hash) == 0xc);
 
 struct cm_name_control_block
 {
@@ -108,7 +108,7 @@ struct cm_name_control_block
   /* 0x02 */ unsigned short RefCount;
   /* 0x04 */ cm_name_hash   NameHash;
 };
-//STATIC_ASSERT(sizeof(cm_name_control_block) == 0x10);
+STATIC_ASSERT(sizeof(cm_name_control_block) == 0x10);
 
 
 struct cm_key_hash
@@ -118,7 +118,7 @@ struct cm_key_hash
   /* 0x08 */ struct _HHIVE* KeyHive;
   /* 0x0c */ uint32_t       KeyCell;
 };
-//STATIC_ASSERT(sizeof(cm_key_hash) == 0x10);
+STATIC_ASSERT(sizeof(cm_key_hash) == 0x10);
 
 
 struct cm_key_control_block;
@@ -131,31 +131,19 @@ struct cached_child_list
   /* 0x04 */ cm_key_control_block * RealKcb;
   };
 };
-//STATIC_ASSERT(sizeof(cached_child_list) == 0x8);
+STATIC_ASSERT(sizeof(cached_child_list) == 0x8);
 
 ///\warning XP SP2
 struct cm_key_control_block
 {
-#ifndef _WIN64
   /* 0x00 */ uint16_t                 RefCount;
   /* 0x02 */ uint16_t                 Flags;
-#else
-			 uint32_t				  RefCount;
-#endif
   /* 0x04 */ uint32_t                 ExtFlags          /*:0x00*/ :8;
   /* 0x04 */ uint32_t                 PrivateAlloc      /*:0x08*/ :1;
   /* 0x04 */ uint32_t                 Delete            /*:0x09*/ :1;
   /* 0x04 */ uint32_t                 DelayedCloseIndex /*:0x0a*/ :0xc;
   /* 0x04 */ uint32_t                 TotalLevels       /*:0x16*/ :0xa;
-  union {
-	  cm_key_hash           KeyHash;
-	  struct {
-		  uint32_t          ConvKey;
-		  cm_key_hash		*NextHash;
-		  struct hhive*     KeyHive;
-		  uint32_t			KeyCell;
-	  };
-  };
+  /* 0x08 */ cm_key_hash              KeyHash;
   /* 0x18 */ cm_key_control_block *   ParentKcb;
   /* 0x1c */ cm_name_control_block *  NameBlock;
   /* 0x20 */ struct _CM_KEY_SECURITY_CACHE* CachedSecurity;
@@ -169,23 +157,12 @@ struct cm_key_control_block
   /* 0x30 */ list_entry               KeyBodyListHead;
   /* 0x30 */ list_entry               FreeListEntry;
   };
-#if NTDDI_VERSION >= NTDDI_WS03
-	struct cm_key_body*				  KeyBodyArray[4];
-	void*							  DelayCloseEntry;
-#endif
   /* 0x38 */ int64_t                  KcbLastWriteTime;
   /* 0x40 */ uint16_t                 KcbMaxNameLen;
   /* 0x42 */ uint16_t                 KcbMaxValueNameLen;
   /* 0x44 */ uint32_t                 KcbMaxValueDataLen;
-#if defined(_WIN64)
-	uint32_t						  KcbUserFlags:4;
-	uint32_t						  KcbVirtControlFlags:4;
-	uint32_t						  KcbDebug:8;
-	uint32_t						  Flags:10;
-	char*							  RealKeyName;
-#endif
 };// struct cm_key_control_block
-//STATIC_ASSERT(sizeof(cm_key_control_block) == 0x48);
+STATIC_ASSERT(sizeof(cm_key_control_block) == 0x48);
 
 
 struct cm_key_body
@@ -203,13 +180,8 @@ struct cm_key_body_51 : cm_key_body
   /* 0x14 */ void *         CallerAddress[10];
   /* 0x3c */ list_entry     KeyBodyList;
 };
-//STATIC_ASSERT(sizeof(cm_key_body_51) == 0x44);
+STATIC_ASSERT(sizeof(cm_key_body_51) == 0x44);
 
-struct cm_key_body_52: cm_key_body
-{
-	/* 0x18 */ uint32_t				ProcessID;
-	/* 0x20 */ list_entry			KeyBodyList;
-};
 
 using nt::key_information_class;
 using nt::KeyBasicInformation;

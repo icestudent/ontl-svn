@@ -17,11 +17,8 @@ namespace ntl {
 namespace intrinsic {
 extern "C" uint32_t __cdecl __readfsdword(uint32_t);
 extern "C" void __cdecl __writefsdword(uint32_t Offset, uint32_t Data);
-
-#ifdef _M_IX86
-#	pragma intrinsic(__readfsdword)
-#	pragma intrinsic(__writefsdword)
-#endif
+#pragma intrinsic(__readfsdword)
+#pragma intrinsic(__writefsdword)
 }//namespace intrin
 
 namespace nt {
@@ -44,7 +41,7 @@ struct tib
   /* 0x18 */  tib                     * Self; ///< flat address of this structure
 };
 
-//STATIC_ASSERT(sizeof(tib) == 0x1C);
+STATIC_ASSERT(sizeof(tib) == 0x1C);
 
 
 struct client_id

@@ -55,11 +55,10 @@ struct file_object
   kevent                    Event;
   io_completion_context *   CompletionContext;
 
-#ifdef _M_IX86
   kspin_lock                IrpListLock;
   list_entry                IrpList;
   void *                    FileObjectExtension;
-#endif
+
   ///@note ignores Vpb
   device_object * get_related_device_object()
   {
@@ -67,7 +66,7 @@ struct file_object
   }
   
 } ; // struct file_object
-//STATIC_ASSERT(sizeof(file_object) == 0x70 + sizeof(kspin_lock) + sizeof(list_entry) + sizeof(void *));
+STATIC_ASSERT(sizeof(file_object) == 0x70 + sizeof(kspin_lock) + sizeof(list_entry) + sizeof(void *));
 
 }//namspace km
 }//namespace ntl

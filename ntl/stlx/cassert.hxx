@@ -15,17 +15,16 @@
 #endif
 
 
-#if !defined _BUGCHECK && defined NTL__DEBUG && defined _M_IX86
-#	define _BUGCHECK(msg, line)      \
+#if 1
+#ifndef _BUGCHECK
+#define _BUGCHECK(msg, line)      \
 {                                 \
   static const char m[] = msg;    \
   __asm mov ecx, offset m         \
   __asm mov edx, line             \
   __asm _emit 0xf1  /* ICE BP */  \
 }
-#else
-#	define _BUGCHECK(msg, line)	\
-	__debugbreak();
+#endif
 #endif
 
 

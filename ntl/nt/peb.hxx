@@ -122,7 +122,7 @@ struct peb
   /* 0x204 */ void *                  SystemAssemblyStorageMap;
   /* 0x208 */ uint32_t                MinimumStackCommit;
 };
-//STATIC_ASSERT(sizeof(peb) == 0x210);
+STATIC_ASSERT(sizeof(peb) == 0x210);
 
 
 }//namespace nt

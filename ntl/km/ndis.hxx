@@ -125,7 +125,7 @@ class ndis
       uint16_t    ReferenceCount;
       bool        Closing;
     };
-    //STATIC_ASSERT(sizeof(reference)==0x8);
+    STATIC_ASSERT(sizeof(reference)==0x8);
 
     struct timer
     {
@@ -199,7 +199,7 @@ class ndis
           void *            MediaSpecificInformation;
           status::type      Status;
         };
-        //STATIC_ASSERT(sizeof(oob_data) == 0x20);
+        STATIC_ASSERT(sizeof(oob_data) == 0x20);
 
         typedef void  * pool;
 
@@ -649,7 +649,7 @@ class ndis
           co_af_register_notify_handler_t * CoAfRegisterNotifyHandler;
 
         };//struct characteristics
-        //STATIC_ASSERT(sizeof(characteristics) == 0x6c);
+        STATIC_ASSERT(sizeof(characteristics) == 0x6c);
 
         struct block
         {
@@ -666,7 +666,7 @@ class ndis
           struct m_driver_block *   AssociatedMiniDriver;
           struct miniport_block *   BindingAdapter;
         };// <size 0xc4>
-        //STATIC_ASSERT(sizeof(block) == 0xc4);
+        STATIC_ASSERT(sizeof(block) == 0xc4);
 
         explicit
         protocol(const protocol::characteristics & characteristics)
@@ -924,7 +924,7 @@ class ndis
       kevent *            AfNotifyCompleteEvent;
 
     }; // struct common_open_block
-    //STATIC_ASSERT(sizeof(common_open_block) == 0xf4);
+    STATIC_ASSERT(sizeof(common_open_block) == 0xf4);
 
     struct open_block : public common_open_block { };
 
@@ -1218,7 +1218,7 @@ class ndis
       /*<thisrel this+0x490>*/ /*|0xc|*/ reference  Ref;
     }; // struct miniport_block
     // <size 0x4a0>
-    //STATIC_ASSERT(sizeof(miniport_block)==0x4a0);
+    STATIC_ASSERT(sizeof(miniport_block)==0x4a0);
 
     typedef
     status::type __stdcall
@@ -1306,7 +1306,7 @@ class ndis
       /*<thisrel this+0x58>*/ /*|0x4|*/ void  (__stdcall*CoSendPacketsHandler)(void*, packet**, unsigned int);
       /*<thisrel this+0x5c>*/ /*|0x4|*/ int  (__stdcall*CoRequestHandler)(void*, void*, request*);
     };
-    //STATIC_ASSERT(sizeof(miniport_characteristics_50)==0x60);
+    STATIC_ASSERT(sizeof(miniport_characteristics_50)==0x60);
 
     struct miniport_characteristics_51 : public miniport_characteristics_50
     {
@@ -1318,7 +1318,7 @@ class ndis
       /*<thisrel this+0x74>*/ /*|0x4|*/ void* Reserved3;
       /*<thisrel this+0x78>*/ /*|0x4|*/ void* Reserved4;
     };
-    //STATIC_ASSERT(sizeof(miniport_characteristics_51)==0x7c);
+    STATIC_ASSERT(sizeof(miniport_characteristics_51)==0x7c);
 
     struct m_driver_block
     {
@@ -1330,7 +1330,7 @@ class ndis
       /*<thisrel this+0x18>*/ /*|0x4|*/ struct _NDIS_PENDING_IM_INSTANCE* PendingDeviceList;
       /*<thisrel this+0x1c>*/ /*|0x4|*/ void  (__stdcall*UnloadHandler)(struct _DRIVER_OBJECT*);
     };
-    //STATIC_ASSERT(sizeof(m_driver_block)==0x20);
+    STATIC_ASSERT(sizeof(m_driver_block)==0x20);
 
     struct m_driver_block_50 : public m_driver_block
     {
@@ -1341,7 +1341,7 @@ class ndis
       /*<thisrel this+0xb8>*/ /*|0x20|*/ kmutant IMStartRemoveMutex;
       /*<thisrel this+0xd8>*/ /*|0x4|*/ unsigned long DriverVersion;
     };
-    //STATIC_ASSERT(sizeof(m_driver_block_50)==0xc0);
+    STATIC_ASSERT(sizeof(m_driver_block_50)==0xc0);
 
     struct m_driver_block_51 : public m_driver_block
     {
@@ -1352,7 +1352,7 @@ class ndis
       /*<thisrel this+0xb8>*/ /*|0x20|*/ kmutant IMStartRemoveMutex;
       /*<thisrel this+0xd8>*/ /*|0x4|*/ unsigned long DriverVersion;
     };
-    //STATIC_ASSERT(sizeof(m_driver_block_51)==0xdc);
+    STATIC_ASSERT(sizeof(m_driver_block_51)==0xdc);
 
     struct packet_pool
     {

@@ -14,17 +14,7 @@ namespace ntl {
 
 struct eprocess;
 struct eresource;
-
-struct compressed_data_info {
-	/*<thisrel this+0x0>*/ /*|0x2|*/ uint16_t CompressionFormatAndEngine;
-	/*<thisrel this+0x2>*/ /*|0x1|*/ uint8_t CompressionUnitShift;
-	/*<thisrel this+0x3>*/ /*|0x1|*/ uint8_t ChunkShift;
-	/*<thisrel this+0x4>*/ /*|0x1|*/ uint8_t ClusterShift;
-	/*<thisrel this+0x5>*/ /*|0x1|*/ uint8_t Reserved;
-	/*<thisrel this+0x6>*/ /*|0x2|*/ int16_t NumberOfChunks;
-	/*<thisrel this+0x8>*/ /*|0x4|*/ int32_t CompressedChunkSizes[1];
-};
-// <size 0xc>
+struct compressed_data_info;
 
 //
 // Define fast I/O procedure prototypes.
@@ -389,7 +379,7 @@ struct fast_io_dispatch_t {
 	fast_io_release_for_ccflush_t* ReleaseForCcFlush;
 };
 
-STATIC_ASSERT(sizeof(fast_io_dispatch_t) == 0x70 || sizeof(fast_io_dispatch_t) == 0xE0);
+STATIC_ASSERT(sizeof(fast_io_dispatch_t) == 0x70);
 
 	}//namespace km
 }//namespace ntl

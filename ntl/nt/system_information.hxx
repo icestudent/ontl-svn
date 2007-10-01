@@ -272,7 +272,7 @@ struct system_process_information
   const_reverse_iterator  rend() const  { return const_reverse_iterator(begin()); }
 
 };
-//STATIC_ASSERT(sizeof(system_process_information) == 0xB8);
+STATIC_ASSERT(sizeof(system_process_information) == 0xB8);
 
 struct system_processes: public system_process_information
 {
