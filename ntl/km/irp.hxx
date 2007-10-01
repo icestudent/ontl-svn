@@ -114,7 +114,12 @@ struct io_stack_location
 
   union
   {
-    uint8_t _[0x10];
+#ifdef _M_IX86
+	uint8_t _[0x10];
+#elif _M_X64
+	  __declspec(align(8))
+	uint8_t _[0x20];
+#endif
 
     struct
     {
@@ -192,7 +197,7 @@ struct io_stack_location
   void *                    Context;
 };
 #pragma pack(pop)
-STATIC_ASSERT(sizeof(io_stack_location) == 0x24 || sizeof(io_stack_location) == 0x44);
+//STATIC_ASSERT(sizeof(io_stack_location) == 0x24 || sizeof(io_stack_location) == 0x44);
 
 const io_stack_location::control_flags sl_invoke_on_cancel = io_stack_location::invoke_on_cancel;
 const io_stack_location::control_flags sl_invoke_on_success = io_stack_location::invoke_on_success;
@@ -267,7 +272,7 @@ struct irp
     }       AsynchronousParameters;
     int64_t AllocationSize;
   }         Overlay;
-  driver_cancel_t CancelRoutine;
+  driver_cancel_t* CancelRoutine;
   void *            UserBuffer;
   union
   {
@@ -342,7 +347,6 @@ struct irp
 
 }; // struct irp
 
-STATIC_ASSERT(sizeof(irp) == 0x70 || sizeof(irp) == 0xC8);
 
 NTL__EXTERNAPI
 irp * __stdcall

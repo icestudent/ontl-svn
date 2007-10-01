@@ -75,7 +75,7 @@ struct general_lookaside_pool
   };
   uint32_t              Future[2];
 };
-STATIC_ASSERT(sizeof(general_lookaside_pool)==0x48);
+//STATIC_ASSERT(sizeof(general_lookaside_pool)==0x48);
 
 
 #pragma warning(push)
