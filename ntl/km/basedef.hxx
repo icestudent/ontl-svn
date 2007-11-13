@@ -96,17 +96,6 @@ ntstatus __stdcall
     const int64_t * Interval
     );
 
-enum times
-{
-  nanoseconds   = 1,
-  microseconds  = 10   * nanoseconds,
-  milliseconds  = 1000 * microseconds,
-  seconds       = 1000 * milliseconds,
-  minutes       = 60   * seconds, 
-//  hours         = int64_t(60)   * minutes,
-//  days          = int64_t(24)   * hours,
-};
-
 
 template<times TimeResolution>
 static inline
@@ -392,6 +381,13 @@ void * __stdcall
     );
 
 NTL__EXTERNAPI
+void * __stdcall
+  MmUnmapLockedPages(
+    void *      BaseAddress,
+    const mdl * MemoryDescriptorList
+    );
+
+NTL__EXTERNAPI
 mdl * __stdcall
   IoAllocateMdl(
     void *    VirtualAddress,
@@ -481,6 +477,11 @@ struct mdl
     void * map_locked_pages(kprocessor_mode AccessMode = KernelMode) const
     {
       return MmMapLockedPages(this, AccessMode);
+    }
+
+    void unmap_locked_pages(void * base_address) const
+    {
+      MmUnmapLockedPages(base_address, this);
     }
 
     void * system_address() const

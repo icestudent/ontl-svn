@@ -182,6 +182,12 @@ struct cm_key_body_51 : cm_key_body
 };
 STATIC_ASSERT(sizeof(cm_key_body_51) == 0x44);
 
+struct cm_key_body_52: cm_key_body
+{
+  legacy_handle ProcessID;
+  list_entry    KeyBodyList;
+};
+
 
 using nt::key_information_class;
 using nt::KeyBasicInformation;

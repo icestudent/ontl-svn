@@ -9,7 +9,6 @@
 #define NTL__NT_TEB
 
 #include "exception.hxx"
-#include "peb.hxx"
 
 
 namespace ntl {
@@ -23,6 +22,7 @@ extern "C" void __cdecl __writefsdword(uint32_t Offset, uint32_t Data);
 
 namespace nt {
 
+struct peb;
 
 /// Thread information block
 /// @note mapped at fs:0x00

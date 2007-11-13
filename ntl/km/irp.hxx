@@ -22,9 +22,6 @@ struct file_object;
 struct ethread;
 struct irp;
 
-//
-// Define completion routine types for use in stack locations in an IRP
-//
 
 typedef
 ntstatus __stdcall
@@ -34,59 +31,20 @@ ntstatus __stdcall
     void *          Context
     );
 
-//
-// Define driver cancel routine type.
-//
+typedef
+void __stdcall
+  driver_cancel_t(
+    device_object * DeviceObject,
+    irp *           Irp
+		);
 
 typedef
 void __stdcall
-driver_cancel_t(
-			   __in device_object* DeviceObject,
-			   __in irp *Irp
-			   );
+  driver_startio_t(
+    device_object * DeviceObject,
+    irp *Irp
+    );
 
-//
-// Define driver dispatch routine type.
-//
-
-typedef
-ntstatus __stdcall
-driver_dispatch_t (
-				 __in device_object *DeviceObject,
-				 __in irp *Irp
-				 );
-
-
-//
-// Define driver start I/O routine type.
-//
-
-typedef
-void __stdcall
-driver_startio_t (
-				__in device_object *DeviceObject,
-				__in irp *Irp
-				);
-
-//
-// Define driver unload routine type.
-//
-typedef
-void __stdcall
-driver_unload_t (
-			   __in driver_object *DriverObject
-			   );
-
-//
-// Define driver AddDevice routine type.
-//
-
-typedef
-ntstatus __stdcall
-driver_add_device_t (
-				   __in driver_object *DriverObject,
-				   __in device_object *PhysicalDeviceObject
-				   );
 
 #pragma pack(push)
 #pragma pack(4) ///\warning shall be 8 for 64bit 
@@ -267,7 +225,7 @@ struct irp
     }       AsynchronousParameters;
     int64_t AllocationSize;
   }         Overlay;
-  driver_cancel_t CancelRoutine;
+  driver_cancel_t * CancelRoutine;
   void *            UserBuffer;
   union
   {

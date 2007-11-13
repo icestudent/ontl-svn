@@ -15,17 +15,21 @@
 #endif
 
 
-#if 1
-#ifndef _BUGCHECK
-#define _BUGCHECK(msg, line)      \
+#ifndef _BUGCHECK 
+#ifdef _M_IX86
+#	define _BUGCHECK(msg, line)      \
 {                                 \
   static const char m[] = msg;    \
   __asm mov ecx, offset m         \
   __asm mov edx, line             \
   __asm _emit 0xf1  /* ICE BP */  \
 }
-#endif
-#endif
+#elif defined _M_X64
+#	define _BUGCHECK(msg, line)	__debugbreak();
+#else
+#error unsupported CPU type
+#endif// CPU type
+#endif// #ifndef _BUGCHECK 
 
 
 #ifdef NTL__DEBUG
