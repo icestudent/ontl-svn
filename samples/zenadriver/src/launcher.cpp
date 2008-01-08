@@ -5,8 +5,8 @@
  *
  *  \author     S.T.A.S.  http://stasm.org
  *
- *  \version    0.25
- *  \date       07 Nov 2007
+ *  \version    0.26
+ *  \date       23 Nov 2007
  *
  *  The source is distributed under the terms of GNU General Public License
  *  http://www.gnu.org/copyleft/gpl.html
@@ -21,6 +21,7 @@
  *    0.23  + import parsing to check modules dependencies
  *    0.24    minor sources cleanups
  *    0.25  * drivers are pathed to return an error
+ *    0.26  * if imege file not found it is blacklisted
  *
  ****************************************************************************
  */
@@ -55,7 +56,7 @@ class zenadriver : public winapp
 
     void about()
     {
-      write("ZenADriver v0.25  stealth drivers revealer. Build on "__DATE__"\n"
+      write("ZenADriver v0.26  stealth drivers revealer. Build on "__DATE__"\n"
             "Copyright (C) 2007 S.T.A.S. All rights reserved.\n\n"
             "alpha version - do not distribute.\n\n");
     }
@@ -227,10 +228,11 @@ class zenadriver : public winapp
           build_full_driver_path(filename);
           if ( !load_image(filename, img_cache.back()) )
           {
-            write("warning: file `");
-            write(a_it->c_str());
-            write("' not found\n");
+//            write("warning: file `");
+//            write(a_it->c_str());
+//            write("' not found\n");
             img_cache.back().clear();
+            goto carantine_it;
           }
         }
 
