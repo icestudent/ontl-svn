@@ -1,0 +1,800 @@
+; AutoExp.Dat - templates for automatically expanding data (with NTL support)
+; Copyright(c) Microsoft Corporation. All Rights Reserved.
+; 
+; v 0.1 - supports basic_string, list, vector, stack, auto_ptr, pair
+;---------------------------------------------------------------
+;
+; While debugging, Data Tips and items in the Watch and Variable
+; windows are automatically expanded to show their most important
+; elements. The expansion follows the format given by the rules
+; in this file. You can add rules for your types or change the
+; predefined rules.
+;
+; For good examples, read the rules in this file.
+;
+; To find what the debugger considers the type of a variable to
+; be, add it to the Watch window and look at the Type column.
+;
+; An AutoExpand rule is a line with the name of a type, an equals 
+; sign, and text with replaceable parts in angle brackets. The 
+; part in angle brackets names a member of the type and an 
+; optional Watch format specifier.
+;
+; AutoExpand rules use the following syntax. The equals sign (=), 
+; angle brackets (<>), and comma are taken literally. Square
+; brackets ([]) indicate optional items.
+;
+; type=[text]<member[,format]>...
+;
+; type      Name of the type (may be followed by <*> for template
+;           types such as the ATL types listed below).
+;
+; text      Any text.Usually the name of the member to display, 
+;           or a shorthand name for the member.
+;
+; member    Name of a member to display.
+;
+; format    Watch format specifier. One of the following:
+;
+;   Letter  Description                 Sample         Display
+;   ------  --------------------------  ------------   -------------
+;   d,i     Signed decimal integer      0xF000F065,d   -268373915
+;   u       Unsigned decimal integer    0x0065,u       101
+;   o       Unsigned octal integer      0xF065,o       0170145
+;   x,X     Hexadecimal integer         61541,X        0X0000F065
+;   l,h     long or short prefix for    00406042,hx    0x0c22
+;             d, i, u, o, x, X
+;   f       Signed floating-point       3./2.,f        1.500000
+;   e       Signed scientific-notation  3./2.,e        1.500000e+000
+;   g       Shorter of e and f          3./2.,g        1.5
+;   c       Single character            0x0065,c       'e'
+;   s       Zero-terminated string      pVar,s         "Hello world"
+;   su      Unicode string              pVar,su        "Hello world"
+;
+; For details of other format specifiers see Help under:
+; "format specifiers/watch variable"
+;
+; The special format <,t> specifies the name of the most-derived 
+; type of the object. This is especially useful with pointers or
+; references to a base class.
+;
+; If there is no rule for a class, the base classes are checked for
+; a matching rule.
+;
+; There are some special entries allowed in the AutoExpand section:
+; $BUILTIN is used to display more complex types that need to do more
+; than just show a member variable or two.
+; $ADDIN allows external DLLs to be added to display even more complex
+; types via the EE Add-in API. The first argument is the DLL name, the
+; second argument is the name of the export from the DLL to use. For 
+; further information on this API see the sample called EEAddIn.
+;
+; WARNING: if hexadecimal mode is on in the watch window, all numbers here are
+; evaluated in hex, e.g. 42 becomes 0x42
+
+[AutoExpand]
+
+; from windef.h
+tagPOINT =x=<x> y=<y>
+tagRECT =top=<top> bottom=<bottom> left=<left> right=<right>
+
+; from winuser.h
+tagMSG =msg=<message,x> wp=<wParam,x> lp=<lParam,x>
+
+; intrinsics
+__m64 =<m64_i64,x>
+__m128=$BUILTIN(M128)
+__m128i=$BUILTIN(M128I)
+__m128d=$BUILTIN(M128D)
+
+
+_GUID=$BUILTIN(GUID)
+
+; see EEAddIn sample for how to use these
+;_SYSTEMTIME=$ADDIN(EEAddIn.dll,AddIn_SystemTime)
+;_FILETIME=$ADDIN(EEAddIn.dll,AddIn_FileTime)
+
+std::binder1st<*>= op=<op> value=<value>
+std::binder2nd<*>= op=<op> value=<value>
+std::less<*>=lessthan
+std::greater<*>=greaterthan
+
+[Visualizer]
+; This section contains visualizers for STL and ATL containers
+; DO NOT MODIFY
+
+;------------------------------------------------------------------------------
+;  std::vector<bool,*> specialization
+;------------------------------------------------------------------------------
+
+std::vector<bool,*>{
+	children
+	(
+		#array
+		(
+			expr : ($c._Myvec._Myfirst[$i / _VBITS] >> ($i % _VBITS)), 
+			size : ($c._Mysize)
+		)  : (bool)($e & 1)
+	)
+		
+    preview
+    ( 
+            #( 
+				"[", 
+				$e._Mysize , 
+				"](", 
+				#array
+				(
+					expr : ($c._Myvec._Myfirst[$i / _VBITS] >> ($i % _VBITS)), 
+					size : ($c._Mysize)
+				)  : (bool)($e & 1), ")")
+	)		
+}
+
+std::vector<bool,*>::iterator|std::vector<bool,*>::const_iterator|std::_Vb_iterator<*>|std::_Vb_const_iterator<*>{
+	preview
+	(
+		#( 
+			(bool) (((*$e._Myptr) >> $e._Myoff) & 1)   
+		)
+	)
+	
+	children
+	(
+		#( 
+			ptr: (bool) (((*$e._Myptr) >> $e._Myoff) & 1)   
+		)
+	)
+
+	
+}
+
+
+;------------------------------------------------------------------------------
+;  std::vector
+;------------------------------------------------------------------------------
+std::vector<*>{
+	children
+	(
+	    #array
+	    (
+			expr :	($c.begin_)[$i],  
+			size :	$c.end_-$c.begin_
+		)
+	)
+	
+    preview
+    ( 
+        #( 
+			"[", 
+            $e.end_ - $e.begin_ , 
+            "](", 
+            
+            #array
+            (
+				expr : 	($c.begin_)[$i],  
+				size : 	$c._Mylast-$c.begin_
+			), 
+			")"
+		)
+	)
+	
+
+}
+
+std::vector<*>::iterator|std::vector<*>::const_iterator{
+	preview 
+	(
+		#(*$e)
+	)
+	
+	children
+	(
+		#(ptr: $e.)
+	)
+}
+
+
+
+;------------------------------------------------------------------------------
+;  std::string/basic_string
+;------------------------------------------------------------------------------
+
+std::basic_string<char,*>{
+	preview
+	( 
+		[$e.str.begin_,s]
+	)
+	
+	stringview
+	(
+		[$e.str.begin_,sb]
+	)
+	
+	children
+	(
+		#([actual members]: [$e,!],  #array( expr: $e.str.begin_[$i], size: $e.str.end_-$e.str.begin_))
+	)	
+
+}
+
+std::basic_string<wchar_t,*>{
+	preview
+	( 
+		[$e.str.begin_,su]
+	)
+	
+	stringview
+	(
+		[$e.str.begin_,sub]
+	)
+	
+	children
+	(
+		#([actual members]: [$e,!],  #array( expr: $e.str.begin_[$i], size: $e.str.end_-$e.str.begin_))
+	)	
+}
+
+std::basic_string<*>::iterator|std::basic_string<*>::const_iterator{
+	preview
+	( 
+		#( $e ) 
+	)
+
+	children
+	( 
+		#( ptr: *$e ) 
+	)
+}
+
+std::pair<*>{
+	preview
+	(
+		#( 
+			"(", 
+			$e.first, 
+			",", 
+			$e.second , 
+			")"
+		)
+	)
+}
+
+;------------------------------------------------------------------------------
+;  std::auto_ptr
+;------------------------------------------------------------------------------
+
+std::auto_ptr<*>{
+	preview
+	( 
+		#(	"auto_ptr ",
+			(*(($T1 *)$c.ptr))
+		 )
+	)
+	children
+	( 
+		#( 
+			ptr: (*(($T1 *)$c.ptr)) 
+		)
+	)
+}
+
+;------------------------------------------------------------------------------
+;  std::map
+;------------------------------------------------------------------------------
+
+std::map<*>{
+	children
+	(
+		#tree
+		(
+			head : $c._Myhead->_Parent, 
+		    skip : $c._Myhead, 
+		    size : $c._Mysize, 
+		    left : _Left, 
+		    right : _Right
+		) : $e._Myval
+	)
+		     
+	preview
+	(
+		#(
+			"[", 
+			$e._Mysize, 
+			"](", 
+
+			#tree
+			(
+				head : $c._Myhead->_Parent, 
+				skip : $c._Myhead, 
+				size : $c._Mysize, 
+				left : _Left, 
+				right : _Right
+			) : $e._Myval,
+			
+			")"
+		)
+	)		     
+}
+
+;------------------------------------------------------------------------------
+;  std::multi_map
+;------------------------------------------------------------------------------
+
+std::multimap<*>{
+	children
+	(
+		#tree
+		(
+			head : $c._Myhead->_Parent, 
+		    skip : $c._Myhead, 
+		    size : $c._Mysize, 
+		    left : _Left, 
+		    right : _Right
+		) : $e._Myval
+	)
+		     
+	preview
+	(
+		#(
+			"[", 
+			$e._Mysize, 
+			"](", 
+			
+			#tree
+			(	
+				head : $c._Myhead->_Parent, 
+				skip : $c._Myhead, 
+				size : $c._Mysize, 
+				left : _Left, 
+				right : _Right
+			) : $e._Myval,
+			
+			")"
+		)
+	)		     
+}
+
+
+;------------------------------------------------------------------------------
+;  std::list
+;------------------------------------------------------------------------------
+
+std::list<*>{
+
+	children
+	(
+		#list
+		(
+			head : $c.head, 
+		    size : $c.size_, 
+		    next : $c.head.next
+		) : $e.head
+	)
+		          
+	preview
+	(
+		#(
+			"[", 
+			$e.size_, 
+			"](", 
+		  
+			#list
+			(
+				head : $c.head, 
+				size : $c.size_, 
+				next : $c.head.next
+			) : $e.head,
+		 
+			")"
+		)
+	)			      
+}
+
+std::list<*>::iterator|std::list<*>::const_iterator
+	preview
+	(
+		#($e.p)
+	)
+	
+	children
+	(
+		#(ptr: $e.p)
+	)
+
+}
+
+
+;------------------------------------------------------------------------------
+;  std::bitset  <bitset>
+;------------------------------------------------------------------------------
+
+std::bitset<*>{       
+	preview
+	(
+		#(
+		"[",
+			$c.digits,
+		"](",
+		#array
+		(	
+			expr : 	($c._Array[$i / $c._Bitsperword] >> ($i % $c._Bitsperword)),  
+			size : 	$c.digits
+		) : [($e & 1),d],
+		")"
+		)
+	)
+	children
+	(
+		#array
+		(	
+			expr : 	($c._Array[$i / $c._Bitsperword] >> ($i % $c._Bitsperword)),  
+			size : 	$c.digits
+		) : (bool)($e & 1))
+}
+
+std::bitset<*>::reference{
+    preview
+    (
+		#(
+			"bitset[", $e._Mypos, "] = ", 
+			(bool)(($e._Pbitset->_Array[$i / _Bitsperword] >> ($e._Mypos % _Bitsperword)) & 1) 
+		)
+    )
+}
+
+;------------------------------------------------------------------------------
+;  std::deque
+;------------------------------------------------------------------------------
+
+std::deque<*>{
+	children
+	(
+		#array
+		(
+			expr : $c._Map[ (($i + $c._Myoff) / $c._EEN_DS) % $c._Mapsize][($i + $c._Myoff) % $c._EEN_DS],  
+			size : $c._Mysize
+		)
+	)
+
+	preview
+	(
+		#(
+			"[", 
+			$e._Mysize, 
+			"](", 
+		  
+			#array
+			(
+				expr : $c._Map[ (($i + $c._Myoff) / $c._EEN_DS) % $c._Mapsize][($i + $c._Myoff) % $c._EEN_DS],  
+				size : $c._Mysize
+			),
+		 
+			")"
+		)
+	)		       
+}
+
+std::deque<*,*>::iterator|std::_Deque_iterator<*,*,*>|std::_Deque_const_iterator<*,*,*>{
+   preview
+   (
+	   #if( $e._Myoff >= ((std::deque<$T1,$T2 > *)$c._Mycont)->_Myoff + ((std::deque<$T1,$T2 > *)$c._Mycont)->_Mysize)
+	   (
+	   		#("<end>")
+	   )
+	   #else(
+			#(
+				"deque[", 
+				$e._Myoff - ((std::deque<$T1,$T2 > *)$c._Mycont)->_Myoff, 
+				"] = ",
+				((std::deque<$T1,$T2 > *)$c._Mycont)->_Map[ (($c._Myoff) / ((std::deque<$T1,$T2 > *)$c._Mycont)->_EEN_DS) % ((std::deque<$T1,$T2 > *)$c._Mycont)->_Mapsize][$c._Myoff % ((std::deque<$T1,$T2 > *)$c._Mycont)->_EEN_DS] 
+			)
+		)
+	)
+	children
+	(
+	   #if( ((std::deque<$T1,$T2 > *)$c._Mycont)->_Myoff + ((std::deque<$T1,$T2 > *)$c._Mycont)->_Mysize > $e._Myoff) 
+	   (
+			#(
+				ptr: ((std::deque<$T1,$T2 > *)$c._Mycont)->_Map[ ($c._Myoff / ((std::deque<$T1,$T2 > *)$c._Mycont)->_EEN_DS) % ((std::deque<$T1,$T2 > *)$c._Mycont)->_Mapsize][$c._Myoff % ((std::deque<$T1,$T2 > *)$c._Mycont)->_EEN_DS] 
+			)
+		)
+	)
+}
+
+;------------------------------------------------------------------------------
+;  std::queue
+;------------------------------------------------------------------------------
+
+std::queue<*>{
+	children
+	(
+		#array
+		(
+			expr : $c.c._Map[ (($i + $c.c._Myoff) / $c.c._EEN_DS) % $c.c._Mapsize][($i + $c.c._Myoff) % $c.c._EEN_DS],  
+			size : $c.c._Mysize
+		)
+	)
+		   
+ preview
+	(
+		#(
+			"[", 
+			$e.c._Mysize, 
+			"](", 
+		  
+			#array
+			(
+				expr : $c.c._Map[ (($i + $c.c._Myoff) / $c.c._EEN_DS) % $c.c._Mapsize][($i + $c.c._Myoff) % $c.c._EEN_DS],  
+				size : $c.c._Mysize
+			),
+		 
+			")"
+		)
+	)			   
+}
+
+
+;------------------------------------------------------------------------------
+;  std::priority_queue
+;------------------------------------------------------------------------------
+
+std::priority_queue<*>{
+	preview
+	( 
+		$e.c 
+	)
+}
+
+;------------------------------------------------------------------------------
+;  std::set
+;------------------------------------------------------------------------------
+
+std::set<*>{
+    preview
+    ( 
+		#( 
+			"[", 
+            $e._Mysize , 
+            "](", 
+            
+            #tree
+            (
+				head : $c._Myhead->_Parent, 
+				skip : $c._Myhead, 
+				left : _Left, 
+				right : _Right,
+				size  : $c._Mysize
+			) : $e._Myval, 
+			
+			")"
+		)
+	)
+			   
+	children
+	(
+		#tree
+		(
+			head : $c._Myhead->_Parent, 
+			skip : $c._Myhead, 
+			left : _Left, 
+			right : _Right,
+			size  : $c._Mysize
+		) : $e._Myval
+	)
+}
+
+;------------------------------------------------------------------------------
+;  std::multi_set
+;------------------------------------------------------------------------------
+
+std::multiset<*>{
+    preview
+    (
+		#( 
+			"[", 
+            $e._Mysize , 
+            "](", 
+            
+            #tree
+            (
+				head : $c._Myhead->_Parent, 
+				skip : $c._Myhead, 
+				left : _Left, 
+				right : _Right,
+				size  : $c._Mysize
+			) : $e._Myval, 
+			
+			")"
+		)
+	)
+			   
+	children
+	(
+		#tree
+		(
+			head : $c._Myhead->_Parent, 
+			skip : $c._Myhead, 
+			left : _Left, 
+			right : _Right,
+			size  : $c._Mysize
+		) : $e._Myval
+	)
+}
+
+
+;------------------------------------------------------------------------------
+;  std::_Tree (shared my map/multimap/set/multiset)
+;------------------------------------------------------------------------------
+
+std::_Tree<*>::iterator|std::_Tree<*>::const_iterator{
+	preview
+	(
+		#($e._Ptr->_Myval)
+	)
+	
+	children
+	(
+		#(ptr: $e._Ptr->_Myval)
+	)
+
+	
+}
+
+
+;------------------------------------------------------------------------------
+;  std::stack
+;------------------------------------------------------------------------------
+
+std::stack<*>{
+	children
+	(
+		#array
+		(
+			expr : $c.c.begin_[$i],  
+			size : $c.c.size_
+		)
+	)
+           
+    preview
+    (
+		#( 
+			"[", 
+            $e.c.size_ , 
+            "](", 
+            
+            #array
+            (
+				expr : $c.c.begin_[$i],  
+				size : $c.c.size_
+			), 
+			
+			")"
+		)
+	)           
+}
+
+;------------------------------------------------------------------------------
+;  stdext::hash_map
+;  stdext::hash_multimap
+;  stdext::hash_set
+;  stdext::hash_multiset
+;------------------------------------------------------------------------------
+
+stdext::hash_map<*>|stdext::hash_multimap<*>|stdext::hash_set<*>|stdext::hash_multiset<*>{
+	
+	preview
+	(
+		#(
+			"[", 
+			$e._List._Mysize, 
+			"](", 
+		 
+			#list
+			(
+				head : $c._List._Myhead->_Next, 
+          	    size : $c._List._Mysize,
+				next : _Next
+			) : $e._Myval,
+			
+			")"
+		)
+	)	
+
+	children
+	(
+    
+		#list
+		(
+			head : $c._List._Myhead->_Next, 
+			size : $c._List._Mysize, 
+			next : _Next
+		) : $e._Myval
+	)
+}
+
+;------------------------------------------------------------------------------
+;  std::complex
+;------------------------------------------------------------------------------
+
+std::complex<*>{
+	children
+	(
+		#(
+			real: $e._Val[0],
+			imaginary: $e._Val[1]
+		)
+	)
+	preview
+	(
+		#if($e._Val[1] != 0)
+		(										
+			#if ($e._Val[0] != 0)				
+			(									; Real and Imaginary components 
+				#if ($e._Val[1] >= 0)
+				(
+					#($e._Val[0],"+i*", $e._Val[1])
+				)
+				#else
+				(
+					#($e._Val[0],"-i*", -$e._Val[1])							  
+				)
+			)
+			#else
+			(									; Purely imaginary
+				#if ($e._Val[1] >= 0.0)
+				(
+					#("i*", $e._Val[1])
+				)
+				#else
+				(
+					#("-i*", -$e._Val[1])						
+				)
+			)
+		)
+		#else
+		(										; Purely real
+			$e._Val[0]		
+		)
+	)
+}
+
+;------------------------------------------------------------------------------
+;  std::valarray
+;------------------------------------------------------------------------------
+
+std::valarray<*>{
+    preview
+    ( 
+		#( 
+			"[", 
+            $e._Mysize , 
+            "](", 
+            
+            #array
+            (
+				expr : 	($c._Myptr)[$i],  
+				size : 	$c._Mysize
+			), 
+			
+			")"
+		)
+	)
+	
+	children
+	(
+		#array
+		(
+			expr :	($c._Myptr)[$i],  
+			size :	$c._Mysize
+		)
+	)
+}
+
+
+
+; This section lets you define your own errors for the HRESULT display.
+; You need to list the error code in unsigned decimal, followed by the message.
+; Changes will take effect the next time you redisplay the variable.
+[hresult]
+;1234=my custom error code
