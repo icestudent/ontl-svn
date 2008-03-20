@@ -535,35 +535,43 @@ class image
     {
       if ( !module_name ) return 0;
       for ( import_descriptor * import_entry = get_first_import_entry();
-            import_entry && !import_entry->is_terminating();
-            ++import_entry )
+        import_entry && !import_entry->is_terminating();
+        ++import_entry )
       {
         if ( !import_entry->Name ) continue;
         // compare names case-insensitive (simpified)
         const char * const name = va<const char*>(import_entry->Name);
         for ( unsigned i = 0; module_name[i]; ++i )
-          if ( (module_name[i] ^ name[i]) & 0x5F) continue;
+          if ( (module_name[i] ^ name[i]) & 0x5F) goto next_entry;
         return import_entry;
+next_entry:;
       }
       return 0;
     }
-  
+
+    ///\todo have we to change its name to something like find_iat_entry?
     uintptr_t &
       find_bound_import(
-        const char *  const import_name,
-        const char *  const module = 0) const
+      const char *  const import_name,
+      const char *  const module = 0) const
     {
-      import_descriptor * import_entry;
-      uintptr_t * iat = 0;
-      if ( module && (import_entry = find_import_entry(module)) )
-        iat = import_entry->find(this, import_name);
-      else
-        for ( import_entry = get_first_import_entry();
-              import_entry && !import_entry->is_terminating();
-              ++import_entry )
-          if ( (iat = import_entry->find(this, import_name)) )
-            break;
-      return iat ? *iat : null_import();
+      for ( import_descriptor * import_entry = get_first_import_entry();
+        import_entry && !import_entry->is_terminating();
+        ++import_entry )
+      {
+        if ( module )
+        { 
+          if ( !import_entry->Name ) goto next_entry;
+          // compare names case-insensitive (simpified)
+          const char * const name = va<const char*>(import_entry->Name);
+          for ( unsigned i = 0; module[i]; ++i )
+            if ( (module[i] ^ name[i]) & 0x5F) goto next_entry;
+        }
+        if ( uintptr_t * iat = import_entry->find(this, import_name) )
+          return *iat;
+next_entry:;
+      }
+      return null_import();
     }
     
 
