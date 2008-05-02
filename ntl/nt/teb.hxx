@@ -99,7 +99,7 @@ struct teb : public tib
   /*<thisrel this+0x6c0>*/ /*|0x4|*/ unsigned long GdiClientPID;
   /*<thisrel this+0x6c4>*/ /*|0x4|*/ unsigned long GdiClientTID;
   /*<thisrel this+0x6c8>*/ /*|0x4|*/ void* GdiThreadLocalInfo;
-  /*<thisrel this+0x6cc>*/ /*|0xf8|*/ unsigned long Win32ClientInfo[62];
+  /*<thisrel this+0x6cc>*/ /*|0xf8|*/ unsigned long Win32ClientInfo[62];// uintptr_t
   /*<thisrel this+0x7c4>*/ /*|0x3a4|*/ void* glDispatchTable[233];
   /*<thisrel this+0xb68>*/ /*|0x74|*/ unsigned long glReserved1[29];
   /*<thisrel this+0xbdc>*/ /*|0x4|*/ void* glReserved2;

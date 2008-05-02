@@ -1,6 +1,8 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  Memory [20.4 lib.memory]
+ *  N2588 20.6 Memory [memory]
+ *
+ *  ///\note C++0x move semantics not supported yet
  *
  ****************************************************************************
  */
@@ -9,19 +11,76 @@
 #define NTL__STLX_MEMORY
 
 #include "cstddef.hxx"
+#include "exception.hxx"
 #include "iterator.hxx"
 #include "type_traits.hxx"
 #include "utility.hxx"
 #include "new.hxx"
+#include <stdlib.hxx>
 
 namespace std {
 
-/**\addtogroup  lib_utilities ********** General utilities library [20] *****
+/**\addtogroup  lib_utilities ********** [20] General utilities library *****
  *@{*/
-/**\defgroup  lib_memory *************** Memory [20.4] **********************
+/**\defgroup  lib_memory *************** [20.6] Memory **********************
  *@{*/
 
-/// [20.4.1 lib.default.allocator]
+/// 20.6.1 Allocator argument tag [allocator.tag]
+struct allocator_arg_t {/**/};
+const allocator_arg_t allocator_arg;// = allocator_arg_t();
+
+///\name 20.6.2 Allocator-related traits [allocator.traits]
+template<class T, class Alloc> struct uses_allocator
+: public integral_constant<
+    bool, is_convertible<Alloc, typename T::allocator_type>::value
+    > {};
+template<class Alloc> struct is_scoped_allocator : false_type {};
+template<class T> struct constructible_with_allocator_suffix : false_type {};
+template<class T> struct constructible_with_allocator_prefix : false_type {};
+///}
+
+///\name 20.6.3 Allocator propagation traits [allocator.propagation]
+template<class Alloc> struct allocator_propagate_never
+: false_type {};
+template<class Alloc> struct allocator_propagate_on_copy_construction 
+: false_type {};
+template<class Alloc> struct allocator_propagate_on_move_assignment
+: false_type {};
+template<class Alloc> struct allocator_propagate_on_copy_assignment
+: false_type {};
+///}
+
+/// 20.6.3 20.6.4 Allocator propogation map [allocator.propagation.map]
+template<class Alloc> struct allocator_propagation_map
+{
+  static Alloc select_for_copy_construction(const Alloc& x)
+  {
+    return allocator_propagate_never<Alloc>::value ? Alloc() : x;
+  }
+#ifdef NTL__CXX
+  static void move_assign(Alloc& to, Alloc&& from)
+  {
+    if ( allocator_propagate_on_move_assignment<Alloc>::value
+      || allocator_propagate_on_copy_assignment<Alloc>::value )
+      to = forward(from);
+  }
+#endif
+  static void copy_assign(Alloc& to, Alloc& from)
+  {
+    if ( allocator_propagate_on_copy_assignment<Alloc>::value )
+      to = from;
+  }
+  static void swap(Alloc& a, Alloc& b)
+  {
+//    anywhy UB
+//    if ( allocator_propagate_on_move_assignment<Alloc>::value 
+//      || allocator_propagate_on_copy_assignment<Alloc>::value )
+    if ( !(a == b ) )
+      swap(a, b);
+  }
+};
+
+/// 20.6.5 The default allocator [default.allocator]
 template<class T> class allocator;
 
 /// specialize for void
@@ -35,7 +94,6 @@ class allocator<void>
     template<class U> struct rebind { typedef allocator<U> other; };
 };
 
-/// The default allocator [20.4.1 lib.default.allocator]
 template<class T>
 class allocator
 {
@@ -56,7 +114,7 @@ class allocator
     template<class U> allocator(const allocator<U> &) throw() {}
     ~allocator() throw() {}
 
-    ///\name  allocator members [20.4.1.1 lib.allocator.members]
+    ///\name  20.6.5.1 allocator members [allocator.members]
 
 #ifndef NTL_STLEXT
     pointer address(typename add_reference<typename remove_const<typename remove_reference<reference>::type>::type>::type x) const
@@ -97,20 +155,26 @@ class allocator
     void construct(pointer p, const T & val)
     { 
       __assume(p);
-      new((void *)p) T(val);
+      ///\todo ::new((void *)p ) T(std::forward<U>(val))
+      ::new((void *)p) T(val);
     }
 
     __forceinline
     void destroy(const pointer p)
     {
-      p->T::/*< workaround MSVC's weird `scalar deleting destructor'*/ ~T();  
+      p->T::/*< workaround MSVC's weird `scalar deleting destructor'*/ ~T(); 
     }
 
-    ///@}
+    ///\}
 
 };//class allocator
 
-///\name  allocator comparisons
+
+template<class T> struct allocator_propagate_never<allocator<T> >
+: true_type {};
+
+
+///\name  20.6.5.2 allocator globals [allocator.globals]
 
 template<class T, class U> 
 inline
@@ -128,7 +192,13 @@ bool
   return false;
 }
 
-/// Raw storage iterator [20.4.2 lib.storage.iterator]
+///\}
+
+///\ 20.6.6 Scoped allocator adaptor [allocator.adaptor]
+template<typename OuterA, typename InnerA = void>
+class scoped_allocator_adaptor;
+
+/// 20.6.7 Raw storage iterator [storage.iterator]
 template<class OutputIterator, class T>
 class raw_storage_iterator 
 : public iterator<output_iterator_tag, void, void, void, void>
@@ -138,16 +208,20 @@ class raw_storage_iterator
   public:
     explicit raw_storage_iterator(OutputIterator x) : i(x) {}
     this_type& operator* ()     { return *this; }
-    this_type& operator= (const T& element)
-      { allocator().construct(&*i, element); }
     this_type& operator++()     { ++i; return *this; }
     this_type  operator++(int)  { this_type old( i ); ++i; return old; }
+    this_type& operator= (const T& element)
+    {
+      allocator<T>().construct(&*i, element);
+      return *this;
+    }
 
   private:
     OutputIterator  i;
 };
 
-///\name  Temporary buffers [20.4.3 lib.temporary.buffer]
+
+///\name  20.6.8 Temporary buffers [temporary.buffer]
 
 template <class T>
 __forceinline
@@ -163,16 +237,22 @@ __forceinline
 void
   return_temporary_buffer(T* p)
 { 
-  // 20.4.1.1/8  n shall equal the value passed as the first argument
+  // 20.6.1.1/7  n shall equal the value passed as the first argument
   //             to the invocation of allocate which returned p.
   // but allocator::deallocate() does not use n
   allocator<T>::size_type const n = 0;
   allocator<T>().deallocate(p, n); 
 }
 
-///@}
+/// 20.6.9 construct_element [construct.element]
+#ifdef NTL__CXX
+template <class Alloc, class T, class... Args>
+void construct_element(Alloc& alloc, T& r, Args&&... args);
+#endif
 
-/// uninitialized_copy [20.4.4.1 lib.uninitialized.copy]
+///\name  20.6.10 Specialized algorithms [specialized.algorithms]
+
+/// 20.6.10.1 uninitialized_copy [uninitialized.copy]
 template <class InputIterator, class ForwardIterator>
 __forceinline
 ForwardIterator
@@ -191,7 +271,7 @@ ForwardIterator
   return result;
 }
 
-/// uninitialized_fill [20.4.4.2 lib.uninitialized.fill]
+/// 20.6.10.2 uninitialized_fill [uninitialized.fill]
 template <class ForwardIterator, class T>
 __forceinline
 void
@@ -207,7 +287,7 @@ void
   ///@todo separate function for scalar types ?
 }
 
-/// uninitialized_fill_n [20.4.4.3 lib.uninitialized.fill.n]
+/// 20.6.10.3 uninitialized_fill_n [uninitialized.fill.n]
 template <class ForwardIterator, class Size, class T>
 __forceinline
 void
@@ -223,10 +303,537 @@ void
   ///@todo separate function for scalar types ?
 }
 
+///@}
+
+/// 20.6.11 Class template unique_ptr [unique.ptr]
+
+///\name 20.6.11.1 Default deleters [unique.ptr.dltr]
+
+/// 20.6.11.1.1 default_delete [unique.ptr.dltr.dflt]
+template <class T> struct default_delete
+{
+    default_delete() {}
+    template <class U> default_delete(const default_delete<U>&) {}
+    void operator()(T* ptr) const { ::delete ptr; }
+  private:
+    // forbid incompatible ::delete[]
+    template <class U> default_delete(const default_delete<U[]>&);   
+    template <class U, size_t S> default_delete(const default_delete<U[S]>&);    
+};
+
+/// 20.6.11.1.2 default_delete<T[]> [unique.ptr.dltr.dflt1]
+template <class T> struct default_delete<T[]>
+{
+  void operator()(T* ptr) const { ::delete[] ptr; }
+};
+
+/// 20.6.11.1.3 default_delete<T[N]> [unique.ptr.dltr.dflt2]
+template <class T, size_t N> struct default_delete<T[N]>
+{
+  void operator()(T* ptr, size_t) const { ::delete[] ptr; }
+};
+
+///\}
+
+template <class T, class D = default_delete<T> >
+class unique_ptr;
+
+/// 20.6.11.2 unique_ptr for single objects [unique.ptr.single]
+///\warning not Standard as no && support yet
+template <class T>
+class unique_ptr<T, default_delete<T> >
+{
+    typedef typename const unique_ptr::T** unspecified_pointer_type;
+    typedef typename const unique_ptr::T*  unspecified_bool_type;
+
+  ///////////////////////////////////////////////////////////////////////////
+  public:
+
+    typedef T element_type;
+    typedef default_delete<T> deleter_type;
+
+    ///\name 20.6.11.2.1 unique_ptr constructors [unique.ptr.single.ctor]
+    unique_ptr() throw() : ptr(0) {}
+    explicit unique_ptr(T* p) throw() : ptr(p) {}
+    unique_ptr(T* p, const deleter_type &) throw() : ptr(p) {}
+    unique_ptr(const unique_ptr& u) throw() : ptr(u.release()) {}
+      
+    template <class U/*, class E*/>
+    unique_ptr(const unique_ptr<U, deleter_type>& u) throw() : ptr(u.release()) {}
+
+    ///\name 20.6.11.2.2 unique_ptr destructor [unique.ptr.single.dtor]
+    ~unique_ptr() throw() { if ( get() ) get_deleter()(get()); }
+
+    ///\name 20.6.11.2.3 unique_ptr assignment [unique.ptr.single.asgn]
+    __forceinline
+    const unique_ptr& operator=(const unique_ptr& u) const throw()
+    {
+      reset(u.release());
+      return *this;
+    }
+
+    template <class U/*, class E*/>
+    __forceinline
+    const unique_ptr& operator=(const unique_ptr<U, deleter_type>& u) const throw()
+    {
+      reset(u.release());
+      return *this;
+    }
+
+    const unique_ptr& operator=(unspecified_pointer_type *) const
+    { 
+      reset();
+      return *this;
+    }
+
+    ///\name 20.6.11.2.4 unique_ptr observers [unique.ptr.single.observers]
+    T& operator*() const throw() { return *get(); }
+    T* operator->() const throw() { return get(); }
+    T* get() const throw() { return ptr; }
+
+    // local statics produce code bloat, shoud we replace the UD with a global static?
+    deleter_type& get_deleter() throw() { return *(deleter_type*)0; }
+    const deleter_type& get_deleter() const throw() { return *(deleter_type*)0; }
+
+    operator unspecified_bool_type() const throw() { return ptr; }
+
+    ///\name 20.6.11.2.5 unique_ptr modifiers [unique.ptr.single.modifiers]
+    T* release() const { T * const tmp = get(); set(0); return tmp; }
+    
+    __forceinline
+    void reset(T* p = 0) const throw()
+    {
+      if ( get() && get() != p ) get_deleter()(get());
+      set(p);
+    }
+
+    void swap(const unique_ptr& u) const throw() { swap(ptr, u.ptr); }
+    
+    ///\}
+
+  ///////////////////////////////////////////////////////////////////////////
+  private:
+
+    mutable element_type *  ptr;
+    void set(T * p) const { ptr = p; }
+
+};//template class unique_ptr
+
+/// 20.6.11.3 unique_ptr for array objects with a runtime length [unique.ptr.runtime]
+template <class T>
+class unique_ptr<T[], default_delete<T[]> >
+{
+    typedef typename const unique_ptr::T** unspecified_pointer_type;
+    typedef typename const unique_ptr::T*  unspecified_bool_type;
+
+  ///////////////////////////////////////////////////////////////////////////
+  public:
+
+    typedef T element_type;
+    typedef default_delete<T[]> deleter_type;
+
+    ///\name 20.6.11.3.1 unique_ptr constructors [unique.ptr.runtime.ctor]
+    unique_ptr() throw() : ptr(0) {}
+    explicit unique_ptr(T* p) throw() : ptr(p) {}
+    unique_ptr(T* p, const deleter_type &) throw() : ptr(p) {}
+    unique_ptr(const unique_ptr& u) throw() : ptr(u.release()) {}
+
+    ///\name 20.6.11.2.2 unique_ptr destructor [unique.ptr.single.dtor]
+    ~unique_ptr() throw() { if ( get() ) get_deleter()(get()); }
+
+    ///\name 20.6.11.2.3 unique_ptr assignment [unique.ptr.single.asgn]
+    __forceinline
+    const unique_ptr& operator=(const unique_ptr& u) const throw()
+    {
+      reset(u.release());
+      return *this;
+    }
+
+    const unique_ptr& operator=(unspecified_pointer_type *) const
+    { 
+      reset();
+      return *this;
+    }
+
+    ///\name 20.6.11.3.2 unique_ptr observers [unique.ptr.runtime.observers]
+    T& operator[](size_t i) const throw() { return get()[i]; }
+    T* get() const throw() { return ptr; }
+
+    deleter_type& get_deleter() throw()
+    { 
+      static deleter_type deleter;
+      return deleter;
+    }
+
+    const deleter_type& get_deleter() const throw()
+    { 
+      static const deleter_type deleter;
+      return deleter;
+    }
+
+    operator unspecified_bool_type() const throw() { return ptr; }
+
+    ///\name 20.6.11.2.5 unique_ptr modifiers [unique.ptr.single.modifiers]
+    T* release() const { T * const tmp = get(); set(0); return tmp; }
+    
+    __forceinline
+    void reset(T* p = 0) const throw()
+    { 
+      if ( get() && get() != p ) get_deleter()(get());
+      set(p);
+    }
+
+    void swap(const unique_ptr& u) const throw() { swap(ptr, u.ptr); }
+    
+    ///\}
+
+  ///////////////////////////////////////////////////////////////////////////
+  private:
+
+    mutable element_type *  ptr;
+    void set(T * p) const { ptr = p; }
+
+    template<class Other> unique_ptr(Other*);
+    template<class Other> void reset(Other*) const;
+
+};//template class unique_ptr
+
+/// 20.6.11.4 unique_ptr for array objects with a compile time length [unique.ptr.compiletime]
+template <class T, size_t N>
+class unique_ptr<T[N], default_delete<T[N]> >
+{
+    typedef typename const unique_ptr::T** unspecified_pointer_type;
+    typedef typename const unique_ptr::T*  unspecified_bool_type;
+
+  ///////////////////////////////////////////////////////////////////////////
+  public:
+
+    typedef T element_type;
+    typedef default_delete<T[N]> deleter_type;
+
+    static const size_t size = N;
+
+    ///\name 20.6.11.3.1 unique_ptr constructors [unique.ptr.runtime.ctor]
+    unique_ptr() throw() : ptr(0) {}
+    explicit unique_ptr(T* p) throw() : ptr(p) {}
+    unique_ptr(T* p, const deleter_type &) throw() : ptr(p) {}
+    unique_ptr(const unique_ptr& u) throw() : ptr(u.release()) {}
+
+    ///\name 20.6.11.4.1 unique_ptr destructor [unique.ptr.compiletime.dtor]
+    ~unique_ptr() throw() { if ( get() ) get_deleter()(get(), N); }
+
+    ///\name 20.6.11.2.3 unique_ptr assignment [unique.ptr.single.asgn]
+    __forceinline
+    const unique_ptr& operator=(const unique_ptr& u) const throw()
+    {
+      reset(u.release());
+      return *this;
+    }
+
+    const unique_ptr& operator=(unspecified_pointer_type *) const
+    { 
+      reset();
+      return *this;
+    }
+
+    ///\name 20.6.11.4.1 unique_ptr destructor [unique.ptr.compiletime.dtor]
+    T& operator[](size_t i) const throw() { return get()[i]; }
+    T* get() const throw() { return ptr; }
+
+    deleter_type& get_deleter() throw()
+    { 
+      static deleter_type deleter;
+      return deleter;
+    }
+
+    const deleter_type& get_deleter() const throw()
+    { 
+      static const deleter_type deleter;
+      return deleter;
+    }
+
+    operator unspecified_bool_type() const throw() { return ptr; }
+
+    ///\name 20.6.11.2.5 unique_ptr modifiers [unique.ptr.single.modifiers]
+    T* release() const { T * const tmp = get(); set(0); return tmp; }
+    
+    __forceinline
+    void reset(T* p = 0) const throw()
+    { 
+      if ( get() && get() != p ) get_deleter()(get());
+      set(p);
+    }
+
+    void swap(const unique_ptr& u) const throw() { swap(ptr, u.ptr); }
+    
+    ///\}
+
+  ///////////////////////////////////////////////////////////////////////////
+  private:
+
+    mutable element_type *  ptr;
+    void set(T * p) const { ptr = p; }
+
+    template<class Other> unique_ptr(Other*);
+    template<class Other> void reset(Other*) const;
+
+};//template class unique_ptr
+
+///\name 20.6.11.5 unique_ptr specialized algorithms [unique.ptr.special]
+template <class T, class D> void swap(unique_ptr<T, D>& x, unique_ptr<T, D>& y)
+{
+  x.swap(y);
+}
+#ifdef NTL__CXX
+template <class T, class D> void swap(unique_ptr<T, D>&& x, unique_ptr<T, D>& y)
+{
+  x.swap(y);
+}
+template <class T, class D> void swap(unique_ptr<T, D>& x, unique_ptr<T, D>&& y)
+{
+  x.swap(y);
+}
+#endif
+
+template <class T1, class D1, class T2, class D2>
+bool operator==(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y)
+{
+  return x.get() == y.get();
+}
+
+template <class T1, class D1, class T2, class D2>
+bool operator!=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y)
+{
+  return x.get() != y.get();
+}
+
+template <class T1, class D1, class T2, class D2>
+bool operator<(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y)
+{
+  return x.get() < y.get();
+}
+
+template <class T1, class D1, class T2, class D2>
+bool operator<=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y)
+{
+  return x.get() <= y.get();
+}
+
+template <class T1, class D1, class T2, class D2>
+bool operator>(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y)
+{
+  return x.get() > y.get();
+}
+
+template <class T1, class D1, class T2, class D2>
+bool operator>=(const unique_ptr<T1, D1>& x, const unique_ptr<T2, D2>& y)
+{
+  return x.get() >= y.get();
+}
+
+///\}
+
+///\name  20.6.12 Smart pointers [util.smartptr]
+
+template<class X> class auto_ptr;
+
+/// 20.6.12.1 Class bad_weak_ptr [util.smartptr.weakptr]
+class bad_weak_ptr : public std::exception
+{
+  public:
+    virtual const char* what() const throw() { return "bad_weak_ptr"; }
+};
+
+template<class T> class weak_ptr;
+
+/// 20.6.12.2 Class template shared_ptr [util.smartptr.shared]
+template<class T>
+class shared_ptr
+{
+  ///////////////////////////////////////////////////////////////////////////
+  public:
+
+    typedef T element_type;
+
+    ///\name  20.6.12.2.1 shared_ptr constructors [util.smartptr.shared.const]
+
+    shared_ptr() throw();
+    template<class Y> explicit shared_ptr(Y* p);
+    template<class Y, class D> shared_ptr(Y* p, D d);
+    template<class Y, class D, class A> shared_ptr(Y* p, D d, A a);
+    template<class Y> shared_ptr(const shared_ptr<Y>& r, T *p);
+    shared_ptr(const shared_ptr& r);
+    template<class Y> shared_ptr(const shared_ptr<Y>& r);
+//    shared_ptr(shared_ptr&& r);
+//    template<class Y> shared_ptr(shared_ptr<Y>&& r);
+    template<class Y> explicit shared_ptr(const weak_ptr<Y>& r);
+//    template<class Y> explicit shared_ptr(auto_ptr<Y>&& r);
+    template <class Y, class D> explicit shared_ptr(const unique_ptr<Y, D>& r) = delete;
+//    template <class Y, class D> explicit shared_ptr(unique_ptr<Y, D>&& r);
+
+    ///\name  20.6.6.2.2 shared_ptr destructor [util.smartptr.shared.dest]
+    ~shared_ptr();
+
+    ///\name  20.6.6.2.3 shared_ptr assignment [util.smartptr.shared.assign]
+    shared_ptr& operator=(shared_ptr const& r);
+    template<class Y> shared_ptr& operator=(shared_ptr<Y> const& r);
+    template<class Y> shared_ptr& operator=(auto_ptr<Y>& r);
+
+    ///\name  20.6.6.2.4 shared_ptr modifiers [util.smartptr.shared.mod]
+
+    void swap(shared_ptr& r);
+    void reset();
+    template<class Y> void reset(Y* p);
+    template<class Y, class D> void reset(Y* p, D d);
+
+    ///\name  20.6.6.2.5 shared_ptr observers [util.smartptr.shared.obs]
+
+    T & operator* ()  const throw() { return *get(); }
+    T * operator->()  const throw() { return get(); }
+    T * get()         const;//throw()
+
+    long use_count() const;//throw()
+    bool unique() const;//throw()
+    operator bool () const;//throw()
+
+    ///@}
+
+  ///////////////////////////////////////////////////////////////////////////
+  private:
+  
+    T * ptr;
+    void set(T * p) { ptr = p; }
+};
+
+///\name  20.6.6.2.6 shared_ptr comparison [util.smartptr.shared.cmp]
+
+template<class T, class U>
+bool
+  operator==(shared_ptr<T> const& a, shared_ptr<U> const& b);
+
+template<class T, class U>
+bool
+  operator!=(shared_ptr<T> const& a, shared_ptr<U> const& b);
+
+template<class T, class U>
+bool
+  operator<(shared_ptr<T> const& a, shared_ptr<U> const& b);
+
+///\name  20.6.6.2.7 shared_ptr I/O [util.smartptr.shared.io]
+template<class E, class T, class Y>
+basic_ostream<E, T>& 
+  operator<< (basic_ostream<E, T>& os, shared_ptr<Y> const& p)
+{
+  os << p.get();
+}
+
+///\name  20.6.6.2.8 shared_ptr specialized algorithms [util.smartptr.shared.spec]
+template<class T> 
+void
+  swap(shared_ptr<T>& a, shared_ptr<T>& b) throw()
+{
+  a.swap(b);
+}
+
+///\name  20.6.6.2.9 shared_ptr casts [util.smartptr.shared.cast]
+
+template<class T, class U>
+shared_ptr<T>
+  static_pointer_cast(shared_ptr<U> const& r);
+
+template<class T, class U>
+shared_ptr<T>
+  dynamic_pointer_cast(shared_ptr<U> const& r);
+
+template<class T, class U>
+shared_ptr<T> 
+  const_pointer_cast(shared_ptr<U> const& r);
+
+///@}
+
+/// 20.6.6.2.10 get_deleter [util.smartptr.getdeleter]
+template<class D, class T> D* get_deleter(shared_ptr<T> const& p);
+
+
+/// 20.6.6.3 Class template weak_ptr [util.smartptr.weak]
+template<class T>
+class weak_ptr
+{
+  ///////////////////////////////////////////////////////////////////////////
+  public:
+
+    typedef T element_type;
+
+    ///\name  20.6.6.3.1 weak_ptr constructors [util.smartptr.weak.const]
+
+    weak_ptr();
+    template<class Y> weak_ptr(shared_ptr<Y> const& r);
+    weak_ptr(weak_ptr const& r);
+    template<class Y> weak_ptr(weak_ptr<Y> const& r);
+
+    ///\name  20.6.6.3.2 weak_ptr destructor [util.smartptr.weak.dest]
+    ~weak_ptr();
+
+    ///\name  20.6.6.3.3 weak_ptr assignment [util.smartptr.weak.assign]
+
+    weak_ptr& operator=(weak_ptr const& r);
+    template<class Y> weak_ptr& operator=(weak_ptr<Y> const& r);
+    template<class Y> weak_ptr& operator=(shared_ptr<Y> const& r);
+
+    ///\name  20.6.6.3.4 weak_ptr modifiers [util.smartptr.weak.mod]
+    
+    void swap(weak_ptr& r);
+    void reset();
+
+    ///\name  20.6.6.3.5 weak_ptr observers [util.smartptr.weak.obs]
+    
+    long use_count() const;
+    bool expired() const;
+    shared_ptr<T> lock() const;
+
+    ///@}
+
+  ///////////////////////////////////////////////////////////////////////////
+  private:
+
+};
+
+///\name  20.6.6.3.6 weak_ptr comparison [util.smartptr.weak.cmp]
+template<class T, class U>
+bool
+  operator<(weak_ptr<T> const& a, weak_ptr<U> const& b);
+
+///\name  20.6.6.3.7 weak_ptr specialized algorithms [util.smartptr.weak.spec]
+template<class T>
+void
+  swap(weak_ptr<T>& a, weak_ptr<T>& b)
+{
+  a.swap(b);
+}
+
+///@}
+
+/// 20.6.6.4 Class template enable_shared_from_this [util.smartptr.enab]
+template<class T> class enable_shared_from_this;
+
+/// 20.6.13 Align [ptr.align]
+void * align(size_t alignment, size_t size, void* &ptr, size_t& space)
+{
+  uintptr_t & uptr = reinterpret_cast<uintptr_t&>(ptr);
+  uintptr_t const aligned_ptr = ntl::align_up(uptr, alignment);
+  if ( aligned_ptr + size <= uptr + space )
+  {
+    space -= aligned_ptr - uptr;
+    return reinterpret_cast<void*>(uptr = aligned_ptr);
+  }
+  return 0;
+}
+
+///\name  D.9 auto_ptr [depr.auto.ptr]
 
 template<class Y> struct auto_ptr_ref;
 
-/// Class template auto_ptr [20.4.5 lib.auto.ptr]
+/// D.9.1 Class template auto_ptr [auto.ptr]
 template<class X>
 class auto_ptr
 {
@@ -235,7 +842,7 @@ class auto_ptr
 
     typedef X element_type;
 
-    ///\name  construct/copy/destroy [20.4.5.1]
+    ///\name  D.9.1.1 auto_ptr constructors [auto.ptr.cons]
 
     explicit auto_ptr(X * p = 0)  throw() : ptr(p) {}
 
@@ -261,7 +868,7 @@ class auto_ptr
     __forceinline
     ~auto_ptr() throw() { if ( get() ) delete get(); }
 
-    ///\name  members [20.4.5.2]
+    ///\name  D.9.1.2 auto_ptr members [auto.ptr.members]
 
     X & operator* ()  const throw() { return *get(); }
     X * operator->()  const throw() { return get(); }
@@ -275,7 +882,7 @@ class auto_ptr
       set(p);
     }
 
-    ///\name  conversions [20.4.5.3]
+    ///\name  D.9.1.3 auto_ptr conversions [auto.ptr.conv]
 
     auto_ptr(auto_ptr_ref<X> r) throw() : ptr(r.ptr.release()) {}
 
@@ -306,175 +913,7 @@ struct auto_ptr_ref
     auto_ptr_ref<Y> & operator=(const auto_ptr_ref<Y> &);
 };
 
-// Additions to header <memory> synopsis [2.2.1 tr.util.smartptr.synopsis]
 
-/// Class bad_weak_ptr [2.2.2]
-class bad_weak_ptr;
-
-/// Class template shared_ptr [2.2.3]
-template<class T> class shared_ptr;
-
-/// Class template weak_ptr [2.2.4]
-template<class T> class weak_ptr;
-
-
-/// Class template shared_ptr [2.2.3 tr.util.smartptr.shared]
-template<class T>
-class shared_ptr
-{
-  ///////////////////////////////////////////////////////////////////////////
-  public:
-
-    typedef T element_type;
-
-    ///\name  constructors [2.2.3.1]
-
-    shared_ptr();
-    template<class Y> explicit shared_ptr(Y* p);
-    template<class Y, class D> shared_ptr(Y* p, D d);
-    shared_ptr(shared_ptr const& r);
-    template<class Y> shared_ptr(shared_ptr<Y> const& r);
-    template<class Y> explicit shared_ptr(weak_ptr<Y> const& r);
-    template<class Y> explicit shared_ptr(auto_ptr<Y>& r);
-
-    ///\name  destructor [2.2.3.2]
-    ~shared_ptr();
-
-    ///\name  assignment [2.2.3.3]
-    shared_ptr& operator=(shared_ptr const& r);
-    template<class Y> shared_ptr& operator=(shared_ptr<Y> const& r);
-    template<class Y> shared_ptr& operator=(auto_ptr<Y>& r);
-
-    ///\name  modifiers [2.2.3.4]
-
-    void swap(shared_ptr& r);
-    void reset();
-    template<class Y> void reset(Y* p);
-    template<class Y, class D> void reset(Y* p, D d);
-
-    ///\name  observers [2.2.3.5]
-
-    T & operator* ()  const throw() { return *get(); }
-    T * operator->()  const throw() { return get(); }
-    T * get()         const;//throw()
-
-    long use_count() const;//throw()
-    bool unique() const;//throw()
-    operator bool () const;//throw()
-
-    ///@}
-
-  ///////////////////////////////////////////////////////////////////////////
-  private:
-  
-    T * ptr;
-    void set(T * p) { ptr = p; }
-};
-
-///\name  shared_ptr comparisons [2.2.3.6]
-
-template<class T, class U>
-bool
-  operator==(shared_ptr<T> const& a, shared_ptr<U> const& b);
-
-template<class T, class U>
-bool
-  operator!=(shared_ptr<T> const& a, shared_ptr<U> const& b);
-
-template<class T, class U>
-bool
-  operator<(shared_ptr<T> const& a, shared_ptr<U> const& b);
-
-///\name  shared_ptr I/O [2.2.3.7]
-template<class E, class T, class Y>
-basic_ostream<E, T>& 
-  operator<< (basic_ostream<E, T>& os, shared_ptr<Y> const& p)
-{
-  os << p.get();
-}
-
-///\name  shared_ptr specialized algorithms [2.2.3.8]
-template<class T> 
-void
-  swap(shared_ptr<T>& a, shared_ptr<T>& b)
-{
-  a.swap(b);
-}
-
-///\name  shared_ptr casts [2.2.3.9]
-
-template<class T, class U>
-shared_ptr<T>
-  static_pointer_cast(shared_ptr<U> const& r);
-
-template<class T, class U>
-shared_ptr<T>
-  dynamic_pointer_cast(shared_ptr<U> const& r);
-
-template<class T, class U>
-shared_ptr<T> 
-  const_pointer_cast(shared_ptr<U> const& r);
-
-///@}
-
-/// shared_ptr get_deleter [2.2.3.10]
-template<class D, class T> D* get_deleter(shared_ptr<T> const& p);
-
-/// Class template weak_ptr [2.2.4 tr.util.smartptr.weak]
-template<class T>
-class weak_ptr
-{
-  ///////////////////////////////////////////////////////////////////////////
-  public:
-
-    typedef T element_type;
-
-    ///\name  constructors/destructor
-
-    weak_ptr();
-    template<class Y> weak_ptr(shared_ptr<Y> const& r);
-    weak_ptr(weak_ptr const& r);
-    template<class Y> weak_ptr(weak_ptr<Y> const& r);
-    ~weak_ptr();
-
-    ///\name  assignment
-
-    weak_ptr& operator=(weak_ptr const& r);
-    template<class Y> weak_ptr& operator=(weak_ptr<Y> const& r);
-    template<class Y> weak_ptr& operator=(shared_ptr<Y> const& r);
-
-    ///\name  modifiers
-    
-    void swap(weak_ptr& r);
-    void reset();
-
-    ///\name  observers
-    
-    long use_count() const;
-    bool expired() const;
-    shared_ptr<T> lock() const;
-
-    ///@}
-
-  ///////////////////////////////////////////////////////////////////////////
-  private:
-
-};
-
-///\name  weak_ptr comparison
-template<class T, class U>
-bool
-  operator<(weak_ptr<T> const& a, weak_ptr<U> const& b);
-
-///\name  weak_ptr specialized algorithms
-template<class T>
-void
-  swap(weak_ptr<T>& a, weak_ptr<T>& b)
-{
-  a.swap(b);
-}
-
-///@}
 /**@} lib_memory */
 /**@} lib_utilities */
 

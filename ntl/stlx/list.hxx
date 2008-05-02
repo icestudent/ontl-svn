@@ -249,6 +249,11 @@ class list
     const_reverse_iterator  rend() const
       { return const_reverse_iterator(begin()); }
 
+    const_iterator cbegin() const { return begin(); }
+    const_iterator cend() const   { return end(); }
+    const_reverse_iterator crbegin() const { return rbegin(); }
+    const_reverse_iterator crend() const   { return rend(); }
+
     ///\name capacity [23.2.2.2]
 
     bool      empty()     const { return size_ == 0; }

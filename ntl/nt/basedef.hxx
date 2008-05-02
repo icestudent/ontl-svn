@@ -83,7 +83,7 @@ struct single_list_entry
 
 typedef single_list_entry slist_entry;
 
-__align(8)
+alignas(8)
 struct slist_header : public slist_entry
 {
   uint16_t    Depth;
@@ -217,8 +217,6 @@ struct ldr_data_table_entry
   {
     find_dll(list_head * head) : head(head) {}
 
-    list_head * head;
-
     const pe::image * operator()(const char name[]) const
     {
       if ( head )
@@ -236,6 +234,10 @@ struct ldr_data_table_entry
         }
       return 0;
     }
+
+    private:
+      list_head * head;
+
   };
 
 };

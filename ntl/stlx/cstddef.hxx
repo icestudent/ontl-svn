@@ -9,6 +9,7 @@
 #define NTL__STLX_CSTDDEF
 
 #ifdef _MSC_VER
+#pragma warning(disable:4514)// unreferenced inline function has been removed
 //#define __forceinline __forceinline
 #else
 #define __forceinline inline
@@ -25,7 +26,11 @@
 #endif
 
 #ifndef STATIC_ASSERT
-#define STATIC_ASSERT(e) typedef char _STATIC_ASSERT_AT_##line[(e)?1:-1]
+#define STATIC_ASSERT(e) typedef char _STATIC_ASSERT_ ## __COUNTER__ [(e)?1:-1]
+#endif
+
+#ifndef static_assert
+#define static_assert(e, Msg) STATIC_ASSERT(e)
 #endif
 
 #if defined(NTL__STLX_FORCE_CDECL) && !defined(NTL__CRTCALL)
@@ -46,14 +51,35 @@
   #endif
 #endif
 
-#ifndef __align
-#define __align(X) __declspec(align(X))
+#ifndef alignas
+  #ifdef _MSC_VER
+    #define alignas(X) __declspec(align(X))
+  #else
+    #error unsupported compiler
+  #endif
 #endif
+
+#ifndef alignof
+  #ifdef _MSC_VER
+  #if _MSC_VER <= 1500
+    #define alignof(X) __alignof(X)
+  #endif
+  #else
+    #error unsupported compiler
+  #endif
+#endif
+static_assert(alignof(int)==alignof(unsigned int), "wierd platform");
 
 namespace std {
 
 /**\defgroup  lib_language_support ***** Language support library [18] ******
  *@{*/
+
+#pragma warning(push)
+#pragma warning(disable:4324)
+typedef alignas(8192) struct {} max_align_t;
+#pragma warning(pop)
+
 /**\defgroup  lib_support_types ******** Types [18.1] ***********************
  *@{*/
 
@@ -66,7 +92,7 @@ typedef struct
   //  nullptr_t();// {}
   //  nullptr_t(const nullptr_t&);
   //  void operator = (const nullptr_t&);
-    void operator & ();
+    void operator &() const;
     template<typename any> void operator +(any) const { I Love MSVC 2005! }
     template<typename any> void operator -(any) const { I Love MSVC 2005! }
 //    void * _;
@@ -96,8 +122,19 @@ typedef          int  ssize_t;
 #define offsetof(s,m) ((size_t)&((const char&)(((s *)0)->m)))
 #endif
 
+#define __ntl_bitmask_type(bitmask, _F)\
+  _F bitmask operator&(bitmask x, bitmask y) { return static_cast<bitmask>(x&y); }\
+  _F bitmask operator|(bitmask x, bitmask y) { return static_cast<bitmask>(x|y); }\
+  _F bitmask operator^(bitmask x, bitmask y) { return static_cast<bitmask>(x^y); }\
+  _F bitmask operator~(bitmask x) { return static_cast<bitmask >(~x); }\
+  _F bitmask& operator&=(bitmask& x, bitmask y) { x = x&y ; return x ; }\
+  _F bitmask& operator|=(bitmask& x, bitmask y) { x = x|y ; return x ; }\
+  _F bitmask& operator^=(bitmask& x, bitmask y) { x = x^y ; return x ; }
+
+
 /**@} lib_support_types */
 /**@} lib_language_support */
+
 
 }//namespace std
 

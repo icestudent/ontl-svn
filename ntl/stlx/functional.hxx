@@ -312,7 +312,8 @@ class pointer_to_unary_function : public unary_function<Arg, Result>
 };
 
 template <class Arg, class Result>
-pointer_to_unary_function<Arg,Result> ptr_fun(Result (*f)(Arg))
+pointer_to_unary_function<Arg,Result>
+  ptr_fun(Result (*f)(Arg))
 {
   return pointer_to_unary_function<Arg, Result>(f);
 }
@@ -341,143 +342,204 @@ pointer_to_binary_function<Arg1, Arg2, Result>
  *@{
  */
 
-template <class S, class T>
-class mem_fun_t : public unary_function<T*, S>
+template <class Result, class T>
+class mem_fun_t : public unary_function<T*, Result>
 {
-    S (T::*m)();
+    Result (T::*m)();
   public:
-    explicit mem_fun_t(S (T::*p)()) : m(p) {}
-    S operator()(T* p) const { return (p->*m)(); }
+    explicit mem_fun_t(Result (T::*p)()) : m(p) {}
+    Result operator()(T* p) const { return (p->*m)(); }
 };
 
-template <class S, class T>
-class const_mem_fun_t : public unary_function<T*, S>
+template <class Result, class T>
+class const_mem_fun_t : public unary_function<T*, Result>
 {
-    S (T::*m)() const;
+    Result (T::*m)() const;
   public:
-    explicit const_mem_fun_t(S (T::*p)() const) : m(p) {}
-    S operator()(const T* p) const { return (p->*m)(); }
+    explicit const_mem_fun_t(Result (T::*p)() const) : m(p) {}
+    Result operator()(const T* p) const { return (p->*m)(); }
 };
 
-template <class S, class T, class A>
-class mem_fun1_t : public binary_function<T*, A, S>
+template <class Result, class T, class A>
+class mem_fun1_t : public binary_function<T*, A, Result>
 {
-    S (T::*m)(A);
+    Result (T::*m)(A);
   public:
-    explicit mem_fun1_t(S (T::*p)(A)) : m(p) {}
-    S operator()(T* p, A x) const { return (p->*m)(x); }
+    explicit mem_fun1_t(Result (T::*p)(A)) : m(p) {}
+    Result operator()(T* p, A x) const { return (p->*m)(x); }
 };
 
-template <class S, class T, class A>
-class const_mem_fun1_t : public binary_function<T*, A, S>
+template <class Result, class T, class A>
+class const_mem_fun1_t : public binary_function<T*, A, Result>
 {
-    S (T::*m)(A) const;
+    Result (T::*m)(A) const;
   public:
-    explicit const_mem_fun1_t(S (T::*p)(A) const) : m(p) {}
-    S operator()(const T* p, A x) const { return (p->*m)(x); }
+    explicit const_mem_fun1_t(Result (T::*p)(A) const) : m(p) {}
+    Result operator()(const T* p, A x) const { return (p->*m)(x); }
 };
 
-template<class S, class T>
+template<class Result, class T>
 inline
-mem_fun_t<S, T>
-  mem_fun(S (T::*f)())
+mem_fun_t<Result, T>
+  mem_fun(Result (T::*f)())
 {
-  return mem_fun_t<S, T>(f);
+  return mem_fun_t<Result, T>(f);
 }
 
-template <class S, class T>
+template <class Result, class T>
 inline
-const_mem_fun_t<S, T>
-  mem_fun(S (T::*f)() const)
+const_mem_fun_t<Result, T>
+  mem_fun(Result (T::*f)() const)
 {
-  return const_mem_fun_t<S, T>(f);
+  return const_mem_fun_t<Result, T>(f);
 }
 
-template<class S, class T, class A>
+template<class Result, class T, class A>
 inline
-mem_fun1_t<S, T, A>
-  mem_fun(S (T::*f)(A))
+mem_fun1_t<Result, T, A>
+  mem_fun(Result (T::*f)(A))
 {
-  return mem_fun1_t<S, T, A>(f);
+  return mem_fun1_t<Result, T, A>(f);
 }
 
-template <class S, class T, class A>
-const_mem_fun1_t<S, T, A>
-  mem_fun(S (T::*f)(A) const)
+template <class Result, class T, class A>
+const_mem_fun1_t<Result, T, A>
+  mem_fun(Result (T::*f)(A) const)
 {
-  return const_mem_fun1_t<S, T, A>(f);
+  return const_mem_fun1_t<Result, T, A>(f);
 }
 
-template <class S, class T>
-class mem_fun_ref_t : public unary_function<T, S>
+template <class Result, class T>
+class mem_fun_ref_t : public unary_function<T, Result>
 {
-    S (T::*m)();
+    Result (T::*m)();
   public:
-    explicit mem_fun_ref_t(S (T::*p)()) : m(p) {}
-    S operator()(T& p) const { return (p.*m)(); }
+    explicit mem_fun_ref_t(Result (T::*p)()) : m(p) {}
+    Result operator()(T& p) const { return (p.*m)(); }
 };
 
-template <class S, class T>
-class const_mem_fun_ref_t : public unary_function<T, S>
+template <class Result, class T>
+class const_mem_fun_ref_t : public unary_function<T, Result>
 {
-    S (T::*m)() const;
+    Result (T::*m)() const;
   public:
-    explicit const_mem_fun_ref_t(S (T::*p)() const) : m(p) {}
-    S operator()(const T& p) const { return (p.*m)(); }
+    explicit const_mem_fun_ref_t(Result (T::*p)() const) : m(p) {}
+    Result operator()(const T& p) const { return (p.*m)(); }
 };
 
-template <class S, class T, class A>
-class mem_fun1_ref_t : public binary_function<T, A, S>
+template <class Result, class T, class A>
+class mem_fun1_ref_t : public binary_function<T, A, Result>
 {
-    S (T::*m)(A);
+    Result (T::*m)(A);
   public:
-    explicit mem_fun1_ref_t(S (T::*p)(A)) : m(p) {}
-    S operator()(T& p, A x) const { return (p.*m)(x); }
+    explicit mem_fun1_ref_t(Result (T::*p)(A)) : m(p) {}
+    Result operator()(T& p, A x) const { return (p.*m)(x); }
 };
 
-template <class S, class T, class A>
-class const_mem_fun1_ref_t : public binary_function<T, A, S>
+template <class Result, class T, class A>
+class const_mem_fun1_ref_t : public binary_function<T, A, Result>
 {
-    S (T::*m)(A) const;
+    Result (T::*m)(A) const;
   public:
-    explicit const_mem_fun1_ref_t(S (T::*p)(A) const) : m(p) {}
-    S operator()(const T& p, A x) const { return (p.*m)(x); }
+    explicit const_mem_fun1_ref_t(Result (T::*p)(A) const) : m(p) {}
+    Result operator()(const T& p, A x) const { return (p.*m)(x); }
 };
 
-template<class S, class T>
+template<class Result, class T>
 inline
-mem_fun_ref_t<S, T>
-  mem_fun_ref(S (T::*f)())
+mem_fun_ref_t<Result, T>
+  mem_fun_ref(Result (T::*f)())
 {
-  return mem_fun_ref_t<S, T>(f);
+  return mem_fun_ref_t<Result, T>(f);
 }
 
-template <class S, class T>
+template <class Result, class T>
 inline
-const_mem_fun_ref_t<S, T>
-  mem_fun_ref(S (T::*f)() const)
+const_mem_fun_ref_t<Result, T>
+  mem_fun_ref(Result (T::*f)() const)
 {
-  return const_mem_fun_ref_t<S, T>(f);
+  return const_mem_fun_ref_t<Result, T>(f);
 }
 
-template<class S, class T, class A>
+template<class Result, class T, class A>
 inline
-mem_fun1_ref_t<S, T, A>
-  mem_fun_ref(S (T::*f)(A))
+mem_fun1_ref_t<Result, T, A>
+  mem_fun_ref(Result (T::*f)(A))
 {
-  return mem_fun1_ref_t<S, T, A>(f);
+  return mem_fun1_ref_t<Result, T, A>(f);
 }
 
-template <class S, class T, class A>
+template <class Result, class T, class A>
 inline
-const_mem_fun1_ref_t<S, T, A>
-  mem_fun_ref(S (T::*f)(A) const)
+const_mem_fun1_ref_t<Result, T, A>
+  mem_fun_ref(Result (T::*f)(A) const)
 {
-  return const_mem_fun1_ref_t<S, T, A>(f);
+  return const_mem_fun1_ref_t<Result, T, A>(f);
 }
 
 /**@} lib_member_pointer_adaptors
  */
+
+
+// DTR 2.1.1 Additions to header <functional> synopsis [tr.util.refwrp.synopsis]
+//namespace tr1 {
+
+/// 2.1.2 Class template reference_wrapper [tr.util.refwrp.refwrp]
+template <class T>
+class reference_wrapper
+//: public unary_function<T1, R> // see below
+//: public binary_function<T1, T2, R> // see below
+{
+  ///////////////////////////////////////////////////////////////////////////
+  public :
+
+    // types
+    typedef T type;
+    //typedef -- result_type; // Not always defined
+
+    // construct/copy/destroy
+    explicit reference_wrapper(T&) throw();
+    reference_wrapper(const reference_wrapper<T>& x) throw();
+
+    // assignment
+    reference_wrapper& operator=(const reference_wrapper<T>& x) throw();
+
+    // access
+    operator T& () const throw();
+    T& get() const throw();
+
+#if 0
+    // invocation
+    template <class T1, class T2, ..., class TN>
+    typename result_of<T(T1, T2, ..., TN)>::type
+      operator() (T1&, T2&, ..., TN&) const
+    {
+    // Returns: INVOKE (get(), a1, a2, ..., aN). ([3.3])
+      return get()(t1);
+    }
+#endif
+
+  ///////////////////////////////////////////////////////////////////////////
+  private:
+
+    T* ptr;
+
+};//template class reference_wrapper
+
+
+template <class T>
+inline
+reference_wrapper<T> ref(T& t) throw()
+{
+  return reference_wrapper<T>(t);
+}
+
+template <class T> reference_wrapper<const T> cref(const T&) throw();
+template <class T> reference_wrapper<T> ref(reference_wrapper<T>) throw();
+template <class T> reference_wrapper<const T> cref(reference_wrapper<T>) throw();
+
+//} // namespace tr1
+
 
 /**@} lib_function_objects */
 

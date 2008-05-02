@@ -70,6 +70,8 @@ struct rtl_user_process_parameters
 };
 STATIC_ASSERT(sizeof(rtl_user_process_parameters) == 0x290);
 
+#pragma warning(push)
+#pragma warning(disable:4820) // 'X' bytes padding added after data member 'peb::MinimumStackCommit'
 
 struct peb
 {
@@ -82,7 +84,7 @@ struct peb
   struct ldr_data
   {
     /* 0x00 */  uint32_t      Length;
-    /* 0x04 */  bool          Initialized;
+    /* 0x04 */  bool          Initialized, _pad[3];
     /* 0x08 */  legacy_handle SsHandle;
     /* 0x0c */  list_head     InLoadOrderModuleList;
     /* 0x14 */  list_head     InMemoryOrderModuleList;
@@ -141,7 +143,8 @@ struct peb
   /* 0x5c */  void *                  OemCodePageData;
   /* 0x60 */  void *                  UnicodeCaseTableData;
   /* 0x64 */  uint32_t                NumberOfProcessors;
-  /* 0x68 */  uint32_t                NtGlobalFlag;
+  /* 0x68 */  uint32_t                NtGlobalFlag,
+                                      _pad1;
   /* 0x70 */  int64_t                 CriticalSectionTimeout;
   /* 0x78 */  uint32_t                HeapSegmentReserve;
   /* 0x7c */  uint32_t                HeapSegmentCommit;
@@ -181,6 +184,7 @@ struct peb
 };
 STATIC_ASSERT(sizeof(peb) == 0x210);
 
+#pragma warning(pop)
 
 }//namespace nt
 }//namespace ntl

@@ -105,6 +105,7 @@ class application
       iterator end()   { return &argv[argc]; }
 
       int size() const { return argc; }
+      bool empty() const { return false; }
 
       static inline char_type * get();
 

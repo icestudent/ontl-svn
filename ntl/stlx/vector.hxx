@@ -200,12 +200,18 @@ class vector
     const_iterator          begin() const { return begin_; }
     iterator                end()         { return end_; }
     const_iterator          end()   const { return end_; }
+
     reverse_iterator        rbegin()      { return reverse_iterator(end_); }
     const_reverse_iterator  rbegin() const
       { return const_reverse_iterator(end_); }
     reverse_iterator        rend()       { return reverse_iterator(begin_); }
     const_reverse_iterator  rend() const 
       { return const_reverse_iterator(begin_); }
+
+    const_iterator cbegin() const { return begin(); }
+    const_iterator cend() const   { return end(); }
+    const_reverse_iterator crbegin() const { return rbegin(); }
+    const_reverse_iterator crend() const   { return rend(); }
 
     ///\name  capacity [23.2.4.2]
 
@@ -265,11 +271,9 @@ class vector
         old_mem = begin_;
         capacity_ = n + capacity_factor();
         const iterator new_mem = array_allocator.allocate(capacity_);
-        const iterator new_mem = array_allocator.allocate(capacity_);
-        new_end = new_mem + difference_type(new_end - old_mem);
-        //new_end += difference_type(new_mem - old_mem);        // dangerous alignment
+        new_end += new_mem - old_mem;
         iterator dest = begin_ = new_mem;
-        // this is safe for begin_ == 0 && end_ == 0, but keep vector() coherent
+        // this is safe for begin_ == 0 && end_ == 0, but keep vector() intact
         for ( iterator src = old_mem; src != position; ++src, ++dest )
           move(dest, src);
       }
@@ -414,7 +418,7 @@ class vector
     // hack: MSVC doesn't look inside function body
     void check_bounds(size_type n) const throw(bad_alloc)//throw(out_of_range)
     {
-      if ( n > size() ) do__throw(out_of_range);
+      if ( n > size() ) __ntl_throw(out_of_range);
     }
 
     void move(const iterator to, const iterator from) const

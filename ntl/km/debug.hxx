@@ -13,6 +13,19 @@
 #include "string.hxx"
 
 namespace ntl {
+
+///\todo move to a common header
+namespace intrinsic {
+extern "C" void __cdecl __debugbreak();
+#pragma intrinsic(__debugbreak)
+}//namespace intrinsic
+
+static inline
+void debugbreak()
+{
+  intrinsic::__debugbreak();
+}
+
 namespace km {
 
 
@@ -192,18 +205,6 @@ struct dbgprint
     printf("%s`%S'", msg, msg2.data());
   }
 };
-
-namespace intrinsic {
-extern "C" void __cdecl __debugbreak();
-#pragma intrinsic(__debugbreak)
-
-static inline
-void debugbreak()
-{
-  intrinsic::__debugbreak();
-}
-
-}//namespace intrinsic
 
 #pragma warning(pop)
 

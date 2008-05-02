@@ -100,6 +100,10 @@ struct atomic_t
 template <class Lock, class T>
 class atomic_exec
 {
+    atomic_exec();
+    atomic_exec(const atomic_exec &);
+    atomic_exec & operator=(const atomic_exec &);
+
   public:
 
     explicit
@@ -121,23 +125,23 @@ class atomic_exec
 
     Lock & lock;
     T      r;
-
-    atomic_exec();
-    atomic_exec(const atomic_exec &);
-    atomic_exec & operator=(const atomic_exec &);
 }; 
   
 
 template <class Lock>
 class atomic_exec<Lock, void>
 {
+    atomic_exec();
+    atomic_exec(const atomic_exec &);
+    atomic_exec & operator=(const atomic_exec &);
+
   public:
 
     explicit
     atomic_exec(Lock & lock)
     : lock(lock)
     { 
-      lock.acquire()
+      lock.acquire();
     }
 
     template<class AnyLock>
@@ -152,7 +156,7 @@ class atomic_exec<Lock, void>
     atomic_exec(Lock * lock)
     : lock(*lock)
     { 
-      lock.acquire()
+      lock.acquire();
     }
 
     template<class AnyLock>
@@ -169,12 +173,9 @@ class atomic_exec<Lock, void>
     }
 
   private:
-
+    
     Lock & lock;
 
-    atomic_exec();
-    atomic_exec(const atomic_exec &);
-    atomic_exec & operator=(const atomic_exec &);
 }; 
   
 
