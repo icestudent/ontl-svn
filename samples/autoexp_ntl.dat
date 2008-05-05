@@ -2,6 +2,7 @@
 ; Copyright(c) Microsoft Corporation. All Rights Reserved.
 ; 
 ; v 0.1 - supports basic_string, list, vector, stack, auto_ptr, pair
+; v 0.2 - added bitset
 ;---------------------------------------------------------------
 ;
 ; While debugging, Data Tips and items in the Watch and Variable
@@ -89,6 +90,7 @@ __m128d=$BUILTIN(M128D)
 
 
 _GUID=$BUILTIN(GUID)
+guid=$BUILTIN(GUID) 
 
 ; see EEAddIn sample for how to use these
 ;_SYSTEMTIME=$ADDIN(EEAddIn.dll,AddIn_SystemTime)
@@ -418,7 +420,7 @@ std::bitset<*>{
 		"](",
 		#array
 		(	
-			expr : 	($c._Array[$i / $c._Bitsperword] >> ($i % $c._Bitsperword)),  
+			expr : 	($c.storage_[$i / $c.element_size_] >> ($i % $c.element_size_)),  
 			size : 	$c.digits
 		) : [($e & 1),d],
 		")"
@@ -428,7 +430,7 @@ std::bitset<*>{
 	(
 		#array
 		(	
-			expr : 	($c._Array[$i / $c._Bitsperword] >> ($i % $c._Bitsperword)),  
+			expr : 	($c.storage_[$i / $c.element_size_] >> ($i % $c.element_size_)),  
 			size : 	$c.digits
 		) : (bool)($e & 1))
 }
