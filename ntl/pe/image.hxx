@@ -39,6 +39,11 @@ class image
       return reinterpret_cast<image*>(image_base);
     }
 
+    static const image * bind(const void * image_base)
+    {
+      return reinterpret_cast<const image*>(image_base);
+    }
+
     template<typename T>
     static __forceinline
     bool in_range(uintptr_t first, uintptr_t last, T p)
@@ -75,10 +80,15 @@ class image
     }; // struct dos_header
     STATIC_ASSERT(sizeof(dos_header)==0x40);
 
+    typedef uint16_t file_machine_type;
+    static const file_machine_type
+      file_machine_unknown  = 0,
+      file_machine_i386     = 0x014C,
+      file_machine_amd64    = 0x8664;
 
     struct file_header
     {
-      uint16_t  Machine;
+      file_machine_type Machine;
       uint16_t  NumberOfSections;
       uint32_t  TimeDateStamp;
       uint32_t  PointerToSymbolTable;
@@ -362,6 +372,11 @@ class image
       return n < nth->FileHeader.NumberOfSections ? &sh[n] : 0;
     }
 
+    const section_header * get_section_header(size_t n = 0) const
+    {
+      return const_cast<image*>(this)->get_section_header(n);
+    }
+
     section_header * get_section_header(const char name[])
     {
       nt_headers * const nth = get_nt_headers();
@@ -372,6 +387,11 @@ class image
         if ( !std::strncmp(name, &sh[--n].Name[0], sizeof(sh->Name)) )
           return &sh[n];
       return 0;
+    }
+
+    const section_header * get_section_header(const char name[]) const
+    {
+      return const_cast<image*>(this)->get_section_header(name);
     }
 
 
@@ -429,6 +449,14 @@ class image
         return ordinal - Base;
       }
 
+      /// runtime-polymorphic version
+      __forceinline
+      uint32_t ordinal(const image * pe, const void * ord) const
+      {
+        return uintptr_t(ord) <= 0xffff ?
+          ordinal(pe, static_cast<uint16_t>(reinterpret_cast<uintptr_t>(ord))) :
+          ordinal(pe, reinterpret_cast<const char*>(ord));
+      }
       void * function(const image * pe, uint32_t ordinal) const 
       {
         return ordinal < NumberOfFunctions
@@ -453,7 +481,7 @@ class image
     }
 
     template<typename DllFinder>
-    void * find_export(const char * exp, DllFinder find_dll) const
+    void * find_export(const void * exp, DllFinder find_dll) const
     {
       const data_directory * const export_table = 
                               get_data_directory(data_directory::export_table);
@@ -491,7 +519,7 @@ class image
     }
 
     template<typename PtrType, typename DllFinder>
-    PtrType find_export(const char * exp, DllFinder find_dll) const
+    PtrType find_export(const void * exp, DllFinder find_dll) const
     {
       return brute_cast<PtrType>(find_export(exp, find_dll));
     }
@@ -654,7 +682,7 @@ class image
           switch ( entry->Type )
           {
             case base_relocation::highlow:
-              *reinterpret_cast<uint32_t*>(addr + entry->Offset) += delta;
+              *reinterpret_cast<uint32_t*>(addr + entry->Offset) += static_cast<uint32_t>(delta);
               break;
             default:
               break;
@@ -663,6 +691,92 @@ class image
       }
       return true;
     }
+
+    ///\name Resources
+
+    struct resource_directory_entry 
+    {
+      union 
+      {
+        struct
+        {
+          uint32_t  Offset:31;
+          uint32_t  IsString:1;
+        } Name;
+        uint16_t  Id;
+      };
+      uint32_t  OffsetToDirectory:31;
+      uint32_t  DataIsDirectory:1;
+    };
+
+    struct resource_directory
+    {
+      uint32_t  Characteristics;
+      uint32_t  TimeDateStamp;
+      uint16_t  MajorVersion;
+      uint16_t  MinorVersion;
+      uint16_t  NumberOfNamedEntries;
+      uint16_t  NumberOfIdEntries;
+    };
+
+    resource_directory_entry* get_res_named_entry(size_t n = 0)
+    {
+      const data_directory* const resd = get_data_directory(data_directory::resource_table);
+      if(!resd || !resd->VirtualAddress)
+        return 0;
+      resource_directory* rsrc = va<resource_directory*>(resd->VirtualAddress);
+      return n < rsrc->NumberOfNamedEntries
+        ? &reinterpret_cast<resource_directory_entry*>(uintptr_t(rsrc) + sizeof(resource_directory)) [n]
+        : 0;
+    }
+
+    resource_directory_entry* get_res_entry(size_t n = 0)
+    {
+      const data_directory* const resd = get_data_directory(data_directory::resource_table);
+      if(!resd || !resd->VirtualAddress)
+        return 0;
+      resource_directory* rsrc = va<resource_directory*>(resd->VirtualAddress);
+      if(!(n < rsrc->NumberOfIdEntries))
+        return 0;
+      resource_directory_entry* ride = reinterpret_cast<resource_directory_entry*>(
+        uintptr_t(rsrc) + sizeof(resource_directory) + 
+        sizeof(resource_directory_entry)*rsrc->NumberOfNamedEntries);
+      return &ride[n];
+      //return & reinterpret_cast<resource_directory_entry*>
+      //  (uintptr_t(rsrc) + sizeof(resource_directory) + sizeof(resource_directory_entry)*rsrc->NumberOfNamedEntries)
+      //  [n];
+    }
+
+    struct resource_dir_string
+    {
+      uint16_t  Length;
+      wchar_t   NameString[1];
+    };
+
+    struct resource_data_entry 
+    {
+      uint32_t  OffsetToData;
+      uint32_t  Size;
+      uint32_t  CodePage;
+      uint32_t  Reserved;
+    };
+
+    ///\name Security table
+    struct security_table
+    {
+      uint32_t  OffsetToData;
+      uint32_t  Size;
+    };
+
+    struct security_table_entry 
+    {
+      uint32_t  dwLength;
+      // 0x100 - 1.0, 0x200 - 2.0
+      uint16_t  wRevision;
+      // 1 - x509, 2 - PCS#7, 3 - reserved, 4 - Terminal Server Protocol Stack certificate  signing
+      uint16_t  wCertificateType;
+      uint8_t   cert_data[1];
+    };
 
     ///}
 
