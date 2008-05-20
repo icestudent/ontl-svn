@@ -3,6 +3,7 @@
 ; 
 ; v 0.1 - supports basic_string, list, vector, stack, auto_ptr, pair
 ; v 0.2 - added bitset
+; v 0.3 - added set & map
 ;---------------------------------------------------------------
 ;
 ; While debugging, Data Tips and items in the Watch and Variable
@@ -290,33 +291,31 @@ std::map<*>{
 	(
 		#tree
 		(
-			head : $c._Myhead->_Parent, 
-		    skip : $c._Myhead, 
-		    size : $c._Mysize, 
-		    left : _Left, 
-		    right : _Right
-		) : $e._Myval
+		    head : $c.root_, 
+		    size : $c.count_,
+		    left : left, 
+		    right : right
+		) : $e.elem
 	)
-		     
+
 	preview
 	(
 		#(
 			"[", 
-			$e._Mysize, 
+			$e.count_,
 			"](", 
 
 			#tree
 			(
-				head : $c._Myhead->_Parent, 
-				skip : $c._Myhead, 
-				size : $c._Mysize, 
-				left : _Left, 
-				right : _Right
-			) : $e._Myval,
+				head : $c.root_,
+				size : $c.count_,
+				left : left, 
+				right : right
+			) : $e.elem,
 			
 			")"
 		)
-	)		     
+	)
 }
 
 ;------------------------------------------------------------------------------
@@ -553,36 +552,34 @@ std::priority_queue<*>{
 ;------------------------------------------------------------------------------
 
 std::set<*>{
-    preview
-    ( 
-		#( 
-			"[", 
-            $e._Mysize , 
-            "](", 
-            
-            #tree
-            (
-				head : $c._Myhead->_Parent, 
-				skip : $c._Myhead, 
-				left : _Left, 
-				right : _Right,
-				size  : $c._Mysize
-			) : $e._Myval, 
-			
-			")"
-		)
-	)
-			   
 	children
 	(
 		#tree
 		(
-			head : $c._Myhead->_Parent, 
-			skip : $c._Myhead, 
-			left : _Left, 
-			right : _Right,
-			size  : $c._Mysize
-		) : $e._Myval
+		    head : $c.root_, 
+		    size : $c.count_,
+		    left : left, 
+		    right : right
+		) : $e.elem
+	)
+
+	preview
+	(
+		#(
+			"[", 
+			$e.count_,
+			"](", 
+
+			#tree
+			(
+				head : $c.root_,
+				size : $c.count_,
+				left : left, 
+				right : right
+			) : $e.elem,
+			
+			")"
+		)
 	)
 }
 
