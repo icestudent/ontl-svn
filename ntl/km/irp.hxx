@@ -22,7 +22,25 @@ struct file_object;
 struct ethread;
 struct irp;
 
-
+namespace priority_boost
+{
+  typedef int8_t increment_t;
+  static const increment_t event_increment = 1;
+  static const increment_t io_no_increment = 0;
+  static const increment_t io_cd_rom_increment = 1;
+  static const increment_t io_disk_increment = 1;
+  static const increment_t io_keyboard_increment = 6;
+  static const increment_t io_mailslot_increment = 2;
+  static const increment_t io_mouse_increment = 6;
+  static const increment_t io_named_pipe_increment = 2;
+  static const increment_t io_network_increment = 2;
+  static const increment_t io_parallel_increment = 1;
+  static const increment_t io_serial_increment = 2;
+  static const increment_t io_sound_increment = 8;
+  static const increment_t io_video_increment = 1;
+  static const increment_t semaphore_increment = 1;
+}
+    
 typedef
 ntstatus __stdcall
   io_completion_routine_t(
@@ -45,9 +63,19 @@ void __stdcall
     irp *Irp
     );
 
+NTL__EXTERNAPI
+void __fastcall
+  IofCompleteRequest(
+    irp * Irp,
+    priority_boost::increment_t PriorityBoost
+    );
 
 #pragma pack(push)
-#pragma pack(4) ///\warning shall be 8 for 64bit 
+#if defined(_M_IX86)
+#   pragma pack(4) 
+#elif defined(_M_X64)
+#   pragma pack(8)
+#endif
 struct io_stack_location
 {
   enum control_flags
@@ -72,7 +100,7 @@ struct io_stack_location
 
   union
   {
-    uint8_t _[0x10];
+//    uint8_t _[0x10];
 
     struct
     {
@@ -196,7 +224,7 @@ struct irp
 
   uint16_t          Type;
   uint16_t          Size;
-  mdl *             MdlAddress;
+  struct mdl *      MdlAddress;
   uint32_t          Flags;
   union
   {
@@ -284,7 +312,12 @@ struct irp
     stack.Control = completion_routine ? static_cast<uint8_t>(control) : 0;
   }
 
-  void * operator new(std::size_t, uint8_t StackSize, bool ChargeQuota = false) throw()
+  void complete_request(priority_boost::increment_t PriorityBoost = priority_boost::io_no_increment)
+  {
+    IofCompleteRequest(this, PriorityBoost);
+  }
+
+  void * operator new(std::size_t, uint8_t StackSize, bool ChargeQuota = false) __ntl_nothrow
   {
     return allocate(StackSize, ChargeQuota);
   }

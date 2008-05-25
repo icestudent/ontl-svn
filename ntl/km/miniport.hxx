@@ -39,6 +39,41 @@ enum interface_type
   I1394,
 };
 
+enum dma_width
+{
+  Width8Bits,
+  Width16Bits,
+  Width32Bits,
+  MaximumDmaWidth
+};
+
+enum dma_speed
+{
+  Compatible,
+  TypeA,
+  TypeB,
+  TypeC,
+  TypeF,
+  MaximumDmaSpeed
+};
+
+enum bus_data_type
+{
+  ConfigurationSpaceUndefined = -1,
+  Cmos,
+  EisaConfiguration,
+  Pos,
+  CbusConfiguration,
+  PCIConfiguration,
+  VMEConfiguration,
+  NuBusConfiguration,
+  PCMCIAConfiguration,
+  MPIConfiguration,
+  MPSAConfiguration,
+  PNPISAConfiguration,
+  SgiInternalConfiguration,
+  MaximumBusDataType
+};
 
 
 }//namespace km

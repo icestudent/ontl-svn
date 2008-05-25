@@ -21,6 +21,7 @@ namespace win {
 
 
 typedef const struct _opaque { } * legacy_sc_handle;
+enum sc_status_type { sc_status_process_info };
 
 NTL__EXTERNAPI
 legacy_sc_handle __stdcall
@@ -84,6 +85,15 @@ int __stdcall
     nt::service::status * lpServiceStatus
     );
 
+NTL__EXTERNAPI
+int __stdcall
+  QueryServiceStatusEx(
+    legacy_sc_handle      hService,
+    sc_status_type        InfoLevel,
+    void*                 lpBuffer,
+    uint32_t              dwBufSize,
+    uint32_t*             lpdwBytesNeeded
+    );
 
 /// Service Control Manager
 class sc_manager 
@@ -180,7 +190,7 @@ class service_control
       return 0 != StartServiceW(handle, argc, argv);
     }
 
-    const service_status * operator->() const throw()
+    const service_status * operator->() const __ntl_nothrow
     { 
       return handle ? &status : reinterpret_cast<const service_status*>(handle);
     }
@@ -200,6 +210,12 @@ class service_control
       const bool r = 0 != DeleteService(handle);
       close_handle();
       return r;
+    }
+
+    bool query_status(nt::service::status_process& service_status)
+    {
+      uint32_t cb;
+      return 0 != QueryServiceStatusEx(handle, StatusProcessInfo, &service_status, sizeof(nt::service::status_process), &cb);
     }
 
   ///////////////////////////////////////////////////////////////////////////

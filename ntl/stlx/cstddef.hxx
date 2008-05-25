@@ -45,7 +45,8 @@
 
 #ifndef NTL__EXTERNAPI
   #ifdef  _MSC_VER
-    #define NTL__EXTERNAPI extern "C" __declspec(dllimport)
+    #define NTL__EXTERNAPI extern "C" __declspec(dllimport) __declspec(nothrow)
+    #define NTL__EXTERNVAR extern "C" __declspec(dllimport)
   #else
     #error usupported compiler
   #endif
@@ -69,6 +70,14 @@
   #endif
 #endif
 static_assert(alignof(int)==alignof(unsigned int), "wierd platform");
+
+#ifndef __align
+  #define __align(X) __declspec(align(X))
+#endif
+
+#if __cplusplus <= 199711L
+  #define constexpr
+#endif
 
 namespace std {
 
@@ -104,18 +113,22 @@ static const nullptr_t nullptr = {};
 #define NULL 0
 #endif
 
-#ifdef _WIN64
-typedef          long long  ptrdiff_t;
-typedef unsigned long long  size_t;
-typedef          long long  ssize_t;
-#else
-typedef          int  ptrdiff_t;
+#ifdef _M_X64
+  typedef          long long  ptrdiff_t;
 #ifdef _MSC_VER
-using ::size_t;
+  using ::size_t;
 #else
-typedef unsigned int  size_t;
+  typedef unsigned long long  size_t;
 #endif
-typedef          int  ssize_t;
+  typedef          long long  ssize_t;
+#else
+  typedef          int  ptrdiff_t;
+#ifdef _MSC_VER
+  using ::size_t;
+#else
+  typedef unsigned int  size_t;
+#endif
+  typedef          int  ssize_t;
 #endif
 
 #ifndef offsetof
@@ -136,6 +149,6 @@ typedef          int  ssize_t;
 /**@} lib_language_support */
 
 
-}//namespace std
+} //namespace std
 
-#endif//#ifndef NTL__STLX_CSTDDEF
+#endif //#ifndef NTL__STLX_CSTDDEF

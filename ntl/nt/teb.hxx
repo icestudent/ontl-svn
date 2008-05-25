@@ -9,16 +9,139 @@
 #define NTL__NT_TEB
 
 #include "exception.hxx"
+#include "handle.hxx"
 
 
 namespace ntl {
 
+///\tode move to another header
 namespace intrinsic {
-extern "C" uint32_t __cdecl __readfsdword(uint32_t);
-extern "C" void __cdecl __writefsdword(uint32_t Offset, uint32_t Data);
-#pragma intrinsic(__readfsdword)
-#pragma intrinsic(__writefsdword)
-}//namespace intrin
+  
+#if defined(_M_IX86)
+
+  extern "C" uint8_t  __cdecl __readfsbyte (uint32_t Offset);
+  extern "C" uint16_t __cdecl __readfsword (uint32_t Offset);
+  extern "C" uint32_t __cdecl __readfsdword(uint32_t Offset);
+  extern "C" uint64_t __cdecl __readfsqword(uint32_t Offset);
+
+  extern "C" void __cdecl __writefsbyte (uint32_t Offset, uint8_t Data);
+  extern "C" void __cdecl __writefsword (uint32_t Offset, uint16_t Data);
+  extern "C" void __cdecl __writefsdword(uint32_t Offset, uint32_t Data);
+  extern "C" void __cdecl __writefsqword(uint32_t Offset, uint64_t Data);
+
+#pragma intrinsic(__readfsbyte, __readfsword, __readfsdword/*, __readfsqword*/)
+#pragma intrinsic(__writefsbyte, __writefsword, __writefsdword/*, __writefsqword*/)
+
+#elif defined(_M_X64)
+
+  extern "C" uint8_t  __cdecl __readgsbyte (uint32_t Offset);
+  extern "C" uint16_t __cdecl __readgsword (uint32_t Offset);
+  extern "C" uint32_t __cdecl __readgsdword(uint32_t Offset);
+  extern "C" uint64_t __cdecl __readgsqword(uint32_t Offset);
+
+  extern "C" void __cdecl __writegsbyte (uint32_t Offset, uint8_t Data);
+  extern "C" void __cdecl __writegsword (uint32_t Offset, uint16_t Data);
+  extern "C" void __cdecl __writegsdword(uint32_t Offset, uint32_t Data);
+  extern "C" void __cdecl __writegsqword(uint32_t Offset, uint64_t Data);
+
+#pragma intrinsic(__readgsbyte, __readgsword, __readgsdword, __readgsqword)
+#pragma intrinsic(__writegsbyte, __writegsword, __writegsdword, __writegsqword)
+
+#endif
+
+}//namespace intrinsic
+
+#if defined(_M_IX86)
+
+  __forceinline uint8_t  readsysptr(uint32_t Offset, uint8_t)
+  { 
+    return intrinsic::__readfsbyte(Offset);
+  }
+  __forceinline uint16_t readsysptr(uint32_t Offset, uint16_t)
+  { 
+    return intrinsic::__readfsword(Offset);
+  }
+  __forceinline uint32_t readsysptr(uint32_t Offset, uint32_t)
+  { 
+    return intrinsic::__readfsdword(Offset);
+  }
+  __forceinline uint64_t readsysptr(uint32_t Offset, uint64_t)
+  { 
+    return intrinsic::__readfsdword(Offset) | (uint64_t)intrinsic::__readfsdword(Offset+4) << 32;
+  }
+  __forceinline uintptr_t readsysptr(uint32_t Offset, const void* = 0)
+  { 
+    return intrinsic::__readfsdword(Offset);
+  }
+
+  __forceinline void writesysptr(uint32_t Offset, uint8_t Data)
+  { 
+    intrinsic::__writefsbyte(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint16_t Data)
+  { 
+    intrinsic::__writefsword(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint32_t Data)
+  { 
+    intrinsic::__writefsdword(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint64_t Data)
+  { 
+    intrinsic::__writefsdword(Offset, static_cast<uint32_t>(Data));
+    intrinsic::__writefsdword(Offset+4, static_cast<uint32_t>(Data >> 32));
+  }
+  __forceinline void writesysptr(uint32_t Offset, const void* Data)
+  { 
+    intrinsic::__writefsdword(Offset, reinterpret_cast<uintptr_t>(Data));
+  }
+
+#elif defined(_M_X64)
+
+  __forceinline uint8_t  readsysptr(uint32_t Offset, uint8_t)
+  { 
+    return intrinsic::__readgsbyte(Offset);
+  }
+  __forceinline uint16_t readsysptr(uint32_t Offset, uint16_t)
+  { 
+    return intrinsic::__readgsword(Offset);
+  }
+  __forceinline uint32_t readsysptr(uint32_t Offset, uint32_t)
+  { 
+    return intrinsic::__readgsdword(Offset);
+  }
+  __forceinline uint64_t readsysptr(uint32_t Offset, uint64_t)
+  { 
+    return intrinsic::__readgsqword(Offset);
+  }
+  __forceinline uintptr_t readsysptr(uint32_t Offset, const void*)
+  { 
+    return intrinsic::__readgsqword(Offset);
+  }
+
+  __forceinline void writesysptr(uint32_t Offset, uint8_t Data)
+  { 
+    intrinsic::__writegsbyte(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint16_t Data)
+  { 
+    intrinsic::__writegsword(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint32_t Data)
+  { 
+    intrinsic::__writegsdword(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint64_t Data)
+  { 
+    intrinsic::__writegsqword(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, const void* Data = 0)
+  { 
+    intrinsic::__writegsqword(Offset, reinterpret_cast<uintptr_t>(Data));
+  }
+
+#endif
+
 
 namespace nt {
 
@@ -30,7 +153,7 @@ struct tib
 {
   /* 0x00 */  exception::registration * ExceptionList;
   /* 0x04 */  void                    * StackBase;    ///< upper stack address
-  /* 0x08 */  void                    * StackLimit;  ///< lower stack address
+  /* 0x08 */  void                    * StackLimit;   ///< lower stack address
   /* 0x0C */  void                    * SubSystemTib;
               union
               {
@@ -59,7 +182,7 @@ struct teb : public tib
   {
     const teb * const p = 0;
     const uint32_t offset = reinterpret_cast<uint32_t>(&(p->*member));
-    return (type)(intrinsic::__readfsdword(offset));
+    return (type)(readsysptr(offset, type()));
   }
 
   template<typename type, typename type2>
@@ -68,12 +191,13 @@ struct teb : public tib
   {
     const teb * const p = 0;
     const uint32_t offset = reinterpret_cast<uint32_t>(&(p->*member));
-    intrinsic::__writefsdword(offset, value);
+    writesysptr(offset, value);
   }
 
   static __forceinline
   teb & instance() { return *static_cast<teb*>(get(&tib::Self)); }
 
+  // common part
   /* 0x1c */  void *    EnvironmentPointer;
   /* 0x20 */  client_id ClientId;
   /* 0x28 */  void *    ActiveRpcHandle;
@@ -86,7 +210,7 @@ struct teb : public tib
   /*<thisrel this+0x40>*/ /*|0x4|*/ void* Win32ThreadInfo;
   /*<thisrel this+0x44>*/ /*|0x68|*/ unsigned long User32Reserved[26];
   /*<thisrel this+0xac>*/ /*|0x14|*/ unsigned long UserReserved[5];
-  /*<thisrel this+0xc0>*/ /*|0x4|*/ void* WOW32Reserved;
+  /*<thisrel this+0xc0>*/ /*|0x4|*/ void* WOW32Reserved;                      // wntdll!X86SwitchTo64BitMode()
   /*<thisrel this+0xc4>*/ /*|0x4|*/ unsigned long CurrentLocale;
   /*<thisrel this+0xc8>*/ /*|0x4|*/ unsigned long FpSoftwareStatusRegister;
   /*<thisrel this+0xcc>*/ /*|0xd8|*/ void* SystemReserved1[54];
@@ -99,7 +223,7 @@ struct teb : public tib
   /*<thisrel this+0x6c0>*/ /*|0x4|*/ unsigned long GdiClientPID;
   /*<thisrel this+0x6c4>*/ /*|0x4|*/ unsigned long GdiClientTID;
   /*<thisrel this+0x6c8>*/ /*|0x4|*/ void* GdiThreadLocalInfo;
-  /*<thisrel this+0x6cc>*/ /*|0xf8|*/ unsigned long Win32ClientInfo[62];// uintptr_t
+  /*<thisrel this+0x6cc>*/ /*|0xf8|*/ unsigned long Win32ClientInfo[62];
   /*<thisrel this+0x7c4>*/ /*|0x3a4|*/ void* glDispatchTable[233];
   /*<thisrel this+0xb68>*/ /*|0x74|*/ unsigned long glReserved1[29];
   /*<thisrel this+0xbdc>*/ /*|0x4|*/ void* glReserved2;
@@ -120,7 +244,7 @@ struct teb : public tib
   /*<thisrel this+0xf28>*/ /*|0x4|*/ unsigned long HardErrorsAreDisabled;
   /*<thisrel this+0xf2c>*/ /*|0x40|*/ void* Instrumentation[16];
   /*<thisrel this+0xf6c>*/ /*|0x4|*/ void* WinSockData;
-  /*<thisrel this+0xf70>*/ /*|0x4|*/ unsigned long GdiBatchCount;
+  /*<thisrel this+0xf70>*/ /*|0x4|*/ uintptr_t GdiBatchCount                  // teb64* on win32 process (on wow64)
   /*<thisrel this+0xf74>*/ /*|0x1|*/ unsigned char InDbgPrint;
   /*<thisrel this+0xf75>*/ /*|0x1|*/ unsigned char FreeStackOnTermination;
   /*<thisrel this+0xf76>*/ /*|0x1|*/ unsigned char HasFiberData;

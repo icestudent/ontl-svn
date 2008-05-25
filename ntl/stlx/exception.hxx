@@ -90,6 +90,7 @@ typedef void (*terminate_handler)();
 terminate_handler set_terminate(terminate_handler f) __ntl_nothrow;
 
 /// terminate [18.6.3.3 lib.terminate]
+__declspec(noreturn)
 void terminate();
 
 /// uncaught_exception [18.6.4 lib.uncaught]

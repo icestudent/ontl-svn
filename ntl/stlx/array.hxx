@@ -87,10 +87,10 @@ struct array
       return operator[](n);
     }
 
-    reference       front()       throw() { return *begin(); }
-    const_reference front() const throw() { return *begin(); }
-    reference       back()        throw() { return *(--end()); }
-    const_reference back()  const throw() { return *(--end()); }
+    reference       front()       { return *begin(); }
+    const_reference front() const { return *begin(); }
+    reference       back()        { return *(--end()); }
+    const_reference back()  const { return *(--end()); }
 
           T * data()        { return __elems; }
     const T * data() const  { return __elems; }
@@ -103,9 +103,9 @@ struct array
     static const size_t __actual_size = N ? N : 1;
     T __elems[__actual_size];
 
-    void __check_bounds(size_type n) const throw(out_of_range)
+    void __check_bounds(size_type n) const __ntl_throws(out_of_range)
     {
-      if ( n > size() ) __ntl_throw(out_of_range);
+      if ( n > size() ) __ntl_throw (out_of_range());
     }
 
 };//struct array

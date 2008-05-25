@@ -81,6 +81,23 @@ ntstatus __stdcall
     const uint32_t *  Key           __optional
     );
 
+typedef 
+ntstatus __stdcall
+  control_file_t(
+    legacy_handle FileHandle,
+    legacy_handle Event,
+    io_apc_routine* ApcRoutine,
+    void* ApcContext,
+    io_status_block* IoStatusBlock,
+    uint32_t IoControlCode,
+    void* InputBuffer,
+    uint32_t InputBufferLength,
+    void* OutputBuffer,
+    uint32_t OutputBufferLength
+    );
+
+NTL__EXTERNAPI control_file_t NtDeviceIoControlFile, NtFsControlFile;
+
 #pragma warning(pop)
 
 ///@}
@@ -255,7 +272,7 @@ class file_handler : public handle, public device_traits<file_handler>
         const uint64_t *            allocation_size = 0,
         const void *                ea_buffer       = 0,
         uint32_t                    ea_length       = 0
-        ) throw()
+        ) __ntl_nothrow
     {
       reset();
       return NtCreateFile(this, desired_access, &oa, &iosb,
@@ -274,7 +291,7 @@ class file_handler : public handle, public device_traits<file_handler>
         const uint64_t *            allocation_size = 0,
         const void *                ea_buffer       = 0,
         uint32_t                    ea_length       = 0
-        ) throw()
+        ) __ntl_nothrow
     {
       reset();
       const const_unicode_string uname(file_name);
@@ -289,7 +306,7 @@ class file_handler : public handle, public device_traits<file_handler>
         const access_mask           desired_access,
         const share_mode            share,
         const creation_options      co
-        ) throw()
+        ) __ntl_nothrow
     {
       reset();
       return NtOpenFile(this, desired_access, &oa, &iosb, share, co);
@@ -316,7 +333,7 @@ class file_handler : public handle, public device_traits<file_handler>
         io_apc_routine *  apc_routine       = 0,
         const void *      apc_context       = 0,
         const uint32_t *  blocking_key      = 0
-        ) const throw()
+        ) const __ntl_nothrow
     {
       return NtReadFile(get(), completion_event, apc_routine, apc_context,
                           &iosb, out_buf, out_size, offset, blocking_key);
@@ -331,7 +348,7 @@ class file_handler : public handle, public device_traits<file_handler>
         io_apc_routine *  apc_routine       = 0,
         const void *      apc_context       = 0,
         const uint32_t *  blocking_key      = 0
-        ) throw()
+        ) __ntl_nothrow
     {
       return NtWriteFile(get(), completion_event, apc_routine, apc_context,
                           &iosb, in_buf, in_size, offset, blocking_key);
@@ -355,7 +372,7 @@ class file_handler : public handle, public device_traits<file_handler>
       const const_unicode_string &  new_name,
       bool                          replace_if_exists)
     {
-      std::auto_ptr<file_rename_information> fi = 
+      file_rename_information::file_rename_information_ptr fi = 
                     file_rename_information::alloc(new_name, replace_if_exists);
       if ( !fi.get() ) return status::insufficient_resources;
       file_information<file_rename_information> file_info(get(), *fi);

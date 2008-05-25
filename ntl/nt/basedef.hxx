@@ -215,6 +215,12 @@ struct ldr_data_table_entry
 
   struct find_dll
   {
+    /**\todo  Redesign:
+     *  Thre is no good reason to pass an arbitrary list_entry to ctor since 
+     *  offset to BaseDllName is *harcoded* by reinterpret_cast.
+     *  So head ptr are to stick to a ldr_data_table_entry itself; and perhaps 
+     *  a ptr to member should passed (if one wants search InMemoryOrderLinks BTW).
+     */
     find_dll(list_head * head) : head(head) {}
 
     const pe::image * operator()(const char name[]) const
@@ -224,6 +230,9 @@ struct ldr_data_table_entry
         {
           const ldr_data_table_entry * const entry = 
                                     reinterpret_cast<ldr_data_table_entry *>(it);
+          // work arround ghost modules
+          if(!entry->BaseDllName.size())
+            continue;
           for ( unsigned short i = 0; i != entry->BaseDllName.size(); ++i )
           {
             if ( (entry->BaseDllName[i] ^ name[i]) & 0x5F )

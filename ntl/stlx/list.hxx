@@ -1,6 +1,6 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  Class template list [23.2.2 lib.list]
+ *  Class template list [23.2.4 lib.list]
  *
  ****************************************************************************
  */
@@ -28,7 +28,7 @@ namespace std {
 /**\addtogroup  lib_sequence *********** Sequences [23.2] *******************
  *@{*/
 
-/// Class template list [23.2.2]
+/// Class template list [23.2.4]
 ///\todo  node caching
 template <class T, class Allocator = allocator<T> >
 class list
@@ -148,7 +148,7 @@ class list
     typedef std::reverse_iterator<iterator>       reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-    ///\name construct/copy/destroy [23.2.2.1]
+    ///\name construct/copy/destroy [23.2.4.1]
 
     explicit list(const Allocator& a = Allocator())
     : node_allocator(a), size_(0) 
@@ -242,6 +242,7 @@ class list
     const_iterator          begin() const { return head.next; }
     iterator                end()         { return &head; }
     const_iterator          end()   const { return &head; }
+
     reverse_iterator        rbegin()      { return reverse_iterator(end()); }
     const_reverse_iterator  rbegin() const
       { return const_reverse_iterator(end()); }
@@ -249,12 +250,12 @@ class list
     const_reverse_iterator  rend() const
       { return const_reverse_iterator(begin()); }
 
-    const_iterator cbegin() const { return begin(); }
-    const_iterator cend() const   { return end(); }
-    const_reverse_iterator crbegin() const { return rbegin(); }
-    const_reverse_iterator crend() const   { return rend(); }
+    const_iterator          cbegin() const { return begin(); }
+    const_iterator          cend()   const { return end(); }
+    const_reverse_iterator  crbegin()const { return rbegin(); }
+    const_reverse_iterator  crend()  const { return rend(); }
 
-    ///\name capacity [23.2.2.2]
+    ///\name capacity [23.2.4.2]
 
     bool      empty()     const { return size_ == 0; }
     size_type size()      const { return size_; }
@@ -274,7 +275,7 @@ class list
     reference       back()        { return *(--end()); }
     const_reference back()  const { return *(--end()); }
 
-    ///\name modifiers [23.2.2.3]
+    ///\name modifiers [23.2.4.3]
 
     __forceinline
     void push_front(const T& x) { insert(begin(), x); }
@@ -354,7 +355,7 @@ class list
 
   public:
 
-    ///\name list operations [23.2.2.4]
+    ///\name list operations [23.2.4.4]
 
     void splice(iterator position, list<T, Allocator>& x);
 
@@ -387,7 +388,7 @@ class list
       if ( size() < 2 ) return;
       iterator i = --end();
       do { const iterator next = i--; if ( *next == *i ) erase(next); }
-      while ( i != begin() )
+      while ( i != begin() );
     }
 
     template <class BinaryPredicate>
@@ -396,22 +397,10 @@ class list
       if ( size() < 2 ) return;
       iterator i = --end();
       do { const iterator next = i--; if ( binary_pred(*next, *i) ) erase(next); }
-      while ( i != begin() )
+      while ( i != begin() );
     }
 
     void merge(list<T, Allocator>& x);
-#if 0
-    {
-      iterator i = begin();
-      iterator x_i = x.begin();
-      while ( i != end() && x_i != x.end() )
-      {
- //       if ( *x_i < *i )
-/////
-      }
-      fix_head();
-    }
-#endif
 
     template <class Compare>
     void merge(list<T, Allocator>& x, Compare comp);
@@ -436,8 +425,6 @@ class list
 
     typename allocator_type::template rebind<node_type>::other node_allocator;
 
-    void fix_head() { head.prev->next = end(); }
-
     void init_head() { head.prev = head.next = &head; }
 
     void replace(iterator position, const T& x)
@@ -453,45 +440,45 @@ class list
 ///\name  List comparisons
 
 template <class T, class Allocator>
-bool operator==(const list<T,Allocator>& x, const list<T,Allocator>& y) throw ()
+bool operator==(const list<T,Allocator>& x, const list<T,Allocator>& y) __ntl_nothrow
 {
   return x.size() == y.size() && equal(x.begin(), x.end(), y.begin());
 }
 
 template <class T, class Allocator>
-bool operator< (const list<T,Allocator>& x, const list<T,Allocator>& y) throw ()
+bool operator< (const list<T,Allocator>& x, const list<T,Allocator>& y) __ntl_nothrow
 {
   return lexicographical_compare(x.begin(), x.end(), y.begin(), y.end());
 }
 
 template <class T, class Allocator>
-bool operator!=(const list<T,Allocator>& x, const list<T,Allocator>& y) throw ()
+bool operator!=(const list<T,Allocator>& x, const list<T,Allocator>& y) __ntl_nothrow
 {
   return ! (x == y);
 }
 
 template <class T, class Allocator>
-bool operator> (const list<T,Allocator>& x, const list<T,Allocator>& y) throw ()
+bool operator> (const list<T,Allocator>& x, const list<T,Allocator>& y) __ntl_nothrow
 {
   return y < x;
 }
 
 template <class T, class Allocator>
-bool operator>=(const list<T,Allocator>& x, const list<T,Allocator>& y) throw ()
+bool operator>=(const list<T,Allocator>& x, const list<T,Allocator>& y) __ntl_nothrow
 {
   return ! (x < y);
 }
 
 template <class T, class Allocator>
-bool operator<=(const list<T,Allocator>& x, const list<T,Allocator>& y) throw ()
+bool operator<=(const list<T,Allocator>& x, const list<T,Allocator>& y) __ntl_nothrow
 {
   return ! (y < x);
 }
 
-///\name  List specialized algorithms [23.2.2.5]
+///\name  List specialized algorithms [23.2.4.5]
 
 template <class T, class Allocator>
-void swap(list<T, Allocator>& x, list<T, Allocator>& y) throw ()
+void swap(list<T, Allocator>& x, list<T, Allocator>& y) __ntl_nothrow
 { 
   x.swap(y);
 }
@@ -501,7 +488,7 @@ void swap(list<T, Allocator>& x, list<T, Allocator>& y) throw ()
 /**@} lib_containers */
 
 ///////////////////////////////////////////////////////////////////////////
-#if 1
+#if 0
 
 template<>
 const char * list<int>::test__implementation()

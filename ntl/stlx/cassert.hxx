@@ -15,39 +15,34 @@
 #endif
 
 
-#ifndef _BUGCHECK 
-#ifdef _M_IX86
-#	define _BUGCHECK(msg, line)      \
-{                                 \
-  static const char m[] = msg;    \
-  __asm mov ecx, offset m         \
-  __asm mov edx, line             \
-  __asm _emit 0xf1  /* ICE BP */  \
-}
-#elif defined _M_X64
-#	define _BUGCHECK(msg, line)	__debugbreak();
-#else
-#error unsupported CPU type
-#endif// CPU type
-#endif// #ifndef _BUGCHECK 
+#if defined NTL__DEBUG || !defined NDEBUG
+  extern "C" const char *  __assertion_failure;
+  extern "C" unsigned      __assertion_failure_at_line;
+#define __ntl_assert(__msg, __line)\
+  { __assertion_failure = (__msg), __assertion_failure_at_line = (__line); __debugbreak(); }
 
-
-#ifdef NTL__DEBUG
-#define _Assert(expr) \
-  if ( !!(expr) ); else \
-  _BUGCHECK("Assertion ("#expr") failed in "__FUNCSIG__" //"__FILE__,__LINE__);\
-  ((void)0)
-#else
-#define _Assert(expr)
 #endif
 
 
-#undef assert
-
-#ifndef NDEBUG
-#define assert(expr) ((void)0)
+#ifdef NTL__DEBUG
+  #define _Assert(expr) \
+    if ( !!(expr) ); else \
+    __ntl_assert("NTL Assertion ("#expr") failed in "__FUNCSIG__" //"__FILE__,__LINE__);\
+    ((void)0)
 #else
-#define assert(expr) (not implemented)
+  #define _Assert(expr)
+#endif
+
+//#undef assert
+#ifndef assert
+  #ifdef NDEBUG
+    #define assert(expr) ((void)0)
+  #else
+    #define assert(expr) \
+      if ( !!(expr) ); else \
+      __ntl_assert("Assertion ("#expr") failed in "__FUNCSIG__" //"__FILE__,__LINE__);\
+      ((void)0)
+  #endif
 #endif
 
 //}//namespace std

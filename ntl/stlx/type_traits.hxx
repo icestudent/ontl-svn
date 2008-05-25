@@ -473,12 +473,12 @@ template <class T> struct is_compound
 
 template <class T> struct is_const          : public false_type {};
 template <class T> struct is_const<const T> : public true_type {};
-_CHECK_TRAIT(is_const<volatile int>::value == 0);
+_CHECK_TRAIT(is_const<volatile int>::value == false);
 _CHECK_TRAIT(is_const<const int>::value);
 
 template <class T> struct is_volatile             : public false_type {};
 template <class T> struct is_volatile<volatile T> : public true_type {};
-_CHECK_TRAIT(is_volatile<const int>::value == 0);
+_CHECK_TRAIT(is_volatile<const int>::value == false);
 _CHECK_TRAIT(is_volatile<volatile int>::value);
 
 template <class T> struct is_pod

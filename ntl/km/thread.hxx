@@ -34,6 +34,9 @@ NTL__EXTERNAPI
 kthread * __stdcall
   PsGetCurrentThread();
 
+NTL__EXTERNAPI
+legacy_handle __stdcall
+  PsGetCurrentThreadId();
 
 NTL__EXTERNAPI
 ntstatus __stdcall
@@ -84,6 +87,41 @@ struct kaffinity
 };
 
 
+struct kpcr : public nt::tib
+{
+  //nt::tib NtTib;
+  struct kpcr * SelfPcr;
+  struct kprcb* Prcb;
+  kirql         Irql;
+  uint32_t      IRR;
+  uint32_t      IrrActive;
+  uint32_t      IDR;
+  void *        KdVersionBlock;
+  struct kidtentry* IDT;
+  struct kgdtentry* GDT;
+  struct ktss*      TSS;
+  uint16_t    MajorVersion;
+  uint16_t    MinorVersion;
+  kaffinity   SetMember;
+  uint32_t    StallScaleFactor;
+  uint8_t     SpareUnused;
+  uint8_t     Number;
+  uint8_t     Spare0;
+  uint8_t     SecondLevelCacheAssociativity;
+  uint32_t    VdmAlert;
+  uint32_t    KernelReserved[14];
+  uint32_t    SecondLevelCacheSize;
+  uint32_t    HalReserved[16];
+  
+  uint32_t    InterruptMode;
+  char        Spare1;
+  uint32_t    KernelReserved2[17];
+//  struct _KPRCB PrcbData;
+  struct kprcb* prcb_data() { return reinterpret_cast<struct kprcb*>(this+1); }
+};
+STATIC_ASSERT(sizeof(kpcr)==(0xd70-0xc50));
+
+
 /// Common KTHREAD region
 struct kthread
 {
@@ -116,7 +154,6 @@ struct kthread
 
 };
 STATIC_ASSERT(sizeof(kthread) == 0x50);
-
 
 
 /// 2K
@@ -342,8 +379,28 @@ class system_tread : public handle, public device_traits<system_tread>
 
 };//
 
+NTL__EXTERNAPI
+ntstatus __stdcall
+  ZwYieldExecution();
+
+static inline
+ntstatus yield_execution()
+{
+  return ZwYieldExecution();
+}
+
+namespace this_thread {
+
+using km::system_tread;
+  
+void yield() { km::yield_execution(); }
+
+}//namespace this_thread
 
 }//namspace km
+
+using namespace km::this_thread;
+
 }//namespace ntl
 
 

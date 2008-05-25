@@ -621,7 +621,7 @@ class basic_string
       basic_string<charT, traits, Allocator> sum;
       sum.alloc__new(lhs.size() + 1);
       sum.append_to__reserved(lhs.begin(), lhs.end());
-      sum.push_back(rhs)
+      sum.push_back(rhs);
       return sum;
     }
 
@@ -662,9 +662,14 @@ class basic_string
       return n < str.size() - pos ? str.begin() + pos + n : str.end();
     }
 
+    iterator max__it(size_type pos, size_type n)
+    {
+      return n < str.size() - pos ? str.begin() + pos + n : str.end();
+    }
+
     void append_to__reserved(charT c)
     {
-      traits_type::assign(str.end_++, c);
+      traits_type::assign(*str.end_++, c);
     }
 
     void append_to__reserved(const_pointer s)

@@ -49,7 +49,7 @@ void * __stdcall
 NTL__EXTERNAPI
 __declspec(noalias)
 void __stdcall
-  ExFreePoolWithTag(void * p, unsigned long tag); 
+  ExFreePoolWithTag(void * __restrict p, unsigned long tag); 
 
 
 template<pool_type PoolType = PagedPool>

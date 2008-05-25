@@ -55,9 +55,11 @@ struct file_object
   kevent                    Event;
   io_completion_context *   CompletionContext;
 
+#ifdef _M_IX86
   kspin_lock                IrpListLock;
   list_entry                IrpList;
   void *                    FileObjectExtension;
+#endif
 
   ///@note ignores Vpb
   device_object * get_related_device_object()

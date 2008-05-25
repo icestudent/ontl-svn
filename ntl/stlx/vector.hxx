@@ -119,6 +119,7 @@ class vector
       vector__disp(first, last, is_integral<InputIterator>::type());
     }
 
+    __forceinline
     vector(const vector<T, Allocator>& x)
     : array_allocator(x.array_allocator)
     {
@@ -355,11 +356,18 @@ class vector
       insert__disp(position, first, last, is_integral<InputIterator>::type());
     }
 
+    __forceinline
     iterator erase(iterator position) __ntl_nothrow
     { 
-      return erase(position, position + 1);
+      // return erase(position, position + 1);
+      array_allocator.destroy(position);
+      --end_;
+      iterator i = position;
+      do move(i, i + 1); while ( ++i != end_ );
+      return position;
     }
 
+    __forceinline
     iterator erase(iterator first, iterator last) __ntl_nothrow
     {
       for ( iterator i = last; i != first;  ) array_allocator.destroy(--i);
@@ -376,6 +384,7 @@ class vector
       std::swap(capacity_, x.capacity_);
     }
 
+    __forceinline
     void clear() __ntl_nothrow
     {
       difference_type n = end_ - begin_;
@@ -420,14 +429,15 @@ class vector
     // hack: MSVC doesn't look inside function body
     void check_bounds(size_type n) const //throw(out_of_range)
     {
-      if ( n > size() ) __ntl_throw (out_of_range());
+      if ( n > size() ) __ntl_throw (out_of_range(__FUNCTION__));
     }
 
-    void move(const iterator to, const iterator from) const
+    void move(const iterator  to, const iterator from) const
     {
       array_allocator.construct(to, *from);
       array_allocator.destroy(from);
     }
+
 
     void realloc(size_type n) __ntl_throws(bad_alloc)
     {

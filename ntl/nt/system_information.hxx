@@ -140,7 +140,7 @@ class system_information_base
 
     typedef InformationClass info_class;
 
-    system_information_base() throw() : ptr(0) 
+    system_information_base() __ntl_nothrow : ptr(0) 
     {
       unsigned long length = 0;
       for ( unsigned long i = sizeof(info_class);
@@ -158,7 +158,7 @@ class system_information_base
       }
     }
 
-    ~system_information_base() throw()
+    ~system_information_base() __ntl_nothrow
     {
       delete[] ptr;
     }
@@ -218,7 +218,7 @@ struct system_process_information
 
   uint32_t              NextEntryOffset;
   uint32_t              NumberOfThreads;
-  uint8_t               _unknown1[24];
+  uint64_t              SpareLi[3];
   int64_t               CreateTime;
   int64_t               UserTime;
   int64_t               KernelTime;
@@ -228,7 +228,7 @@ struct system_process_information
   legacy_handle         InheritedFromUniqueProcessId;
   int32_t               HandleCount;
   uint32_t              SessionId;
-  uint32_t              _unknown2;
+  uint32_t              PageDirectoryBase;
   // VM counters
   size_t                PeakVirtualSize;
   size_t                VirtualSize;
@@ -242,7 +242,7 @@ struct system_process_information
   size_t                PagefileUsage;
   size_t                PeakPagefileUsage;
   size_t                PrivatePageCount;
-  // IO counters
+  // IO counters (win2K+)
   uint64_t              ReadOperationCount;
   uint64_t              WriteOperationCount;
   uint64_t              OtherOperationCount;
@@ -255,21 +255,27 @@ struct system_process_information
   typedef const system_thread_information *     const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-
   const_iterator begin() const
   { 
-    return end() - NumberOfThreads;
+    // ST: does not depend on sizeof(system_process_information) && should also support NT4
+    return reinterpret_cast<system_thread_information*>(
+          uintptr_t(this) + NextEntryOffset
+          - (ImageName.size() ? ImageName.max_size()*sizeof(const_unicode_string::value_type) : 0))
+      - NumberOfThreads;
+    //return reinterpret_cast<system_thread_information*>(this + 1);
   }
   
   const_iterator end() const
   {
-    return reinterpret_cast<system_thread_information*>(
-      uintptr_t(this) + NextEntryOffset
-      - (ImageName.size() ? ImageName.max_size()*sizeof(const_unicode_string::value_type) : 0));
+    return begin() + NumberOfThreads;
   }
 
-  const_reverse_iterator  rbegin() const { return const_reverse_iterator(end()); }
+  const_reverse_iterator  rbegin() const { return const_reverse_iterator(const_iterator()); }
   const_reverse_iterator  rend() const  { return const_reverse_iterator(begin()); }
+  const_iterator cbegin() const { return begin(); }
+  const_iterator cend()   const { return end(); }
+  const_reverse_iterator  crbegin() const { return rbegin(); }
+  const_reverse_iterator  crend()   const { return rend(); }
 
 };
 STATIC_ASSERT(sizeof(system_process_information) == 0xB8);
@@ -305,7 +311,7 @@ struct system_processes: public system_process_information
       }
 
     ///////////////////////////////////////////////////////////////////////////
-    private:
+ //   private:
 
       const system_process_information * p;
 
@@ -315,20 +321,15 @@ struct system_processes: public system_process_information
       friend struct system_processes;
   };
 
-  const_iterator begin() const
-  { 
-    return this;
-  }
-  
-  const_iterator end() const
-  { 
-    return 0;
-  }
+  const_iterator begin() const {  return this; }
+  const_iterator end() const { return 0; }
+  const_iterator cbegin() const {  return this; }
+  const_iterator cend() const { return 0; }
 
   const system_process_information * 
-  find_process(const const_unicode_string & image_name)
+  find_process(const const_unicode_string & image_name) const
   {
-    for ( const_iterator it = begin(); it != end(); ++it )
+    for ( const_iterator it = cbegin(); it != cend(); ++it )
       if ( image_name == it->ImageName )
         return &*it;
     return 0;
@@ -387,6 +388,10 @@ struct system_modules_information //RTL_PROCESS_MODULES
   const_reverse_iterator  rbegin() const { return const_reverse_iterator(end()); }
   reverse_iterator        rend()        { return reverse_iterator(begin()); }
   const_reverse_iterator  rend() const  { return const_reverse_iterator(begin()); }
+  const_iterator          cbegin() const { return begin(); }
+  const_iterator          cend()   const { return end(); }
+  const_reverse_iterator  crbegin()const { return rbegin(); }
+  const_reverse_iterator  crend()  const { return rend(); }
 
   /// @note returns Modules[0] when file_name == nullptr
   __forceinline

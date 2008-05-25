@@ -107,14 +107,14 @@ struct file_information_base
 {
     typedef InformationClass info_class;
 
-    file_information_base(legacy_handle file_handle) throw()
+    file_information_base(legacy_handle file_handle) __ntl_nothrow
     : status_(_query(file_handle, &info, sizeof(info)))
     {/**/}
 
     file_information_base(
       legacy_handle       file_handle,
       const info_class &  info
-      ) throw()
+      ) __ntl_nothrow
     : status_(_set(file_handle, &info, sizeof(info)))
     {/**/}
 
@@ -166,13 +166,13 @@ struct file_information
                                 NtQueryInformationFile,
                                 NtSetInformationFile>
 {
-  file_information(legacy_handle file_handle) throw()
+  file_information(legacy_handle file_handle) __ntl_nothrow
   : file_information_base<InformationClass, NtQueryInformationFile, NtSetInformationFile>(file_handle)
   {/**/}
 
   file_information(
     legacy_handle             file_handle,
-    const InformationClass &  info) throw()
+    const InformationClass &  info) __ntl_nothrow
   : file_information_base<InformationClass,
                           NtQueryInformationFile,
                           NtSetInformationFile>(file_handle, info)
@@ -214,16 +214,19 @@ struct file_rename_information
 {
   static const file_information_class info_class_type = FileRenameInformation;
 
+  typedef std::unique_ptr<uint8_t[]> file_rename_information_ptr;
+
   static inline
-    std::auto_ptr<file_rename_information>
+    file_rename_information_ptr
       alloc(
         const const_unicode_string &  new_name,
         bool                          replace_if_exists,
         legacy_handle                 root_directory = legacy_handle())
     {
-      return std::auto_ptr<file_rename_information>(
-            new (new_name.size()*sizeof(wchar_t))
-            file_rename_information(new_name, replace_if_exists, root_directory));
+      file_rename_information_ptr ptr ( 
+        new uint8_t[sizeof(file_rename_information) + new_name.size()*sizeof(wchar_t)] );
+      new (ptr.get()) file_rename_information(new_name, replace_if_exists, root_directory);
+      return ptr;
     }
 
     bool          ReplaceIfExists;
@@ -244,18 +247,6 @@ struct file_rename_information
       std::copy(new_name.begin(), new_name.end(), FileName);
     }
 
-  void * operator new(std::size_t size, uint32_t filename_length) throw()
-  {
-    return ::operator new[](size + filename_length);
-  }
-
-  void operator delete(void* p)
-  {
-    ::operator delete[](p);
-  }
-
-  friend class std::auto_ptr<file_rename_information>;
-
 };
 
 template<>
@@ -263,7 +254,7 @@ struct file_information<file_rename_information>
 {
     file_information(
       legacy_handle                   file_handle,
-      const file_rename_information & info) throw()
+      const file_rename_information & info) __ntl_nothrow
     : status_(_set(file_handle, &info,
               sizeof(info) + info.FileNameLength - sizeof(wchar_t)))
     {/**/}

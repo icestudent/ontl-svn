@@ -35,6 +35,7 @@ using nt::io_apc_routine;
 using nt::device_power_state;
 using nt::system_power_state;
 
+struct kthread;
 
 //enum mode { KernelMode, UserMode };
 struct kprocessor_mode { uint8_t mode; };
@@ -75,16 +76,6 @@ static inline
 bool get_version(uint32_t & major_version, uint32_t & minor_version)
 {
   return PsGetVersion(&major_version, &minor_version, 0, 0);
-}
-
-NTL__EXTERNAPI
-ntstatus __stdcall
-  ZwYieldExecution();
-
-static inline
-ntstatus yield_execution()
-{
-  return ZwYieldExecution();
 }
 
 
@@ -200,6 +191,7 @@ struct dispatcher_header
   list_entry  WaitListHead;
 };
 
+struct kgate  { dispatcher_header Header; };
 
 struct kevent { dispatcher_header Header; };
 
@@ -333,178 +325,6 @@ struct kdpc
 };
 
 
-NTL__EXTERNAPI void *     MmHighestUserAddress;
-NTL__EXTERNAPI void *     MmSystemRangeStart;
-NTL__EXTERNAPI uintptr_t  MmUserProbeAddress;
-
-static inline
-void * highest_user_address()
-{
-  return MmHighestUserAddress;
-}
-
-static inline
-void * lowest_user_address()
-{
-  return (void*)0x10000;
-}
-
-static inline
-bool valid_user_address(const void * p)
-{
-  return lowest_user_address() <= p && p < highest_user_address();
-}
-
-
-typedef uint64_t physical_address;
-
-struct physical_memory_range
-{
-  physical_address  BaseAddress;
-  int64_t           NumberOfBytes;
-};
-
-
-NTL__EXTERNAPI
-physical_address __stdcall
-  MmGetPhysicalAddress(const void * BaseAddress);
-
-
-struct mdl;
-struct irp;
-
-NTL__EXTERNAPI
-void * __stdcall
-  MmMapLockedPages(
-    const mdl *     MemoryDescriptorList,
-    kprocessor_mode AccessMode
-    );
-
-NTL__EXTERNAPI
-void * __stdcall
-  MmUnmapLockedPages(
-    void *      BaseAddress,
-    const mdl * MemoryDescriptorList
-    );
-
-NTL__EXTERNAPI
-mdl * __stdcall
-  IoAllocateMdl(
-    void *    VirtualAddress,
-    uint32_t  Length,
-    bool      SecondaryBuffer,
-    bool      ChargeQuota,
-    irp *     Irp             __optional
-    );
-
-NTL__EXTERNAPI
-void  __stdcall
-IoFreeMdl(
-    mdl * Mdl
-    );
-
-NTL__EXTERNAPI
-void  __stdcall
-  MmBuildMdlForNonPagedPool(
-    mdl * MemoryDescriptorList
-    );
-
-struct mdl
-{
-    mdl *     Next;
-    int16_t   Size;
-    //int16_t   MdlFlags;
-    uint16_t  mapped_to_system_va     : 1;
-    uint16_t  pages_locked            : 1;
-    uint16_t  source_is_nonpaged_pool : 1;
-    uint16_t  allocated_fixed_size    : 1;
-    uint16_t  partial                 : 1;
-    uint16_t  partial_has_been_mapped : 1;
-    uint16_t  io_page_read            : 1;
-    uint16_t  write_operation         : 1;
-    uint16_t  parent_mapped_system_va : 1;
-    uint16_t  free_extra_ptes         : 1;
-    uint16_t  describes_awe           : 1;
-    uint16_t  io_space                : 1;
-    uint16_t  network_header          : 1;
-    uint16_t  mapping_can_fail        : 1;
-    uint16_t  allocated_must_succeed  : 1;
-    struct _EPROCESS *  Process;
-    void *    MappedSystemVa;
-    void *    StartVa;
-    uint32_t  ByteCount;
-    uint32_t  ByteOffset;
-
-    void * operator new(
-      std::size_t,
-      void *    virtual_address,
-      uint32_t  length,
-      bool      Secondary_buffer  = false,
-      bool      charge_quota     = false,
-      irp *     pirp             = 0
-      ) throw()
-    {
-      return
-        IoAllocateMdl(virtual_address, length, Secondary_buffer, charge_quota, pirp);
-    }
-
-    void operator delete(void * pmdl) throw()
-    {
-      if ( pmdl ) IoFreeMdl(reinterpret_cast<mdl *>(pmdl));
-    }
-
-    void build_for_non_paged_pool()
-    {
-      MmBuildMdlForNonPagedPool(this);
-    }
-
-    mdl * next() const
-    {
-      return Next;
-    }
-
-    const uint32_t * pfn_array() const
-    {
-      return reinterpret_cast<const uint32_t *>(&this[1]);
-    }
-
-    ///\note valid in in the context of the subject thread
-    uintptr_t virtual_address() const
-    {
-      return uintptr_t(StartVa) + ByteOffset;
-    }
-
-    void * map_locked_pages(kprocessor_mode AccessMode = KernelMode) const
-    {
-      return MmMapLockedPages(this, AccessMode);
-    }
-
-    void unmap_locked_pages(void * base_address) const
-    {
-      MmUnmapLockedPages(base_address, this);
-    }
-
-    void * system_address() const
-    {
-      return mapped_to_system_va || source_is_nonpaged_pool
-          ? MappedSystemVa : map_locked_pages();
-    }
-
-    uint32_t byte_count() const
-    {
-      return ByteCount;
-    }
-
-    uint32_t total_bytes() const
-    {
-      uint32_t size = 0;
-      for ( const mdl * p = this; p; p = p->next() )
-        size += p->ByteCount;
-      return size;
-    }
-};
-
-
 struct ksemaphore
 {
   dispatcher_header Header;
@@ -530,6 +350,21 @@ struct work_queue_item
 };
 
 
+struct fast_mutex
+{
+  static const int32_t  lock_bit_v        = 0;
+  static const int32_t  lock_bit          = 1;
+  static const int32_t  lock_waiter_woken = 2;
+  static const int32_t  lock_waiter_inc   = 0;
+
+  /*volatile*/ int32_t      Count;
+  kthread *             Owner;
+  uint32_t              Contention;
+//  synchronization_event Gate;
+  kevent                Gate;
+  uint32_t              OldIrql;
+};
+
 struct kmutant 
 {
   dispatcher_header   Header;
@@ -538,6 +373,88 @@ struct kmutant
   unsigned char       Abandoned;
   unsigned char       ApcDisable;
 };
+
+
+struct kguarded_mutex 
+{
+  static const int32_t  lock_bit_v        = 0;
+  static const int32_t  lock_bit          = 1;
+  static const int32_t  lock_waiter_woken = 2;
+  static const int32_t  lock_waiter_inc   = 0;
+
+  int32_t   Count;
+  kthread*  Owner;
+  uint32_t  Contention;
+  kgate     Gate;
+  int16_t   KernelApcDisable;
+  int16_t   SpecialApcDisable;
+};
+
+typedef uintptr_t eresource_thread_t;
+
+struct owner_entry
+{
+  eresource_thread_t OwnerThread;
+  union { int32_t OwnerCount; uint32_t TableSize; };
+};
+
+
+typedef uint16_t eresource_flag_t;
+static const eresource_flag_t
+  ResourceNeverExclusive        = 0x10,
+  ResourceReleaseByOtherThread  = 0x20,
+  ResourceOwnedExclusive        = 0x80;
+
+struct eresource
+{
+  list_entry        SystemResourcesList;
+  owner_entry *     OwnerTable;
+  int16_t           ActiveCount;
+  eresource_flag_t  Flag;
+  volatile ksemaphore * SharedWaiters;
+  volatile kevent *     ExclusiveWaiters;
+  owner_entry       OwnerEntry[2];
+  uint32_t          ContentionCount;
+  int16_t           NumberOfSharedWaiters;
+  int16_t           NumberOfExclusiveWaiters;
+  union
+  {
+    void *    Address;
+    uintptr_t CreatorBackTraceIndex;
+  };
+  kspin_lock SpinLock;
+};
+STATIC_ASSERT(sizeof(eresource)==0x38);
+
+
+union ex_rundown_ref
+{
+  uint32_t  Count;
+  void *    Ptr;
+};
+
+union ex_fast_ref
+{
+  void *    Object;
+  uint32_t  RefCnt:3;
+  uint32_t  Value;
+};
+
+struct ex_push_lock
+{
+  union
+  {
+    struct flags
+    {
+      /*<bitfield this+0x0>*/ /*|0x4|*/ uint32_t Waiting    :1;
+      /*<bitfield this+0x0>*/ /*|0x4|*/ uint32_t Exclusive  :1;
+      /*<bitfield this+0x0>*/ /*|0x4|*/ uint32_t Shared     :0x1E;
+    };
+    /*<thisrel this+0x0>*/ /*|0x4|*/ uint32_t Value;
+    /*<thisrel this+0x0>*/ /*|0x4|*/ void* Ptr;
+  };
+};// <size 0x4>
+
 
 
 }//namespace ntl

@@ -382,7 +382,7 @@ class basic_ios : public ios_base
     {
       if ( !rdbuf() ) state |= badbit;
       const iostate failre = static_cast<iostate>((this->state = state) & exceptmask);
-      if ( failre ) __ntl_throw(failure(__get_iostate_c_str(failre)));
+      if ( failre ) __ntl_throw (failure(__get_iostate_c_str(failre)));
     }
 
     __forceinline
