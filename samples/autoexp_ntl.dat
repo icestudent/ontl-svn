@@ -4,6 +4,7 @@
 ; v 0.1 - supports basic_string, list, vector, stack, auto_ptr, pair
 ; v 0.2 - added bitset
 ; v 0.3 - added set & map
+; v 0.4 - array, rbtree, negators
 ;---------------------------------------------------------------
 ;
 ; While debugging, Data Tips and items in the Watch and Variable
@@ -104,8 +105,27 @@ std::greater<*>=greaterthan
 
 [Visualizer]
 ; This section contains visualizers for STL and ATL containers
-; DO NOT MODIFY
+;------------------------------------------------------------------------------
+;  std::array
+;------------------------------------------------------------------------------
+std::array<*> {
+	preview (
+		; An actual array is previewed with its address.
+		; array<T, N> is previewed like vector<T>.
+		#(
+			"[",
+			$e.__actual_size,
+			"](",
+			#array(expr: $e.__elems[$i], size: $e.__actual_size),
+			")"
+		)
+	)
 
+	children (
+		; Just like an actual array.
+		#array(expr: $e.__elems[$i], size: $e.__actual_size)
+	)
+}
 ;------------------------------------------------------------------------------
 ;  std::vector<bool,*> specialization
 ;------------------------------------------------------------------------------
@@ -623,18 +643,18 @@ std::multiset<*>{
 
 
 ;------------------------------------------------------------------------------
-;  std::_Tree (shared my map/multimap/set/multiset)
+;  tree::rbtree::rbtree (shared my map/multimap/set/multiset)
 ;------------------------------------------------------------------------------
 
-std::_Tree<*>::iterator|std::_Tree<*>::const_iterator{
+tree::rbtree::rbtree<*>::iterator|tree::rbtree::rbtree<*>::const_iterator{
 	preview
 	(
-		#($e._Ptr->_Myval)
+		#($e.p->elem)
 	)
 	
 	children
 	(
-		#(ptr: $e._Ptr->_Myval)
+		#(ptr: $e.p->elem)
 	)
 
 	
@@ -787,6 +807,36 @@ std::valarray<*>{
 			expr :	($c._Myptr)[$i],  
 			size :	$c._Mysize
 		)
+	)
+}
+
+; STL negators are previewed with "not[12](<stored functor>)".
+; They have a child with the fake name of [pred], so that the
+; stored functor can be inspected.
+std::unary_negate<*>{
+	preview (
+		#(
+			"not1(",
+			$e.pred,
+			")"
+		)
+	)
+
+	children (
+		#([pred] : $e.pred)
+	)
+}
+std::binary_negate<*>{
+	preview (
+		#(
+			"not2(",
+			$e.pred,
+			")"
+		)
+	)
+
+	children (
+		#([pred] : $e.pred)
 	)
 }
 
