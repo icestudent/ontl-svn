@@ -52,32 +52,45 @@
   #endif
 #endif
 
-#ifndef alignas
-  #ifdef _MSC_VER
-    #define alignas(X) __declspec(align(X))
-  #else
-    #error unsupported compiler
-  #endif
-#endif
-
-#ifndef alignof
-  #ifdef _MSC_VER
-  #if _MSC_VER <= 1500
-    #define alignof(X) __alignof(X)
-  #endif
-  #else
-    #error unsupported compiler
-  #endif
-#endif
-static_assert(alignof(int)==alignof(unsigned int), "wierd platform");
-
-#ifndef __align
-  #define __align(X) __declspec(align(X))
-#endif
-
 #if __cplusplus <= 199711L
+
+  #ifndef alignas
+    #ifdef _MSC_VER
+      #define alignas(X) __declspec(align(X))
+    #else
+      #error unsupported compiler
+    #endif
+  #endif
+
+  #ifndef alignof
+    #ifdef _MSC_VER
+    #if _MSC_VER <= 1500
+      #define alignof(X) __alignof(X)
+    #endif
+    #else
+      #error unsupported compiler
+    #endif
+  #endif
+  static_assert(alignof(int)==alignof(unsigned int), "wierd platform");
+
+  //static const char __func__[]
+  #ifndef __func__
+    #ifdef _MSC_VER
+      //#define __func__ __FUNCDNAME__
+      #define __func__ __FUNCSIG__
+      //#define __func__ __FUNCTION__
+    #else
+      #error unsupported compiler
+    #endif
+  #endif
+
+  #ifndef __align
+    #define __align(X) __declspec(align(X))
+  #endif
+
   #define constexpr
-#endif
+
+#endif//__cplusplus <= 199711L
 
 namespace std {
 

@@ -31,7 +31,7 @@ class type_info
     bool operator==(const type_info& rhs) const;
     bool operator!=(const type_info& rhs) const;
     bool before(const type_info& rhs) const;
-    const char* name() const;
+    const char* name() const { return mname; }
   private:
     type_info(const type_info& rhs);
     type_info& operator=(const type_info& rhs);
