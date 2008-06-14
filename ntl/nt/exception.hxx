@@ -534,14 +534,16 @@ struct cxxregistration : public nt::exception::registration
     callsettingframe(void (*unwindfunclet)(), int /*nlg_notify_param*/ = 0x103)
   {
     uintptr_t const _ebp = stackbaseptr();
-    __asm mov eax, unwindfunclet
-    __asm push ebp
-    __asm mov ebp, _ebp
-    __asm call eax;
-    __asm pop ebp
+    __asm mov   eax, unwindfunclet
+    __asm push  ebp
+    __asm mov   ebp, _ebp
+    __asm call  eax;
+    __asm pop   ebp
   }
   #pragma warning(pop)
 
+  /// 15.2/3  If a destructor called during stack unwinding exits with an exception,
+  ///         std::terminate is called.
   static exception_filter unwindfilter(ntstatus code)
   {
     switch ( code )
