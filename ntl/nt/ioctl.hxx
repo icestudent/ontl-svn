@@ -138,10 +138,10 @@ template <file_device::type DeviceType,
           file_access::type Access>
 struct ioctl
 {
-  STATIC_ASSERT((DeviceType <= file_device::_max_reserved)
-    && Function <= function<function<0>::_max_reserved>::custom
-              && (Method & ~3) == 0
-              && (Access & ~3) == 0);
+  static_assert(DeviceType <= file_device::_max_reserved, __name__" invalid DeviceType");
+  static_assert(Function <= function<function<0>::_max_reserved>::custom, __name__" invalid Function");
+  static_assert((Method & ~3) == 0, __name__" invalid Method");
+  static_assert((Access & ~3) == 0, __name__" invalid Access");
 
   static const method::type       method    = Method;
   static const uint16_t           function  = Function;

@@ -1,6 +1,6 @@
 
-///\file C++ exception support runtime
-/// This must be a separate compilation unit to support /GL for other ones.
+///\file  C++ exception support runtime
+///\note  This must be a separate compilation unit to support /GL for other ones.
 
 #define NTL__OTHEREHMAGICS
 
@@ -37,22 +37,32 @@ uint32_t get_eax()
   __asm xchg eax, eax
 }
 
-/// throw T; implementation
-///\ note both pointers are null if re-throw (throw;)
+
+/// throw T; implementation.
+/// 15.1/1  Throwing an exception transfers control to a handler
+///         An object is passed and the type of that object determines which
+///         handlers can catch it.
+///\note    MSVC's throw; statement sets both pointers to nulls.
+__declspec(noreturn)
 extern "C"
 void __stdcall _CxxThrowException(void * object, _s__ThrowInfo const * info)
 {
-  uintptr_t args[] = { _EH_MAGIC, (uintptr_t)object, (uintptr_t)info };
-  RaiseException(exception_record::cxxmagic, nt::exception::noncontinuable, sizeof(args)/sizeof(*args), args);
+  std::array<uintptr_t, 3> args = { _EH_MAGIC, (uintptr_t)object, (uintptr_t)info };
+  raise_exception(exception_record::cxxmagic, nt::exception::noncontinuable, args);
 }
 
-/// indirectly called by OS' dispatcher
+///\see exception_handler
+/// indirectly called by _CxxThrowException -> RtlDispatchException (RtlpExecuteHandlerForException)
+/// OR RtlUnwind (RtlpExecuteHandlerForUnwind)
 extern "C"
-exception_disposition __cdecl /*actually not, the first ehfuncinfo* arg is passed in EAX*/
-__CxxFrameHandler3 (const exception_record *  er,
-                          cxxregistration *   frame,
-                    const nt::context *       ectx,
-                    ehdispatchercontext *     dispatch)
+exception_disposition
+__cdecl ///\note actually the first arg is passed in EAX register
+__CxxFrameHandler3 (
+  /** ehfuncinfo * eax */
+  exception_record *    er,     ///< thrown NT exception
+  cxxregistration *     frame,  ///< tib::ExceptionList node
+  nt::context *         ectx,
+  dispatcher_context *  dispatch)
 {
   const ehfuncinfo* const ehfi = reinterpret_cast<const ehfuncinfo*>(get_eax());
   return cxxframehandler(er, frame, ectx, dispatch, ehfi);

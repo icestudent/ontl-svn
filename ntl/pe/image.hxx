@@ -457,6 +457,7 @@ class image
           ordinal(pe, static_cast<uint16_t>(reinterpret_cast<uintptr_t>(ord))) :
           ordinal(pe, reinterpret_cast<const char*>(ord));
       }
+
       void * function(const image * pe, uint32_t ordinal) const 
       {
         return ordinal < NumberOfFunctions

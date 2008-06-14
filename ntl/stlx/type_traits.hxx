@@ -9,6 +9,7 @@
 
 #include "cstddef.hxx"
 #include "limits.hxx"
+//#include "utility.hxx"//std::pair
 
 #ifndef NTL__STLX_TYPE_TRAITS
 #define NTL__STLX_TYPE_TRAITS
@@ -481,6 +482,7 @@ template <class T> struct is_volatile<volatile T> : public true_type {};
 _CHECK_TRAIT(is_volatile<const int>::value == false);
 _CHECK_TRAIT(is_volatile<volatile int>::value);
 
+///\warning what about std::pair<int, int> ?
 template <class T> struct is_pod
 : public integral_constant<
     bool, __is_pod(typename remove_extent<T>::type) // __is_pod will return false on fundamental types

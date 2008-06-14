@@ -35,23 +35,21 @@ namespace ntl {
       };
     };
 
-   NTL__EXTERNAPI
+     NTL__EXTERNAPI
       ntstatus __stdcall
-      DbgPrint(
-      const char  Format[],
-      ...
-      );
+        DbgPrint(
+          const char  Format[],
+          ...
+          );
 
     NTL__EXTERNAPI
       ntstatus __stdcall
-      DbgPrintEx(
-      dpfltr::type  ComponentId,
-      dpfltr::level Level,
-      const char    Format[],
-      ...
-      );
-
-
+        DbgPrintEx(
+          dpfltr::type  ComponentId,
+          dpfltr::level Level,
+          const char    Format[],
+          ...
+          );
 
     //warning C4100: 'XXX' : unreferenced formal parameter
 #pragma warning(push)
@@ -212,12 +210,12 @@ namespace ntl {
 
       void operator()(const char msg[], const const_unicode_string & msg2) const
       { 
-        printf("%s`%S'", msg, msg2.data());
+        printf("%s`%wZ'", msg, &msg2);
       }
 
       void operator()(const char msg[], const unicode_string & msg2) const
       { 
-        printf("%s`%S'", msg, msg2.data());
+        printf("%s`%wZ'", msg, &msg2);
       }
     };
 
