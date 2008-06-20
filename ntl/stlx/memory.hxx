@@ -16,7 +16,8 @@
 #include "type_traits.hxx"
 #include "utility.hxx"
 #include "new.hxx"
-#include <stdlib.hxx>
+#include "stdlib.hxx"
+#include "../linked_ptr.hxx"
 
 namespace std {
 
@@ -661,8 +662,10 @@ template<class T> class weak_ptr;
 
 /// 20.6.12.2 Class template shared_ptr [util.smartptr.shared]
 template<class T>
-class shared_ptr
+class shared_ptr : ntl::linked_ptr<T>
 {
+    typedef ntl::linked_ptr<T> base_type;
+
   ///////////////////////////////////////////////////////////////////////////
   public:
 
@@ -670,8 +673,18 @@ class shared_ptr
 
     ///\name  20.6.12.2.1 shared_ptr constructors [util.smartptr.shared.const]
 
-    shared_ptr() __ntl_nothrow;
-    template<class Y> explicit shared_ptr(Y* p);
+    /// 1 Effects: Constructs an empty shared_ptr object.
+    /// 2 Postconditions: use_count() == 0 && get() == 0.
+    shared_ptr() __ntl_nothrow : base_type() {}
+
+    /// 5 Effects: Constructs a shared_ptr object that owns the pointer p.
+    /// 6 Postconditions: use_count() == 1 && get() == p
+    ///\note does not throw bad_alloc since needs mo heap memory
+    template<class Y> explicit shared_ptr(Y* p) : base_type(p)
+    {
+      
+    }
+
     template<class Y, class D> shared_ptr(Y* p, D d);
     template<class Y, class D, class A> shared_ptr(Y* p, D d, A a);
     template<class Y> shared_ptr(const shared_ptr<Y>& r, T *p);
@@ -684,8 +697,17 @@ class shared_ptr
     template <class Y, class D> explicit shared_ptr(const unique_ptr<Y, D>& r) = delete;
 //    template <class Y, class D> explicit shared_ptr(unique_ptr<Y, D>&& r);
 
-    ///\name  20.6.6.2.2 shared_ptr destructor [util.smartptr.shared.dest]
-    ~shared_ptr();
+    ///\name  20.6.12.2.2 shared_ptr destructor [util.smartptr.shared.dest]
+    /// — If *this is empty or shares ownership with another shared_ptr instance
+    ///   (use_count() > 1), there are no side effects.
+    /// — Otherwise, if *this owns a pointer p and a deleter d, d(p) is called.
+    /// — Otherwise, *this owns a pointer p, and delete p is called.
+    __forceinline
+    ~shared_ptr()
+    {
+      if ( unique() )
+        delete base_type::get();
+    }
 
     ///\name  20.6.6.2.3 shared_ptr assignment [util.smartptr.shared.assign]
     shared_ptr& operator=(shared_ptr const& r);
@@ -701,20 +723,27 @@ class shared_ptr
 
     ///\name  20.6.6.2.5 shared_ptr observers [util.smartptr.shared.obs]
 
-    T & operator* ()  const __ntl_nothrow { return *get(); }
-    T * operator->()  const __ntl_nothrow { return get(); }
-    T * get()         const;//__ntl_nothrow
+    T & operator* ()  const __ntl_nothrow { return *base_type::get(); }
+    T * operator->()  const __ntl_nothrow { return base_type::get(); }
+    T * get()         const __ntl_nothrow { return base_type::get(); }
 
-    long use_count() const;//__ntl_nothrow
-    bool unique() const;//__ntl_nothrow
-    operator bool () const;//__ntl_nothrow
+    //long use_count() const __ntl_nothrow { return base_type::use_count(); }
+    using base_type::use_count;
 
+    //bool unique()    const __ntl_nothrow { return base_type::unique(); }
+    using base_type::unique;
+    
+    //operator base_type::unspecified_bool_type() const __ntl_nothrow
+    //{ 
+    //  return base_type::operator base_type::unspecified_bool_type();
+    //}
+    using base_type::operator base_type::unspecified_bool_type;
+    
     ///@}
 
   ///////////////////////////////////////////////////////////////////////////
   private:
   
-    T * ptr;
     void set(T * p) { ptr = p; }
 };
 

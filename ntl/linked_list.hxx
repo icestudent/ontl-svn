@@ -146,10 +146,10 @@ struct containing_adaptor
     typedef ContainingType      containing_type;
     typedef MemberType          member_type;
 
-    this_type(const member_type * m) : m(m) {}
+    containing_adaptor(const member_type * m) : m(m) {}
 
     template<typename Iterator>
-    this_type(const Iterator & it) : m(&*it) {}
+    containing_adaptor(const Iterator & it) : m(&*it) {}
 
     containing_type * operator->() const
     {
@@ -158,8 +158,8 @@ struct containing_adaptor
       return reinterpret_cast<containing_type*>(uintptr_t(pc)+uintptr_t(m)-uintptr_t(pf));
     }
 
-  ///\todo  unless this is declared in the contining namecpace
-  ///       the containing_adaptor tempalte shoulbe instantiated
+  ///\todo  unless this is declared in the containing namecpace
+  ///       the containing_adaptor tempalte should be instantiated
   template<member_type containing_type:: * M>
   friend
     containing_adaptor<containing_type, member_type, M>
@@ -168,7 +168,6 @@ struct containing_adaptor
   private:
 
     const member_type * m;
-    void operator=(const containing_adaptor&);
 };
 
 }//namespace ntl  

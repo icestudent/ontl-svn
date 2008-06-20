@@ -189,7 +189,7 @@ template <class T> struct decay;
 template <bool, class T = void> struct enable_if {};
 template <class T> struct enable_if<true, T> { typedef T type; };
 
-template <bool, class T, class F> struct conditional;
+template <bool, class IfTrueType, class IfFalseType> struct conditional;
 template <class T, class F> struct conditional<true, T, F>  { typedef T type; }; 
 template <class T, class F> struct conditional<false, T, F> { typedef F type; }; 
 

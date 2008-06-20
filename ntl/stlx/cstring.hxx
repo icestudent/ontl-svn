@@ -252,6 +252,20 @@ NTL__CRTCALL
 
 }//namespace std
 
+#ifdef _MSC_VER
+// It is rumored that
+// "The compiler may call the function and not replace the function call
+// with inline instructions, _if_it_will_result_in_better_performance_"
+// And this is right in some cases.
+extern "C" int    __cdecl memcmp(const void * s1, const void * s2, size_t n);
+extern "C" void * __cdecl memcpy(void * const dst, const void * const src, size_t n);
+extern "C" void * __cdecl memset(void * const s, int c, size_t n);
+extern "C" int    __cdecl strcmp(const char * s1, const char * s2);
+extern "C" char * __cdecl strcpy(char * const dst, const char * const src);
+extern "C" size_t __cdecl strlen(const char * const s);
+extern "C" char * __cdecl strcat(char * const dst, const char * const src);
+#pragma intrinsic(memcmp, memcpy, memset, strcmp, strcpy, strlen, strcat)
+#endif
 
 // functions exported by ntdll.dll and ntoskrnl.exe
 #ifndef _INC_STDLIB// MSVC compatibility

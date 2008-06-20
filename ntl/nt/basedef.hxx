@@ -21,6 +21,7 @@ namespace nt {
  *@{*/
 
 
+///\todo implement as the double_linked typedef
 struct list_entry
 {
   union { list_entry * Flink; list_entry * next; };

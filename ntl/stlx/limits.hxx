@@ -8,6 +8,8 @@
 #ifndef NTL__STLX_LIMITS
 #define NTL__STLX_LIMITS
 
+#include "cstddef.hxx"
+#include "cstdint.hxx"
 #include "climits.hxx"
 #include "cfloat.hxx"
 

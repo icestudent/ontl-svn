@@ -35,11 +35,14 @@ class consoleapp : public win::application<win::tchar_t>
 
 };
 
+#pragma warning(push)
+#pragma warning(disable:4714)//function 'int __thiscall ntl::consoleapp::main(void)' marked as __forceinline not inlined
 int _Consoleapp_entry()
 {
   consoleapp app;
   return app.main();
 }
+#pragma warning(pop)
 
 /**@} application */
 

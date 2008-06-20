@@ -138,10 +138,10 @@ class exception
       void unwindnestedframes(record * ehrec) const
       {
         // same cast
-        registration * const top = reinterpret_cast<registration *>(teb::get(&teb::ExceptionList));
+        registration * const top = reinterpret_cast<registration*>(teb::get(&teb::ExceptionList));
         unwind(ehrec);
         ehrec->ExceptionFlags &= ~unwinding;
-        top->next = reinterpret_cast<registration *>(teb::get(&teb::ExceptionList));
+        top->next = reinterpret_cast<registration*>(teb::get(&teb::ExceptionList));
         teb::set(&teb::ExceptionList, top);
       }
       #pragma warning(push)
@@ -649,12 +649,14 @@ struct cxxrecord : public nt::exception::record
           ? exception_execute_handler : exception_continue_search;
   }
 
+  ///\note no ___security_cookie support yet
   struct catchguard : public exception_registration
   {
   	const ehfuncinfo *  funcinfo;
   	cxxregistration *   cxxreg;
-  	int					        catchdepth;
+  	int                 catchdepth;
   };
+  STATIC_ASSERT(sizeof(catchguard) == 20);
 
   //static exception_handler catchguardhandler;
   static
@@ -668,8 +670,9 @@ struct cxxrecord : public nt::exception::record
     const catchguard &cg = *static_cast<const catchguard*>(establisher_frame);
   	return cxxframehandler(er, cg.cxxreg, ctx, dispatch, cg.funcinfo,
   	                        cg.catchdepth, &cg, false);
-	}
+  }
 
+  ///\todo .SAFESEH
   generic_function_t * 
     callcatchblockhelper(
       cxxregistration *     const cxxreg,
@@ -693,7 +696,7 @@ struct cxxrecord : public nt::exception::record
   generic_function_t *
     callcatchblock(
       cxxregistration *     const cxxreg,
-      const nt::context *   const ctx,
+      const nt::context *   const /*ctx*/,
       const ehfuncinfo *    const funcinfo,
       generic_function_t *  const handler,
       int                   const catchdepth,
@@ -864,8 +867,8 @@ struct cxxrecord : public nt::exception::record
         const throwinfo * const ti = get_throwinfo();
         if ( !ti ) // rethrow?
         {
-          // MSVC keeps previous throw object in the per-thread data...
-          ///\todo
+          // MSVC keeps previous thrown object in the per-thread data...
+          // we just return to continue search in the containing scope.
           return;
         }
         for ( tryblock::ranges tr = ehfi->get_try_ranges(trylevel, cs);
@@ -880,7 +883,7 @@ struct cxxrecord : public nt::exception::record
                 {
                   catchit(ereg, ctx, dispatch, ehfi, &tb->catchsym[c],
                           ti->catchabletypearray->type[i], tb, trylevel, nested_eframe);
-                  // new or rethrown excetion
+                  // rethrown excetion
                   goto next_try;
                 }
           next_try: ;
@@ -930,7 +933,10 @@ sizeof(ehmagic1400);
 #ifdef NTL__OTHEREHMAGICS
      && ehfi->magic >= ehmagic1400
 #endif
+      #pragma warning(push)
+      #pragma warning(disable:4127)//conditional expression is constant
      && ehfi->synchronous )
+      #pragma warning(pop)
     //#endif//MSVC 14
     return ExceptionContinueSearch;
   }
@@ -942,7 +948,7 @@ sizeof(ehmagic1400);
       eframe->unwind(dispatch, ehfi);
     }
     // async exceptions are to be unwinded by __except_handler3
-    return ExceptionContinueExecution;
+    return ExceptionContinueSearch;
   }
   // handle the exception if possible
   if ( ehfi->tryblocktable_size )

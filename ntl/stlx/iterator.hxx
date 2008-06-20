@@ -8,9 +8,8 @@
 #ifndef NTL__STLX_ITERATOR
 #define NTL__STLX_ITERATOR
 
-#include "iosfwd.hxx"
-#include "cstddef.hxx"
 #include "exception.hxx"
+#include "iosfwd.hxx"
 #include "type_traits.hxx"
 
 namespace std {

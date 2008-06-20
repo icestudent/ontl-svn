@@ -68,3 +68,6 @@ __CxxFrameHandler3 (
   return cxxframehandler(er, frame, ectx, dispatch, ehfi);
 }
 
+
+///\todo __EH_prolog for /Os
+
