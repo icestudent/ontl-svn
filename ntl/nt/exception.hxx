@@ -1,6 +1,10 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  NT Exceptions
+ *  NT Exceptions support
+ *
+ *  \warning  the file contains the cxxrecord::catchguardhandler function which
+ *            has to be registered as .SAFESEH (by linking with rtl/safeseh.asm)
+ *            nevertheless /SAFESEH is still unuseful without /GS support.
  *
  ****************************************************************************
  */
@@ -79,7 +83,7 @@ class exception
     {
       static const int maximum_parameters = 15;
 
-      static const ntstatus cxxmagic = status::cxx_exception;// 0xE0000000|'msc';
+      static const ntstatus cxxmagic = status::cxx_exception;//0xE0000000|'msc';
       static const ntstatus commagic = status::com_exception;//0xE0000000|'MOC';
       static const ntstatus longjumpmagic = status::longjump;
 
@@ -133,6 +137,7 @@ class exception
 
       //_UnwindNestedFrames
       #pragma warning(push)
+      // SE handlers already registered should be SAFESEH
       #pragma warning(disable:4733)//Inline asm assigning to 'FS:0' : handler not registered as safe handler
       __declspec(noinline)
       void unwindnestedframes(record * ehrec) const
@@ -194,6 +199,7 @@ RtlUnwind(
     const void *                    ReturnValue
     );
 
+///\todo may be implemented by the __global_unwind2 call
 void inline
   unwind(const nt::exception::registration * volatile frame, const exception_record * volatile er)
 {
@@ -396,8 +402,8 @@ struct ehandler
   uint32_t isunaligned  : 1;// guess it is not used on x86
   uint32_t isreference  : 1;
 
-  const type_info *   typeinfo;
-  ptrdiff_t           eobject_bpoffset; // 0 = no object (catch by type)
+  const type_info *     typeinfo;
+  ptrdiff_t             eobject_bpoffset; // 0 = no object (catch by type)
   generic_function_t *  handler;
 
   /// 15.1/3  A throw-expression initializes a temporary object, called
@@ -602,6 +608,8 @@ inline
     const exception_registration *  const nested_eframe = 0,
     bool                            const destruct      = false);
 
+//#ifndef NTL_EH_RUNTIME
+
 struct cxxrecord : public nt::exception::record
 {
 
@@ -658,7 +666,6 @@ struct cxxrecord : public nt::exception::record
   };
   STATIC_ASSERT(sizeof(catchguard) == 20);
 
-  //static exception_handler catchguardhandler;
   static
   exception_disposition __cdecl
     catchguardhandler( 
@@ -672,7 +679,6 @@ struct cxxrecord : public nt::exception::record
   	                        cg.catchdepth, &cg, false);
   }
 
-  ///\todo .SAFESEH
   generic_function_t * 
     callcatchblockhelper(
       cxxregistration *     const cxxreg,
@@ -728,6 +734,7 @@ struct cxxrecord : public nt::exception::record
 
   #pragma warning(push)
   #pragma warning(disable:4731)//frame pointer register 'ebp' modified by inline assembly code
+  // SE handlers already registered should be SAFESEH
   #pragma warning(disable:4733)//Inline asm assigning to 'FS:0' : handler not registered as safe handler
   __declspec(noreturn)
   static void jumptocontinuation(generic_function_t * funclet, cxxregistration *cxxreg)
@@ -907,9 +914,9 @@ struct cxxrecord : public nt::exception::record
 /// C++ exception_handler implementation.
 ///\note  This is called by __CxxFrameHandler3 which has to be compiled w/o /GL,
 ///       so avoid __forceinline here to reduce the size of all this huge stuff
-///       (MSVC will ignore inline anywhy, but static is deprecated)
+///       (MSVC has wierd heuristics to ignore inline, so hack arround)
 exception_disposition 
-inline
+__declspec(noinline)
   cxxframehandler(
           exception_record *        const er,       ///< thrown NT exception
           cxxregistration *         const eframe,   ///< SEH frame ptr
@@ -958,8 +965,8 @@ sizeof(ehmagic1400);
     cxxrecord * const cxxer = static_cast<cxxrecord*>(er);
 #ifdef NTL__OTHEREHMAGICS
     if ( cxxer->iscxx()
-      && cxxer->NumberParameters >= 3 /**\see _CxxThrowException args*/
       && cxxer->get_ehmagic() > ehmagic1400
+      && cxxer->NumberParameters >= 3 /**\see _CxxThrowException args*/
       && cxxer->get_throwinfo()->forwardcompathandler )
     {
       return cxxer->get_throwinfo()->forwardcompathandler
@@ -973,6 +980,8 @@ sizeof(ehmagic1400);
   }
   return ExceptionContinueSearch;
 }
+
+//#endif #ifndef NTL_EH_RUNTIME
 
 #endif//#ifdef _MSC_VER
 

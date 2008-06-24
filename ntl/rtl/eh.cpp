@@ -1,10 +1,19 @@
-
+////////////////////////////////////////////////////////////////////////////////
+///
 ///\file  C++ exception support runtime
-///\note  This must be a separate compilation unit to support /GL for other ones.
-
-#define NTL__OTHEREHMAGICS
+///
+///\note  The file contains compiler predefined library helpers
+///       and must be compiled without /GL to avoid C2268.
+///       So it is the separate compilation unit to support /GL for other ones.
+///
+////////////////////////////////////////////////////////////////////////////////
 
 #include <exception>
+
+#define NTL_EH_RUNTIME
+
+//#define NTL__OTHEREHMAGICS
+
 #include <nt/exception.hxx>
 
 /// RTL poiner to the current terminate_handler
@@ -57,12 +66,13 @@ void __stdcall _CxxThrowException(void * object, _s__ThrowInfo const * info)
 extern "C"
 exception_disposition
 __cdecl ///\note actually the first arg is passed in EAX register
-__CxxFrameHandler3 (
+__CxxFrameHandler3(
   /** ehfuncinfo * eax */
-  exception_record *    er,     ///< thrown NT exception
-  cxxregistration *     frame,  ///< tib::ExceptionList node
-  nt::context *         ectx,
-  dispatcher_context *  dispatch)
+  exception_record *    er,       ///< thrown NT exception
+  cxxregistration *     frame,    ///< tib::ExceptionList node
+  nt::context *         ectx,     ///< not used on x86
+  dispatcher_context *  dispatch  ///< not used on x86
+  )
 {
   const ehfuncinfo* const ehfi = reinterpret_cast<const ehfuncinfo*>(get_eax());
   return cxxframehandler(er, frame, ectx, dispatch, ehfi);
