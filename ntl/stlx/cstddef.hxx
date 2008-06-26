@@ -50,6 +50,11 @@
   #endif
 #endif
 
+#if __cplusplus > 199711L
+/// new C++ Standard
+#define NTL__CXX
+#endif
+
 #if __cplusplus <= 199711L
 
   #ifndef static_assert

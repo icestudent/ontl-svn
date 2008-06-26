@@ -48,7 +48,7 @@ struct linked<2>
   static const size_t   rank = 2;
   typedef linked<rank>  this_type;
 
-  ///\warning do not change the order since this is native OS' type
+  ///\warning do not change the order, since this is native OS' type
   this_type * prev, * next;
 
   void link(this_type * prev, this_type * next)
@@ -76,6 +76,9 @@ struct linked<2>
   { 
     unlink(this->prev, this->next);
   }
+
+  void swap(this_type * other);
+  
 };
 
 typedef linked<2> double_linked;

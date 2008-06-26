@@ -33,6 +33,7 @@ struct linked_ptr
     }
 
     T * get() const { return ptr; }
+    void set(T * ptr) { this->ptr = ptr; }
 
     /// unlink
     ~linked_ptr()
@@ -49,7 +50,7 @@ struct linked_ptr
       const_double_linked_iterator i = &links;
       do if ( containing_adaptor<this_type, double_linked, &this_type::links>(i)->ptr )
           ++c; 
-      while ( --i != links.next );
+      while ( --i != &links );
       return c;
     }
 
