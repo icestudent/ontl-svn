@@ -328,7 +328,8 @@ static const uint32_t ehmagic1200 = 0x19930520;
   #endif
 #endif
 
-struct memptrdescriptor // _PMD
+/// pointer to member descriptor
+struct ptrtomember // _PMD
 {
   typedef int32_t  mdiff_t;
   mdiff_t member_offset;
@@ -365,12 +366,12 @@ typedef void generic_function_t();
 
 struct catchabletype
 {
-  uint32_t  memmoveable : 1;
-  uint32_t  refonly     : 1;
-  uint32_t  hasvirtbase : 1;
-  type_info *       typeinfo;
-  memptrdescriptor  thiscast;
-  uint32_t          object_size;
+  uint32_t    memmoveable : 1;
+  uint32_t    refonly     : 1;
+  uint32_t    hasvirtbase : 1;
+  type_info * typeinfo;
+  ptrtomember thiscast;
+  uint32_t    object_size;
   union { eobject::ctor_ptr copyctor; eobject::ctor_ptr2 copyctor2; };
 };
 
@@ -931,7 +932,6 @@ __declspec(noinline)
   if ( er->islongjump() ) {/* do not return */}
   else
 #endif
-sizeof(ehmagic1400);
   if ( !er->iscxx() )
   {
     // however, /EHa allows to catch(...) an arbitrary exception
@@ -942,7 +942,7 @@ sizeof(ehmagic1400);
 #endif
       #pragma warning(push)
       #pragma warning(disable:4127)//conditional expression is constant
-     && ehfi->synchronous )
+     && sizeof(ehfuncinfo) >= sizeof(ehfuncinfo1400) && ehfi->synchronous )
       #pragma warning(pop)
     //#endif//MSVC 14
     return ExceptionContinueSearch;

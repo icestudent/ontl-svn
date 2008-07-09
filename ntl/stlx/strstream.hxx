@@ -125,12 +125,12 @@ class strstreambuf : public basic_streambuf<char>
     
     virtual int_type pbackfail(int_type c = EOF);
     virtual int_type underflow();
-    virtual pos_type seekoff(off_type off , ios_base::seekdir way ,
+    virtual pos_type seekoff(off_type off, ios_base::seekdir way,
     ios_base::openmode which
     = ios_base::in | ios_base::out);
     virtual pos_type seekpos(pos_type sp , ios_base::openmode which
     = ios_base::in | ios_base::out);
-    virtual streambuf* setbuf(char* s , streamsize n );
+    virtual streambuf* setbuf(char* s , streamsize n);
 
   ///////////////////////////////////////////////////////////////////////////
   private:

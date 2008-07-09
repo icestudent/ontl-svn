@@ -16,12 +16,10 @@
 
 
 #if defined NTL__DEBUG || !defined NDEBUG
-  extern "C" const char *  __assertion_failure;
-  extern "C" unsigned      __assertion_failure_at_line;
-///\todo interlocked
 #define __ntl_assert(__msg, __line)\
-  {__assertion_failure = (__msg), __assertion_failure_at_line = (__line); __debugbreak(); }
-
+  { const char * volatile __assertion_failure; __assertion_failure = (__msg);\
+    unsigned volatile __assertion_failure_at_line; __assertion_failure_at_line = (__line);\
+    __debugbreak(); }
 #endif
 
 
