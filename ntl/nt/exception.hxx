@@ -356,8 +356,8 @@ struct ptrtomember // _PMD
 struct eobject
 {
   typedef void (__thiscall eobject::* dtor_ptr)();
-  typedef void (__thiscall eobject::* ctor_ptr)();
-  typedef void (__thiscall eobject::* ctor_ptr2)(int);
+  typedef void (__thiscall eobject::* ctor_ptr)(eobject&);
+  typedef void (__thiscall eobject::* ctor_ptr2)(eobject&, int);
 };
 STATIC_ASSERT(sizeof(eobject::dtor_ptr) == sizeof(void*));
 
@@ -799,10 +799,11 @@ struct cxxrecord : public nt::exception::record
       }
       else if ( convertable->copyctor ) // UDT with a copy ctor
       {
+        eobject* const copy = reinterpret_cast<eobject*>(catchstackframe);
         if ( convertable->hasvirtbase )
-          (get_object()->*convertable->copyctor2)(1);
+          (copy->*convertable->copyctor2)(*get_object(), 1);
         else
-          (get_object()->*convertable->copyctor)();
+          (copy->*convertable->copyctor)(*get_object());
       }
       else // UDT w/o a copy ctor
       {
