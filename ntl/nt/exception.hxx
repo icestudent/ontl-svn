@@ -415,7 +415,7 @@ struct ehandler
   bool type_match(const catchabletype * ct, const throwinfo * ti) const
   {
     // catch(...) handles them all
-    if ( !this->typeinfo || !*this->typeinfo->name() )
+    if ( is_ellipsis() )
       return true;
     // different TI record with different name?
     if ( this->typeinfo != ct->typeinfo
@@ -427,6 +427,12 @@ struct ehandler
     if ( ti->econst && !isconst ) return false;
     if ( ti->evolatile && !isvolatile ) return false;
     return true;
+  }
+
+  // catch(...) ?
+  bool is_ellipsis() const
+  {
+    return !this->typeinfo || !*this->typeinfo->name() || false;
   }
 };
 
@@ -602,7 +608,7 @@ inline
   cxxframehandler(
           exception_record *        const er,
           cxxregistration *         const eframe,
-    const nt::context *             const ectx,
+          nt::context *             const ectx,
           dispatcher_context *      const dispatch,
     const ehfuncinfo *              const ehfi,
     int                             const trylevel      = 0,
@@ -854,7 +860,7 @@ struct cxxrecord : public nt::exception::record
   void
     find_handler(
       cxxregistration *       const ereg,
-      const nt::context *     const ctx,
+      nt::context *           const ctx,
       dispatcher_context *    const dispatch,
       const ehfuncinfo *      const ehfi,
       const bool                    destruct,
@@ -905,8 +911,11 @@ struct cxxrecord : public nt::exception::record
     else
     if ( ehfi->tryblocktable_size > 0 && !destruct )
     {
-      __asm int 3
       //FindHandlerForForeignException(EHExceptionRecord *,EHRegistrationNode *,_CONTEXT *,void *,_s_FuncInfo const *,int,int,EHRegistrationNode *)
+      // we just translate SEH to C++ exception and throw it
+      // use catch(exception_pointers &) to handle
+      exception_pointers seh = { this, ctx };
+      throw seh;
     }
     else std::terminate();
   }
@@ -922,7 +931,7 @@ __declspec(noinline)
   cxxframehandler(
           exception_record *        const er,       ///< thrown NT exception
           cxxregistration *         const eframe,   ///< SEH frame ptr
-    const nt::context *             const ectx,
+          nt::context *             const ectx,
           dispatcher_context *      const dispatch,
     const ehfuncinfo *              const ehfi,     ///< registered handlers
     int                             const trylevel      /*= 0*/,
