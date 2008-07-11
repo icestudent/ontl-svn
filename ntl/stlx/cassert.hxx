@@ -32,16 +32,16 @@
   #define _Assert(expr)
 #endif
 
-//#undef assert
-#ifndef assert
-  #ifdef NDEBUG
-    #define assert(expr) ((void)0)
-  #else
-    #define assert(expr) \
-      if ( !!(expr) ); else \
-      __ntl_assert("Assertion ("#expr") failed in "__FUNCSIG__" //"__FILE__,__LINE__);\
-      ((void)0)
-  #endif
+/// ISO C 7.2/1 The assert macro is redefined according to the current state
+///             of NDEBUG each time that <assert.h> is included.
+#undef assert
+#ifdef NDEBUG
+  #define assert(expr) ((void)0)
+#else
+  #define assert(expr) \
+    if ( !!(expr) ); else \
+    __ntl_assert("Assertion ("#expr") failed in "__FUNCSIG__" //"__FILE__,__LINE__);\
+    ((void)0)
 #endif
 
 //}//namespace std
