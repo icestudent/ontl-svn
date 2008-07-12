@@ -178,6 +178,7 @@ class unary_negate
 : public unary_function<typename Predicate::argument_type, bool>
 {
     const Predicate& pred;
+    void operator=(const unary_negate &);
   public:
     explicit unary_negate(const Predicate& pred) : pred(pred) {}
 
@@ -201,6 +202,7 @@ class binary_negate
                           bool>
 {
     const Predicate& pred;
+    void operator=(const binary_negate &);
   public:
     explicit binary_negate(const Predicate& pred) : pred(pred) {}
 

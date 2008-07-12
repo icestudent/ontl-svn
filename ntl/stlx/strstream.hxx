@@ -13,6 +13,8 @@
 #include "string.hxx"
 #include "iosfwd.hxx"
 #include "streambuf.hxx"
+#include "istream.hxx"
+#include "ostream.hxx"
 
 
 namespace std {
@@ -21,7 +23,10 @@ namespace std {
 /**\defgroup  str_strstreams ********** Strings streams [D.7] ***************
  *@{*/
 
-///D.7.1 Class strstreambuf [depr.strstreambuf]
+/// D.7.1 Class strstreambuf [depr.strstreambuf]
+/// 1 The class strstreambuf associates the input sequence, and possibly
+///   the output sequence, with an object of some character array type, whose
+///   elements store arbitrary values. The array object has several attributes.
 class strstreambuf : public basic_streambuf<char>
 {
   ///////////////////////////////////////////////////////////////////////////
@@ -224,6 +229,27 @@ class strstreambuf : public basic_streambuf<char>
       return EOF;
     }
 
+    /// 19 Effects: Alters the stream position within one of the controlled
+    ///   sequences, if possible, as follows:
+    /// - If (which & ios::in) != 0, positions the input sequence.
+    /// - If (which & ios::out) != 0, positions the output sequence.
+    /// - If (which & (ios::in | ios::out)) == (ios::in | ios::out)) and
+    ///   way == either ios::beg or ios::end, positions both the input and the output sequences
+    /// - Otherwise, the positioning operation fails.
+    /// 20 For a sequence to be positioned, if its next pointer is a null pointer,
+    ///   the positioning operation fails. Otherwise, the function determines
+    ///   newoff, as follows:
+    ///   condition           newoff value
+    ///   way == ios::beg     0
+    ///   way == ios::cur     the next pointer minus the beginning pointer (xnext - xbeg).
+    ///   way == ios::end     seekhigh minus the beginning pointer (seekhigh - xbeg).
+    /// - If (newoff + off) < (seeklow - xbeg), or (seekhigh - xbeg) < (newoff + off),
+    ///   the positioning operation fails.
+    /// 21 Otherwise, the function assigns xbeg + newoff + off to the next pointer xnext.
+    /// 22 Returns: pos_type(newoff), constructed from the resultant offset newoff
+    ///   (of type off_type), that stores the resultant stream position, if possible.
+    ///   If the positioning operation fails, or if the constructed object cannot
+    ///   represent the resultant stream position, the return value is pos_type(off_type(-1)).
     virtual
     pos_type
       seekoff(off_type            off,
@@ -235,16 +261,16 @@ class strstreambuf : public basic_streambuf<char>
         && way == ios::cur
         || !(which & (ios::in | ios::out)) )
         return failed;
-      char_type * const seekhigh = gnext ? (pend ? pend : gend) : 0;
-      if ( !seekhigh )
+      char_type * const sh = gnext ? (pend ? pend : gend) : 0;
+      if ( !sh )
         return failed;
-      char_type * const seeklow  = gbeg;
+      char_type * const sl  = seeklow();
       if ( which & ios::in )
       {
         const off_type newoff = off + way == ios::beg ? 0 
                                     : way == ios::cur ? gnext - gbeg
-                                    : /*way == ios::end ?*/ seekhigh - gbeg;
-        if ( newoff < (seeklow - gbeg) || (seekhigh - gbeg) < newoff )
+                                    : /*way == ios::end ?*/ sh - gbeg;
+        if ( newoff < (sl - gbeg) || (sh - gbeg) < newoff )
           return failed;
         gnext = gbeg + newoff;
         if ( !(which & ios::out) )
@@ -255,13 +281,30 @@ class strstreambuf : public basic_streambuf<char>
         return failed;
       const off_type newoff = off + way == ios::beg ? 0 
                                   : way == ios::cur ? pnext - pbeg
-                                  : /*way == ios::end ?*/ seekhigh - pbeg;
-      if ( newoff < (seeklow - pbeg) || (seekhigh - pbeg) < newoff )
+                                  : /*way == ios::end ?*/ sh - pbeg;
+      if ( newoff < (sl - pbeg) || (sh - pbeg) < newoff )
         return failed;
       pnext = pbeg + newoff;
       return pos_type(newoff);
     }
 
+    /// 23 Effects: Alters the stream position within one of the controlled sequences,
+    ///   if possible, to correspond to the stream position stored in sp (as described below).
+    /// — If (which & ios::in) != 0, positions the input sequence.
+    /// — If (which & ios::out) != 0, positions the output sequence.
+    /// — If the function positions neither sequence, the positioning operation fails.
+    /// 24 For a sequence to be positioned, if its next pointer is a null pointer,
+    ///   the positioning operation fails. Otherwise, the function determines
+    ///   newoff from sp.offset():
+    /// — If newoff is an invalid stream position, has a negative value, or has
+    ///  a value greater than (seekhigh - seeklow), the positioning operation fails
+    /// — Otherwise, the function adds newoff to the beginning pointer xbeg and
+    ///   stores the result in the next pointer xnext.
+    /// 25 Returns: pos_type(newoff), constructed from the resultant offset
+    ///   newoff (of type off_type), that stores the resultant stream position,
+    ///   if possible. If the positioning operation fails, or if the constructed
+    ///   object cannot represent the resultant stream position,
+    ///   the return value is pos_type(off_type(-1)).
     virtual
     pos_type
       seekpos(pos_type sp,
@@ -271,9 +314,7 @@ class strstreambuf : public basic_streambuf<char>
       if ( !(which & (ios::in | ios::out)) )
         return failed;
       const off_type newoff = sp;
-      char_type * const seekhigh = gnext ? (pend ? pend : gend) : 0;
-      char_type * const seeklow  = gbeg;
-      if ( newoff < 0 || newoff > seekhigh - seeklow )
+      if ( newoff < 0 || newoff > seekhigh() - seeklow() )
         return failed;
       if ( which & ios::in )
       {
@@ -291,8 +332,17 @@ class strstreambuf : public basic_streambuf<char>
     /// 26 Effects: Implementation defined, except that setbuf(0, 0) has no effect.
     //virtual streambuf* setbuf(char* s , streamsize n);
 
+    ///}
+    
   ///////////////////////////////////////////////////////////////////////////
   private:
+
+    /// 4 Each object of class strstreambuf has a seekable area, delimited by the
+    ///   pointers seeklow and seekhigh. If gnext is a null pointer, the seekable
+    ///   area is undefined. Otherwise, seeklow equals gbeg and seekhigh is either
+    ///   pend, if pend is not a null pointer, or gend.
+    char_type * seekhigh() const { return gnext ? (pend ? pend : gend) : gnext; }
+    char_type * seeklow() const { return gnext ? gbeg : gnext/* 0 */; }
 
     enum strstate
     { 
@@ -353,9 +403,152 @@ class strstreambuf : public basic_streambuf<char>
       if ( pfree ) pfree(p);
       else delete[] p;
     }
-    
 
 };//class strstreambuf
+
+
+/// D.7.2 Class istrstream [depr.istrstream].
+/// 1 The class istrstream supports the reading of objects of class strstreambuf.
+///   It supplies a strstreambuf object to control the associated array object.
+class istrstream : public istream//basic_istream<char>
+{
+  public:
+
+    ///\name D.7.2.1 istrstream constructors [depr.istrstream.cons]
+
+    /// 1 Effects: Constructs an object of class istrstream, initializing
+    ///   the base class with istream(&sb) and initializing sb with
+    ///   strstreambuf(s,0)). s shall designate the first element of an NTBS.
+    explicit istrstream(const char* s) : basic_istream<char>(&sb), sb(s, 0) {;}
+    explicit istrstream(char* s) : basic_istream<char>(&sb), sb(s, 0) {;}
+
+    /// 2 Effects: Constructs an object of class istrstream, initializing
+    ///   the base class with istream(&sb) and initializing sb with
+    ///   strstreambuf(s,n)). s shall designate the first element of
+    ///   an array whose length is n elements, and n shall be greater than zero.
+    istrstream(const char* s, streamsize n) : basic_istream<char>(&sb), sb(s, n) {;}
+    istrstream(char* s, streamsize n) : basic_istream<char>(&sb), sb(s, n) {;}
+
+    virtual ~istrstream() {;}
+
+    ///\name D.7.2.2 Member functions [depr.istrstream.members]
+
+    /// 1 Returns: const_cast<strstreambuf*>(&sb)
+    strstreambuf* rdbuf() const { return const_cast<strstreambuf*>(&sb); }
+
+    /// 2 Returns: rdbuf()->str().
+    char *str() { return rdbuf()->str(); }
+
+    ///\}
+
+  private:
+    strstreambuf sb;
+};
+
+
+/// D.7.3 Class ostrstream [depr.ostrstream].
+/// 1 The class ostrstream supports the writing of objects of class strstreambuf.
+///   It supplies a strstreambuf object to control the associated array object.
+class ostrstream : public ostream//basic_ostream<char>
+{
+  public:
+
+    ///\name D.7.3.1 ostrstream constructors [depr.ostrstream.cons]
+
+    /// 1 Effects: Constructs an object of class ostrstream, initializing
+    ///   the base class with ostream(&sb) and initializing sb with strstreambuf().
+    ostrstream() : basic_ostream<char>(&sb), sb() {;}
+
+    /// 2 Effects: Constructs an object of class ostrstream, initializing
+    ///   the base class with ostream(&sb), and initializing sb with one of two
+    ///   constructors:
+    /// — If (mode & app) == 0, then s shall designate the first element of
+    ///   an array of n elements. The constructor is strstreambuf(s, n, s).
+    /// — If (mode & app) != 0, then s shall designate the first element of 
+    ///   an array of n elements that contains an NTBS whose first element is
+    ///   designated by s. The constructor is strstreambuf(s, n, s + std::strlen(s)).
+    ostrstream(char* s, int n, ios_base::openmode mode = ios_base::out)
+    : basic_ostream<char>(&sb),
+      sb(s, n, s + (mode & ios_base::app ? strlen(s) : 0))
+    {;}
+
+    virtual ~ostrstream() {;}
+
+    ///\name D.7.3.2 Member functions [depr.ostrstream.members]
+
+    /// 1 Returns: (strstreambuf*)&sb .
+    strstreambuf* rdbuf() const { return const_cast<strstreambuf*>(&sb); }
+
+    /// 2 Effects: Calls rdbuf()->freeze(freezefl).
+    void freeze(bool freezefl = true) { rdbuf()->freeze(freezefl); }
+
+    /// 3 Returns: rdbuf()->str().
+    char *str() { return rdbuf()->str(); }
+
+    /// 4 Returns: rdbuf()->pcount().
+    int pcount() const { return rdbuf()->pcount(); }
+
+    ///\}
+
+  private:
+    strstreambuf sb;
+};
+
+
+/// D.7.4 Class strstream [depr.strstream].
+/// 1 The class strstream supports reading and writing from objects
+///   of class strstreambuf. It supplies a strstreambuf object to control
+///   the associated array object.
+class strstream : public iostream//basic_iostream<char>
+{
+  public:
+  
+    ///\name Types
+    typedef char char_type;
+    typedef char_traits<char>::int_type int_type;
+    typedef char_traits<char>::pos_type pos_type;
+    typedef char_traits<char>::off_type off_type;
+
+    ///\name D.7.4.1 strstream constructors [depr.strstream.cons]
+
+    /// 1 Effects: Constructs an object of class strstream,
+    ///   initializing the base class with iostream(&sb).
+    strstream() : basic_iostream<char>(&sb), sb() {;}
+
+    /// 2 Effects: Constructs an object of class strstream, initializing
+    ///   the base class with iostream(&sb) and initializing sb
+    ///   with one of the two constructors:
+    ///   — If (mode & app) == 0, then s shall designate the first element of
+    ///     an array of n elements. The constructor is strstreambuf(s,n,s).
+    ///   — If (mode & app) != 0, then s shall designate the first element of
+    ///     an array of n elements that contains an NTBS whose first element
+    ///     is designated by s. The constructor is strstreambuf(s,n,s + std::strlen(s)).
+    strstream(char* s, int n, ios_base::openmode mode = ios_base::in|ios_base::out)
+    : basic_iostream<char>(&sb),
+      sb(s, n, s + (mode & ios_base::app ? strlen(s) : 0))
+    {;}
+
+    ///\name D.7.4.2 strstream destructor [depr.strstream.dest]
+    virtual ~strstream() {}
+
+    ///\name D.7.4.3 strstream operations [depr.strstream.oper]
+
+    strstreambuf* rdbuf() const { return const_cast<strstreambuf*>(&sb); }
+
+    /// 1 Effects: Calls rdbuf()->freeze(freezefl).
+    void freeze(bool freezefl = true) { rdbuf()->freeze(freezefl); }
+
+    /// 2 Returns: rdbuf()->str().
+    char *str() { return rdbuf()->str(); }
+
+    /// 3 Returns: rdbuf()->pcount().
+    int pcount() const { return rdbuf()->pcount(); }
+
+    ///\}
+
+  private:
+    strstreambuf sb;
+};
 
 /**@} str_strstreams */
 
