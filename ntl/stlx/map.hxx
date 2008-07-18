@@ -228,9 +228,9 @@ class map:
       node* p = root_;
       while(p){
         if(val_comp_.comp(x, p->elem.first))
-          p = p->left;
+          p = p->links.left;
         else if(val_comp_.comp(p->elem.first, x))
-          p = p->right;
+          p = p->links.right;
         else
           return make_iterator(p);
       }
@@ -258,14 +258,14 @@ class map:
       node* p = root_;
       while(p){
         if(val_comp_(x, p->elem)){
-          if(p->left){
-            p = p->left;
+          if(p->links.left){
+            p = p->links.left;
           }else{
             iterator re(p, this);
             return make_pair(re, re); // is a closest nodes
           }
         }else if(val_comp_(p->elem, x)) // greater
-          p = p->right;
+          p = p->links.right;
         else
           return make_pair(iterator(p, this), iterator(next(p), this));
       }

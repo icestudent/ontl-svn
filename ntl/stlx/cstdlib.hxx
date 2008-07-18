@@ -111,6 +111,7 @@ NTL__CRTCALL
 #define EXIT_FAILURE  1
 
 /// 7.20.4.3 The exit function
+__declspec(noreturn) 
 void
 NTL__CRTCALL
   exit(int status);

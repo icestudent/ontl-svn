@@ -188,7 +188,7 @@ typedef nt::exception::pointers           exception_pointers;
 //typedef nt::exception::registration exception_registration; see nt::tib::ExceptionList
 struct exception_registration : public nt::exception::registration {};
 
-/// the functopn is exported by kernel32.dll ntdll.dll & nt.exe
+/// the functopn is exported by kernel32.dll, ntdll.dll & nt.exe
 ///\warning not to be called from C code since it trashes all registers
 NTL__EXTERNAPI
 void __stdcall

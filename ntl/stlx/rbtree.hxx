@@ -47,9 +47,11 @@ namespace tree
         {}
         node(const T& elem)
           :elem(elem), 
-          parent(NULL), left(NULL), right(NULL),
+          parent(NULL), //left(NULL), right(NULL),
           color(red)
-        {}
+        {
+          links.left = links.right = 0;
+        }
         node(const node& n)
           :elem(n.elem),
           parent(n.parent), color(n.color)
@@ -504,7 +506,7 @@ namespace tree
       void fixup_insert(node* x) __ntl_nothrow
       {
         while(x != root_ && x->parent->color == node::red){
-          x = fixup_insert(x, x->parent == x->parent->parent->left);
+          x = fixup_insert(x, x->parent == x->parent->parent->links.left);
         }
         root_->color = node::black;
       }

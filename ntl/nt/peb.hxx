@@ -72,6 +72,8 @@ STATIC_ASSERT(sizeof(rtl_user_process_parameters) == 0x290);
 
 #pragma warning(push)
 #pragma warning(disable:4820) // 'X' bytes padding added after data member 'peb::MinimumStackCommit'
+#pragma pack(push)
+#pragma pack(8)
 
 struct peb
 {
@@ -184,6 +186,7 @@ struct peb
 };
 STATIC_ASSERT(sizeof(peb) == 0x210);
 
+#pragma pack(pop)
 #pragma warning(pop)
 
 }//namespace nt

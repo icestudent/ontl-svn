@@ -10,10 +10,10 @@
 
 #include "cstddef.hxx"
 #include "cstdarg.hxx"
-using std::va_list;
-
 
 #ifndef _INC_STDLIB// MSVC compatibility
+
+using std::va_list;
 
 NTL__EXTERNAPI size_t __cdecl
   _snprintf(char *buffer, size_t count, const char *format, ...);
@@ -34,8 +34,15 @@ namespace std {
 
   typedef long long fpos_t;
 
+#ifndef _INC_STDLIB// MSVC compatibility
+
   using ::_snprintf; using ::_vsnprintf;
 
+#else
+
+using ::va_list;
+
+#endif
 
 /**@} lib_general_utilities
  */
