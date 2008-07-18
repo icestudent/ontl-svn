@@ -31,14 +31,16 @@
 #define STATIC_ASSERT(e) typedef char _Join(_STATIC_ASSERT_, __COUNTER__) [(e)?1:-1]
 #endif
 
-#if defined(NTL__STLX_FORCE_CDECL) && !defined(NTL__CRTCALL)
-  #ifdef _MSC_VER
-    #define NTL__CRTCALL __cdecl
+#ifndef NTL__CRTCALL
+  #ifdef NTL__STLX_FORCE_CDECL
+    #ifdef _MSC_VER
+      #define NTL__CRTCALL __cdecl
+    #else
+      #error unsupported compiler
+    #endif
   #else
-    #error unsupported compiler
+    #define NTL__CRTCALL
   #endif
-#else
-  #define NTL__CRTCALL
 #endif
 
 #ifndef NTL__EXTERNAPI

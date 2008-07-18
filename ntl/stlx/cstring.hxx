@@ -18,8 +18,6 @@ namespace std {
 /**\addtogroup  lib_c_strings ********** Null-terminated sequence utilities [21.4]
  *@{*/
 
-//#pragma intrinsic(memchr)
-
 __forceinline 
 const void *
 NTL__CRTCALL

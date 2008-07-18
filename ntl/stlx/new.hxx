@@ -17,7 +17,7 @@
 ///\todo find the apropriate place for this
 template<typename SizeType>
 __forceinline
-SizeType __grow_heap_block_size(const SizeType  size)
+SizeType __ntl_grow_heap_block_size(const SizeType  size)
 {
   return (((size + 8) * 2) & ~(8-1)) - 8;
 }
