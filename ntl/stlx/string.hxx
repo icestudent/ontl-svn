@@ -689,7 +689,22 @@ class basic_string
     }
 
     /// 4 Returns: rfind(basic_string<charT,traits,Allocator>(s,n),pos).
-    size_type rfind(const charT* s, size_type pos, size_type n) const;
+    size_type rfind(const charT* s, size_type pos, size_type n) const
+    {
+      size_type & xpos = pos;
+      if ( xpos > size() || xpos + n > size() )
+        xpos = size() - n;
+      while ( xpos + n > 0 ) 
+      {
+        for ( size_type i = 0; i != n; ++i )
+          if ( !traits_type::eq(*(begin() + xpos + i), *(s + i)) )
+            goto next_xpos;
+        return xpos;
+      next_xpos:
+        --xpos;
+      }
+      return npos;
+    }
   
     /// 5 Returns: rfind(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
@@ -703,11 +718,9 @@ class basic_string
     {
       ///\note  Standard claims the use of at() member function, but
       ///       we stick to an exception-safe way
-      size_type & xpos = pos;
-      if ( xpos > size() ) xpos = size();
-      while ( xpos )
-        if ( traits_type::eq(str[xpos], c) ) return xpos;
-        else --xpos;
+      for ( size_type xpos = pos < size() ? pos + 1 : size(); xpos; )
+        if ( traits_type::eq(*(begin() + --xpos), c) )
+          return xpos;
       return npos;
     }
 
@@ -716,7 +729,8 @@ class basic_string
     {
       size_type xpos = size();
       while ( xpos-- )
-        if ( traits_type::eq(str[xpos], c) ) return xpos;
+        if ( traits_type::eq(*(begin() + xpos), c) )
+          return xpos;
       return npos;
     }
 
@@ -736,7 +750,14 @@ class basic_string
     }
 
     /// 4 Returns: find_first_of(basic_string<charT,traits,Allocator>(s,n),pos).
-    size_type find_first_of(const charT* s, size_type pos, size_type n) const;
+    size_type find_first_of(const charT* s, size_type pos, size_type n) const
+    {
+      for ( size_type xpos = pos; xpos < size(); ++xpos )
+        for ( size_type i = 0; i != n; ++i )
+          if ( traits_type::eq(*(begin() + xpos), *(s + i)) )
+            return xpos;
+      return npos;
+    }
 
     /// 5 Returns: find_first_of(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
@@ -746,7 +767,13 @@ class basic_string
     }
 
     /// 7 Returns: find_first_of(basic_string<charT,traits,Allocator>(1,c),pos).
-    size_type find_first_of(charT c, size_type pos = 0) const;
+    size_type find_first_of(charT c, size_type pos = 0) const
+    {
+      for ( size_type xpos = pos; xpos < size(); ++xpos )
+        if ( traits_type::eq(*(begin() + xpos), c) )
+          return xpos;
+      return npos;
+    }
 
     ///\name  21.3.7.5 basic_string::find_last_of [string::find.last.of]
 
@@ -764,7 +791,19 @@ class basic_string
     }
 
     /// 4 Returns: find_last_of(basic_string<charT,traits,Allocator>(s,n),pos).
-    size_type find_last_of(const charT* s, size_type pos, size_type n) const;
+    size_type find_last_of(const charT* s, size_type pos, size_type n) const
+    {
+      size_type & xpos = pos;
+      if ( xpos > size() ) xpos = size();
+      while ( xpos )
+      {
+        for ( size_type i = 0; i != n; ++i )
+          if ( traits_type::eq(*(begin() + xpos), *(s + i)) )
+            return xpos;
+        --xpos;
+      }
+      return npos;
+    }
 
     /// 5 Returns: find_last_of(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
@@ -774,7 +813,10 @@ class basic_string
     }
 
     /// 7 Returns: find_last_of(basic_string<charT,traits,Allocator>(1,c),pos).
-    size_type find_last_of(charT c, size_type pos = npos) const;
+    size_type find_last_of(charT c, size_type pos = npos) const
+    {
+      return rfind(c);
+    }
 
     ///\name  21.3.7.6 basic_string::find_first_not_of [string::find.first.not.of]
 
@@ -792,7 +834,18 @@ class basic_string
     }
 
     /// 4 Returns: find_first_not_of(basic_string<charT,traits,Allocator>(s,n),pos).
-    size_type find_first_not_of(const charT* s, size_type pos, size_type n) const;
+    size_type find_first_not_of(const charT* s, size_type pos, size_type n) const
+    {
+      for ( size_type xpos = pos; xpos < size(); ++xpos )
+      {
+        for ( size_type i = 0; i != n; ++i )
+          if ( traits_type::eq(*(begin() + xpos), *(s + i)) )
+            goto next_xpos;
+        return xpos;
+      next_xpos:;
+      }
+      return npos;
+    }
 
     /// 5 Returns: find_first_not_of(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
@@ -802,7 +855,13 @@ class basic_string
     }
 
     /// 7 Returns: find_first_not_of(basic_string<charT,traits,Allocator>(1,c),pos).
-    size_type find_first_not_of(charT c, size_type pos = 0) const;
+    size_type find_first_not_of(charT c, size_type pos = 0) const
+    {
+      for ( size_type xpos = pos; xpos < size(); ++xpos )
+        if ( !traits_type::eq(*(begin() + xpos), c) )
+          return xpos;
+      return npos;
+    }
 
     ///\name  21.3.7.7 basic_string::find_last_not_of [string::find.last.not.of]
 
@@ -820,7 +879,19 @@ class basic_string
     }
 
     /// 4 Returns: find_last_not_of(basic_string<charT,traits,Allocator>(s,n),pos).
-    size_type find_last_not_of(const charT* s, size_type pos, size_type n) const;
+    size_type find_last_not_of(const charT* s, size_type pos, size_type n) const
+    {
+      for ( size_type xpos = pos < size() ? pos + 1 : size(); xpos; )
+      {
+        --xpos;
+        for ( size_type i = 0; i != n; ++i )
+          if ( traits_type::eq(*(begin() + xpos), *(s + i)) )
+            goto next_xpos;
+        return xpos;
+      next_xpos:;
+      }
+      return npos;
+    }
 
     /// 5 Returns: find_last_not_of(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
@@ -830,9 +901,20 @@ class basic_string
     }
 
     /// 7 Returns: find_last_not_of(basic_string<charT,traits,Allocator>(1,c),pos).
-    size_type find_last_not_of(charT c, size_type pos = npos) const;
+    size_type find_last_not_of(charT c, size_type pos = npos) const
+    {
+      for ( size_type xpos = pos < size() ? pos + 1 : size(); xpos; )
+        if ( !traits_type::eq(*(begin() + --xpos), c) )
+          return xpos;
+      return npos;
+    }
 
-    ///\name  basic_string::substr [21.3.6.7 lib.string::substr]
+    ///\name 21.3.7.8 basic_string::substr [string::substr]
+    /// 1 Requires: pos <= size()
+    /// 2 \todo Throws: out_of_range if pos > size().
+    /// 3 Effects: Determines the effective length rlen of the string to copy as
+    ////  the smaller of n and size() - pos.
+    /// 4 Returns: basic_string<charT,traits,Allocator>(data()+pos,rlen).
     basic_string substr(size_type pos = 0, size_type n = npos) const
     {
       return basic_string(*this, pos, n);
