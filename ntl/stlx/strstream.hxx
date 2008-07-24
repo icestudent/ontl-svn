@@ -389,6 +389,7 @@ class strstreambuf : public basic_streambuf<char>
     /// 6 ... If palloc is not a null pointer, the function calls (*palloc)(n)
     ///   to allocate the new dynamic array object.
     ///   Otherwise, it evaluates the expression new charT[n]
+//    __forceinline
     char* _alloc(size_t size)
     {
       return palloc ? (char*)palloc(size) : new (std::nothrow) char[size];
@@ -398,6 +399,7 @@ class strstreambuf : public basic_streambuf<char>
     ///   address is p:
     ///   If pfree is not a null pointer, the function calls (*pfree)(p).
     ///   Otherwise, it evaluates the expression delete[] p.
+//    __forceinline
     void _free(char* p)
     {
       if ( pfree ) pfree(p);
