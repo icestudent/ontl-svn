@@ -5,11 +5,9 @@
  ****************************************************************************
  */
 
-
 #ifndef NTL__CPU
 #define NTL__CPU
 
-#include "base.hxx"
 
 namespace ntl {
 namespace cpu {

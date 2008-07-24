@@ -2,6 +2,8 @@
  *                                                                     \brief
  *  C Library files utilities [c.files]
  *
+ *\note There should be no sprintf and other buffer-overflowing stuff.
+ *
  ****************************************************************************
  */
 
