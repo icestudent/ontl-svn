@@ -18,21 +18,25 @@ struct system_time
 {
     typedef int64_t type;
     static const type resolution = (1000 * 1000 * 1000) / 100; // 100ns
-  
+
+    #pragma warning(push)
+    #pragma warning(disable:4127)//conditional expression is constant
     __forceinline type get() volatile const
     {
       uint32_t l; int32_t h;
+      if ( sizeof(std::uintptr_t) > sizeof(int32_t) )// don't like #ifdef _M_X64
+        return *reinterpret_cast<int64_t volatile const*>(this);
       do { cpu::pause(); l = low; h = high; }
       while ( h != high2 );
       return (type)h << 32 | l;
     }
+    #pragma warning(pop)
 
     __forceinline operator type() const
     {
-      return (type)high << 32 | low;
+      return *reinterpret_cast<type const*>(this);
     }
 
-  private:
     uint32_t  low;
     int32_t   high, high2;
 };

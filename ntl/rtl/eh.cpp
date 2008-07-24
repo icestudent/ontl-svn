@@ -10,6 +10,8 @@
 
 #include <exception>
 
+#if STLX__USE_EXCEPTIONS
+
 #define NTL_EH_RUNTIME
 
 //#define NTL__OTHEREHMAGICS
@@ -78,6 +80,7 @@ __CxxFrameHandler3(
   return cxxframehandler(er, frame, ectx, dispatch, ehfi);
 }
 
+#endif//STLX__USE_EXCEPTIONS
 
 ///\todo __EH_prolog for /Os
 
