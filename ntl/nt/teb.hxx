@@ -92,7 +92,8 @@ namespace intrinsic {
   }
   __forceinline void writesysptr(uint32_t Offset, const void* Data)
   { 
-    intrinsic::__writefsdword(Offset, reinterpret_cast<uintptr_t>(Data));
+    // static_cast to avoid warning C4244: 'argument' : conversion from 'std::uintptr_t' to 'std::uint32_t', possible loss of data
+    intrinsic::__writefsdword(Offset, static_cast<uint32_t>(reinterpret_cast<uintptr_t>(Data)));
   }
 
 #elif defined(_M_X64)
@@ -181,7 +182,7 @@ struct teb : public tib
   type get(type teb::* member) 
   {
     const teb * const p = 0;
-    const uint32_t offset = reinterpret_cast<uint32_t>(&(p->*member));
+    const uint32_t offset = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&(p->*member)));
     return (type)(readsysptr(offset, type()));
   }
 
@@ -190,7 +191,7 @@ struct teb : public tib
   void set(type teb::* member, type2 value) 
   {
     const teb * const p = 0;
-    const uint32_t offset = reinterpret_cast<uint32_t>(&(p->*member));
+    const uint32_t offset = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&(p->*member)));
     writesysptr(offset, value);
   }
 

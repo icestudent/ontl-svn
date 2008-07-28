@@ -620,7 +620,7 @@ inline
 struct cxxrecord : public nt::exception::record
 {
 
-  uint32_t get_ehmagic() const
+  uintptr_t get_ehmagic() const
   { 
     /* 0x14 */  return ExceptionInformation[0];
   }
@@ -751,7 +751,7 @@ struct cxxrecord : public nt::exception::record
     exception_registration * const top = teb::get(&teb::ExceptionList);
     teb::set(&teb::ExceptionList, top->next);
 
-    const uint32_t _ebp = cxxreg->stackbaseptr();
+    const uintptr_t _ebp = cxxreg->stackbaseptr();
     __asm
     {
       mov   ecx,  cxxreg
@@ -870,7 +870,7 @@ struct cxxrecord : public nt::exception::record
     ehstate_t cs = ereg->current_state(ehfi);
     if ( ExceptionCode == cxxmagic )
     {
-      const uint32_t   ehmagic = ExceptionInformation[0];
+      const uintptr_t ehmagic = ExceptionInformation[0];
       if ( NumberParameters == 3
 #ifdef NTL__OTHEREHMAGICS
         && ehmagic >= ehmagic1200 && ehmagic <= ehmagic1400

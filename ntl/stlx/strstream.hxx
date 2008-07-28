@@ -107,7 +107,8 @@ class strstreambuf : public basic_streambuf<char>
       freeze();
       return gptr();
     }
-    
+
+    ///\note int replaced with streamsize
     streamsize pcount()
     {
       return !pptr() ? reinterpret_cast<streamsize>(pptr()) : pptr() - pbase();
@@ -158,9 +159,9 @@ class strstreambuf : public basic_streambuf<char>
             std::copy(pbase(), pptr()/*epptr()*/, p);
             _free(pbase());
           }
-          const int pnextdiff = pptr() - pbase();
+          const ptrdiff_t pnextdiff = pptr() - pbase();
           setp(p, p + alsize);
-          pbump(pnextdiff);
+          pnext += pnextdiff;//pbump(pnextdiff);
           setg(p, p + (gnext - gbeg), pnext + 1/*note pnext++ below*/);
         }
       }
@@ -488,7 +489,7 @@ class ostrstream : public ostream//basic_ostream<char>
     char *str() { return rdbuf()->str(); }
 
     /// 4 Returns: rdbuf()->pcount().
-    int pcount() const { return rdbuf()->pcount(); }
+    streamsize pcount() const { return rdbuf()->pcount(); }
 
     ///\}
 
@@ -544,7 +545,7 @@ class strstream : public iostream//basic_iostream<char>
     char *str() { return rdbuf()->str(); }
 
     /// 3 Returns: rdbuf()->pcount().
-    int pcount() const { return rdbuf()->pcount(); }
+    streamsize pcount() const { return rdbuf()->pcount(); }
 
     ///\}
 
