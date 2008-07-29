@@ -149,8 +149,7 @@ class exception
         top->next = reinterpret_cast<registration*>(teb::get(&teb::ExceptionList));
         teb::set(&teb::ExceptionList, top);
       }
-      #pragma warning(push)
-
+      #pragma warning(pop)
     };
 
     /// exception_info result
@@ -436,13 +435,14 @@ struct ehandler
   }
 };
 
+typedef int ehstate_t; ///< unwind map index
+
 struct unwindtable
 {
-  int     state;
+  ehstate_t            state;
   generic_function_t * unwindfunclet; 
 };
 
-typedef int ehstate_t; ///< unwind map index
 
 struct tryblock
 {

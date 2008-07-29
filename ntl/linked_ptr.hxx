@@ -8,7 +8,7 @@
 #ifndef NTL__LINKED_PTR
 #define NTL__LINKED_PTR
  
-#include <algorithm>
+#include "stlx/algorithm.hxx"
 #include "linked_list.hxx"
 
 namespace ntl {

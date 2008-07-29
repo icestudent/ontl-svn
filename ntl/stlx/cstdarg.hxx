@@ -22,6 +22,7 @@ typedef struct { } * va_list;
 #ifdef _MSC_VER
 
 #if defined(_M_IX86)
+
 //  stack parameters are aligned by 4 bytes
 
 #define va_start(__argptr, __last_param)\
@@ -36,6 +37,7 @@ typedef struct { } * va_list;
 #endif
 
 #elif defined(_M_X64)
+
 //  stack parameters are aligned by 8 bytes
 
 #define va_start(__argptr, __last_param)\
@@ -49,14 +51,15 @@ typedef struct { } * va_list;
 #   define va_end(__argptr)()
 #endif
 
+
 #else//CPU type
 #   error unsupported CPU type
 #endif
 
 #endif//!_MSC_VER
 
-#else// va_start
-//#   error define va_start & Co
+#else//! va_start
+#   error define va_start & Co
 #endif
 
 /**@} lib_support_runtime */
