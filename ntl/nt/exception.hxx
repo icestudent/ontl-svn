@@ -620,9 +620,9 @@ inline
 struct cxxrecord : public nt::exception::record
 {
 
-  uintptr_t get_ehmagic() const
+  uint32_t get_ehmagic() const
   { 
-    /* 0x14 */  return ExceptionInformation[0];
+    /* 0x14 */  return static_cast<uint32_t>(ExceptionInformation[0]);
   }
 
   eobject * get_object() const
@@ -870,7 +870,7 @@ struct cxxrecord : public nt::exception::record
     ehstate_t cs = ereg->current_state(ehfi);
     if ( ExceptionCode == cxxmagic )
     {
-      const uintptr_t ehmagic = ExceptionInformation[0];
+      const uint32_t   ehmagic = get_ehmagic();
       if ( NumberParameters == 3
 #ifdef NTL__OTHEREHMAGICS
         && ehmagic >= ehmagic1200 && ehmagic <= ehmagic1400
