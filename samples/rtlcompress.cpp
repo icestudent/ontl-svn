@@ -1,3 +1,11 @@
+/**
+ *	@file rtlcompress.cpp
+ *	@brief Sample which shows how to work with console and files with NTL library
+ *	@note Compilation command-line: cl /nologo /I../../branches/x64/ntl /DWIN32 /D_UNICODE /DUNICODE /GS- rtlcompress.cpp /link /subsystem:console /libpath:your_lib_path_with_ntdll.lib 
+ *	@author icestudent
+ *	@version 0.3
+ **/
+
 #include <nt/basedef.hxx>
 #include <nt/file.hxx>
 #include <nt/debug.hxx>
