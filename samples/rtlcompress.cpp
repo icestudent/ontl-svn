@@ -4,6 +4,9 @@
 #include <cstdio>
 #include <winapp.hxx>
 
+/* assume that we do not work with large files */
+#pragma warning(disable:4267) // 'argument' : conversion from 'size_t' to 'std::uint32_t', possible loss of data. 
+
 using namespace ntl;
 using namespace ntl::nt;
 using namespace std;
