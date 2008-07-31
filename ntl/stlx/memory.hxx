@@ -426,7 +426,6 @@ void
   }
 
   assert(first == ucg.commit());
-  return ucg.commit();
 }
 #endif
 
@@ -456,7 +455,6 @@ void
   }
 
   assert(first == ucg.commit());
-  return ucg.commit();
 }
 #endif
 
