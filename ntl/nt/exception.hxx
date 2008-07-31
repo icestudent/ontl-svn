@@ -686,30 +686,6 @@ struct cxxrecord : public nt::exception::record
   	                        cg.catchdepth, &cg, false);
   }
 
-  #pragma warning(push)
-  // SE handlers already registered should be SAFESEH
-  #pragma warning(disable:4733)//Inline asm assigning to 'FS:0' : handler not registered as safe handler
-  generic_function_t * 
-    callcatchblockhelper(
-      cxxregistration *     const cxxreg,
-      const ehfuncinfo *    const funcinfo,
-      generic_function_t *  const handler,
-      int                   const catchdepth,
-      unsigned              const nlg_code)
-  {
-    catchguard guard;
-    guard.next        = nt::teb::get(&nt::teb::ExceptionList);
-    guard.handler     = catchguardhandler;
-    guard.funcinfo    = funcinfo;
-    guard.cxxreg      = cxxreg;
-    guard.catchdepth  = catchdepth + 1;
-    nt::teb::set(&nt::teb::ExceptionList, &guard);
-    generic_function_t * const continuation = cxxreg->callsettingframe(handler, nlg_code);
-    nt::teb::set(&nt::teb::ExceptionList, guard.next);
-    return continuation;
-  }
-  #pragma warning(pop)
-
   generic_function_t *
     callcatchblock(
       cxxregistration *     const cxxreg,
@@ -744,9 +720,30 @@ struct cxxrecord : public nt::exception::record
   }
 
   #pragma warning(push)
-  #pragma warning(disable:4731)//frame pointer register 'ebp' modified by inline assembly code
-  // SE handlers already registered should be SAFESEH
   #pragma warning(disable:4733)//Inline asm assigning to 'FS:0' : handler not registered as safe handler
+  // SE handlers already registered should be SAFESEH
+
+  generic_function_t * 
+    callcatchblockhelper(
+    cxxregistration *     const cxxreg,
+    const ehfuncinfo *    const funcinfo,
+    generic_function_t *  const handler,
+    int                   const catchdepth,
+    unsigned              const nlg_code)
+  {
+    catchguard guard;
+    guard.next        = nt::teb::get(&nt::teb::ExceptionList);
+    guard.handler     = catchguardhandler;
+    guard.funcinfo    = funcinfo;
+    guard.cxxreg      = cxxreg;
+    guard.catchdepth  = catchdepth + 1;
+    nt::teb::set(&nt::teb::ExceptionList, &guard);
+    generic_function_t * const continuation = cxxreg->callsettingframe(handler, nlg_code);
+    nt::teb::set(&nt::teb::ExceptionList, guard.next);
+    return continuation;
+  }
+
+  #pragma warning(disable:4731)//frame pointer register 'ebp' modified by inline assembly code
   __declspec(noreturn)
   static void jumptocontinuation(generic_function_t * funclet, cxxregistration *cxxreg)
   {
