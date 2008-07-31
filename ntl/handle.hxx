@@ -11,6 +11,7 @@
 
 //#include <functional>
 #include "cstdint"
+#include "stlx/exception.hxx"
 
 namespace ntl {
 
@@ -50,8 +51,7 @@ class basic_handle
 
     basic_handle duplicate() const __ntl_nothrow
     { 
-      basic_handle h( Duplicate(get()) );
-      return h;
+      return basic_handle( Duplicate(get()) );
     }
 
     void reset(X h = 0) __ntl_nothrow

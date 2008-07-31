@@ -28,6 +28,16 @@ NTL__EXTERNAPI
 wchar_t * __stdcall
   GetCommandLineW();
 
+NTL__EXTERNAPI
+uint32_t __stdcall
+  GetLastError();
+
+NTL__EXTERNAPI
+void __stdcall
+  SetLastError(
+    uint32_t dwErrCode
+    );
+
 
 /**\addtogroup  win_application *** Win32 Application support library *******
  *@{*/
@@ -99,10 +109,17 @@ class application
       int               argc;
 
       typedef const char_type * * iterator;
+      typedef const char_type* const * const_iterator;
       typedef std::reverse_iterator<iterator> reverse_iterator;
 
       iterator begin() { return &argv[0]; }
       iterator end()   { return &argv[argc]; }
+
+      const_iterator begin() const { return &argv[0]; }
+      const_iterator end() const   { return &argv[argc]; }
+
+      const_iterator cbegin() const{ return begin(); }
+      const_iterator cend() const  { return end(); }
 
       int size() const { return argc; }
       bool empty() const { return false; }
@@ -117,23 +134,27 @@ class application
       int parse(char_type * p = get())
       {
         argc = 0;
-        if ( *p == '"' )
-        {
+        // self
+        if(*p == '"'){
           argv[argc++] = ++p;
           while ( *p && *p != '"' ) p++;
           if ( ! *p ) return -1;
           *p++ = '\0';
-        }
-        else
-        {
+        }else{
           argv[argc++] = p;
           while ( *p < '\0' || *p > ' ' ) p++;
           if ( *p ) *p++ = '\0';
         }
-        while ( *p )
-        {
+        // arguments
+        while(*p){
           while ( *p > '\0' && *p <= ' ') p++;
           if ( ! *p ) break;
+          if(*p == '"'){
+            argv[argc++] = ++p;
+            while(*p && *p != '"') p++;
+            if(!*p) return -1;
+            *p++ = '\0';
+          }else{
           argv[argc++] = p;
           while ( *p < '\0' || *p > ' ' ) p++;
           if ( *p ) *p++ = '\0';           
@@ -142,6 +163,11 @@ class application
       }
 
     };
+
+    static uint32_t last_error()
+    {
+      return GetLastError();
+    }
 
 };
 

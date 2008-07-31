@@ -10,6 +10,7 @@
 
 #include "stlx/iterator.hxx"
 #include "stlx/type_traits.hxx"
+#include "stlx/algorithm.hxx"
 
 namespace ntl {
 

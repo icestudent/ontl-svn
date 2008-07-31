@@ -87,10 +87,10 @@ struct array
       return operator[](n);
     }
 
-    reference       front()       { return *begin(); }
-    const_reference front() const { return *begin(); }
-    reference       back()        { return *(--end()); }
-    const_reference back()  const { return *(--end()); }
+    reference       front()       __ntl_nothrow { return *begin(); }
+    const_reference front() const __ntl_nothrow { return *begin(); }
+    reference       back()        __ntl_nothrow { return *(--end()); }
+    const_reference back()  const __ntl_nothrow { return *(--end()); }
 
           T * data()        { return __elems; }
     const T * data() const  { return __elems; }
@@ -100,7 +100,10 @@ struct array
   // Types with private or protected data members are not aggregate
   //private:
     
-    static const size_t __actual_size = N ? N : 1;
+    /* vs2k5 debugger bug: it doesn't recognize `static const type`, we must use enum instead */
+    //static const size_t __actual_size = N ? N : 1;
+    enum { __actual_size = N ? N : 1 };
+
     T __elems[__actual_size];
 
     void __check_bounds(size_type n) const __ntl_throws(out_of_range)

@@ -17,9 +17,10 @@ namespace cpu {
 
   static inline void pause() { __asm { rep nop } }
 
-
   #else // ! _M_IX86
-  #error unsupported CPU type
+    //#error unsupported CPU type
+    static inline void pause() { }
+    #pragma deprecated(pause)
   #endif
 #else // ! _MSC_VER
 #error unsupported compiler

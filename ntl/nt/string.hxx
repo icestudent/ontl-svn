@@ -12,6 +12,8 @@
 #include "../string"
 #include "../type_traits"
 #include "../basedef.hxx"
+#include "../stlx/cstdint.hxx"
+#include "../stlx/array.hxx"
 
 namespace ntl {
 namespace nt {
@@ -91,15 +93,12 @@ class native_string
       buffer_(&str[0])
     {/**/}
 
-    const native_string& operator=(const native_string & s);
-#if 0
-    {
-      length_ = s.length_;
-      maximum_length_ = s.maximum_length_;
-      buffer_ = s.buffer_;
-      return *this;
-    }
-#endif
+    template<size_t Size>
+    native_string(std::array<charT, Size>& str)
+      : length_((Size - 1) * sizeof(value_type)),
+      maximum_length_(length_ + sizeof(value_type)),
+      buffer_(str.data())
+    {/**/}
     
     ///\name  native_string connversions
 
@@ -125,10 +124,12 @@ class native_string
     const_iterator          begin()  const  { return buffer_; }
     iterator                end()           { return &buffer_[length_ / sizeof(value_type)]; }
     const_iterator          end()    const  { return &buffer_[length_ / sizeof(value_type)]; }
+
     reverse_iterator        rbegin()      { return reverse_iterator(&buffer_[length_ / sizeof(value_type)]); }
     const_reverse_iterator  rbegin() const { return const_reverse_iterator(&buffer_[length_ / sizeof(value_type)]); }
     reverse_iterator        rend()       { return reverse_iterator(buffer_); }
     const_reverse_iterator  rend() const { return const_reverse_iterator(buffer_); }
+
     const_iterator          cbegin()  const  { return begin();   }
     const_iterator          cend()    const  { return end();     }
     const_reverse_iterator  crbegin() const  { return rbegin();  }
@@ -217,6 +218,8 @@ class native_string
     {
       if ( n > size() ) __ntl_throw (std::out_of_range(__FUNCTION__));
     }
+    const native_string& operator=(const native_string & s);
+
 
 };//class native_string
 

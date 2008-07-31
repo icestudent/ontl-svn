@@ -18,7 +18,7 @@
 //#include "stdexcept.hxx"
 #include "vector.hxx"
 
-#ifndef EOF // should be removed to "stdio.hxx" ?
+#ifndef EOF // should be moved to "stdio.hxx" ?
 #define EOF -1
 #endif
 
@@ -433,7 +433,6 @@ class basic_string
     basic_string& append(const basic_string& str, size_type pos, size_type n)
     {
       this->str.insert(this->str.end(), str.begin() + pos, str.max__it(pos, n));
-
       return *this;
     }
 
@@ -925,7 +924,7 @@ class basic_string
     int compare(const basic_string& str) const
     {
       const int r = traits_type::compare(begin(), str.begin(),
-                                            (std::min)(size(), str.size()));
+                                            std::min(size(), str.size()));
       return r != 0 ? r : size() - str.size();   
     }
 
