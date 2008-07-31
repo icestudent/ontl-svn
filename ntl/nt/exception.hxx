@@ -686,6 +686,9 @@ struct cxxrecord : public nt::exception::record
   	                        cg.catchdepth, &cg, false);
   }
 
+  #pragma warning(push)
+  // SE handlers already registered should be SAFESEH
+  #pragma warning(disable:4733)//Inline asm assigning to 'FS:0' : handler not registered as safe handler
   generic_function_t * 
     callcatchblockhelper(
       cxxregistration *     const cxxreg,
@@ -705,6 +708,7 @@ struct cxxrecord : public nt::exception::record
     nt::teb::set(&nt::teb::ExceptionList, guard.next);
     return continuation;
   }
+  #pragma warning(pop)
 
   generic_function_t *
     callcatchblock(
