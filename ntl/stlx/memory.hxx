@@ -257,7 +257,7 @@ void construct_element(Alloc& alloc, T& r, Args&&... args);
 namespace detail {
 
 template <class ForwardIterator, class Allocator = void>
-strcut uninitialized_copy_guard
+struct uninitialized_copy_guard
 {
   typedef ForwardIterator iterator;
   typedef typename iterator_traits<ForwardIterator>::value_type value_type;
