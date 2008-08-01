@@ -157,7 +157,8 @@ class application
           }else{
           argv[argc++] = p;
           while ( *p < '\0' || *p > ' ' ) p++;
-          if ( *p ) *p++ = '\0';           
+          if ( *p ) *p++ = '\0';
+          }
         }
         return argc;
       }

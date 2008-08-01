@@ -12,7 +12,7 @@
 #include "win/console.hxx"
 //#include "win/new.hxx"
 
-//#pragma comment(linker, "/subsystem:windows")
+#pragma comment(linker, "/subsystem:windows")
 #pragma comment(linker, "/entry:ntl::_Winapp_entry")
 
 #pragma comment(linker, "/nodefaultlib:libc")
