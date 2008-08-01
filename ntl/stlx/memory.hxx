@@ -253,212 +253,131 @@ template <class Alloc, class T, class... Args>
 void construct_element(Alloc& alloc, T& r, Args&&... args);
 #endif
 
-#ifdef NTL_USE_UCG
+
+///\name 20.7.10 Specialized algorithms [specialized.algorithms]
+/// 1 All the iterators that are used as formal template parameters in the following
+///   algorithms are required to have their operator* return an object for which
+///   operator& is defined and returns a pointer to T. In the algorithm uninitialized_
+///   copy, the formal template parameter InputIterator is required to satisfy
+///   the requirements of an input iterator (24.1.1).
+///   In all of the following algorithms, the formal template parameter ForwardIterator
+///   is required to satisfy the requirements of a forward iterator (24.1.3)
+///   and also to satisfy the requirements of a mutable iterator (24.1), and is
+///   required to have the property that no exceptions are thrown from increment,
+///   assignment, comparison, or dereference of valid iterators.
+///   In the following algorithms, if an exception is thrown there are no effects.
+
 namespace detail {
-
-template <class ForwardIterator, class Allocator = void>
-struct uninitialized_copy_guard
-{
-  typedef ForwardIterator iterator;
-  typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-  typedef Allocator allocator_type;
-  
-  uninitialized_copy_guard(iterator iter,
-                           const allocator_type& alloc)
-  : start_(iter),
-    iter_(iter),
-    committed_(false),
-    alloc_(alloc)
-    {
-      // STATIC_ASSERT((is_same<value_type, typename allocator_type::value_type>::value));
-    }
-    
-  ~uninitialized_copy_guard()
-  {
-    if(committed_ == false)
-    {
-      for(iterator first = start_; first != iter_; ++first)
-      {
-        alloc_.destroy(&*first);
-      }
-    }
-  }
-
-  void construct_from(const value_type& r) const
-  {
-    alloc_.construct(&*iter_, r);
-    ++iter_;
-  }
-
-  iterator commit()
-  {
-    committed_ = true;
-    return iter_;
-  }
-
-private:
-  // no value semantics
-  uninitialized_copy_guard(const uninitialized_copy_guard&);
-  uninitialized_copy_guard& operator=(const uninitialized_copy_guard&);
-
-private:
-  iterator start_;
-  iterator iter_;
-  bool committed_;
-
-  typedef typename allocator_type::template rebind<value_type>::other alloc_t;
-  alloc_t alloc_;
-};
   
 template <class ForwardIterator>
-strcut uninitialized_copy_guard<ForwardIterator, void>
+struct revert_on_exception
 {
-  typedef ForwardIterator iterator;
-  typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-  
-  uninitialized_copy_guard(iterator iter)
-  : start_(iter),
-    iter_(iter),
-    committed_(false) {}
+    typedef ForwardIterator iterator;
+    typedef typename iterator_traits<iterator>::value_type value_type;
     
-  ~uninitialized_copy_guard()
-  {
-    if(committed_ == false)
+    revert_on_exception(const iterator & first, iterator & current)
+    : first(first), current(current) {/**/}
+      
+    ~revert_on_exception()
     {
-      for(iterator first = start_; first != iter_; ++first)
-      {
-        // I am not sure what __assume would help/buy us here,
-        // just copy-n-paste'd from elsewhere.
-        // Anyone knows better please add comment and modify
-        // the code as needed.
-        // !fr3@K!
-        __assume(&*first);
-        (&*first)->~value_type();
-      }
+      ///\note this works even if one pass a nullpointer to the guarded functions
+      if ( first )
+        for( iterator it = first; it != current; ++it)
+        {
+          // avoid unnecessary runtime check.
+          __assume(&*it);
+          (&*it)->~value_type();
+        }
     }
-  }
 
-  void construct_from(const value_type& r) const
-  {
-    // See comment in dtor.
-    // !fr3@K!
-    __assume(&*iter_);
-    new (static_cast<void*>(&*iter_)) value_type(r);
-    ++iter_;
-  }
+    void commit() { first = 0; }
 
-  iterator commit()
-  {
-    committed_ = true;
-    return iter_;
-  }
+  private:
 
-private:
+        iterator   first;
+        iterator & current;
+
   // no value semantics
-  uninitialized_copy_guard(const uninitialized_copy_guard&);
-  uninitialized_copy_guard& operator=(const uninitialized_copy_guard&);
-
-private:
-  iterator start_;
-  iterator iter_;
-  bool committed_;
+  revert_on_exception(const revert_on_exception&);
+  revert_on_exception& operator=(const revert_on_exception&);
 };
-
 } // namespace detail
-#endif // NTL_USE_UCG
 
-///\name  20.6.10 Specialized algorithms [specialized.algorithms]
+///\name  20.7.10.1 uninitialized_copy [uninitialized.copy]
 
-/// 20.6.10.1 uninitialized_copy [uninitialized.copy]
 template <class InputIterator, class ForwardIterator>
 __forceinline
 ForwardIterator
   uninitialized_copy(InputIterator    first,
                      InputIterator    last,
                      ForwardIterator  result)
-#ifndef NTL_USE_UCG
 {
   typedef typename iterator_traits<ForwardIterator>::value_type value_type;
+  detail::revert_on_exception<ForwardIterator> g(result, result);
   for ( ; first != last; ++result, ++first )
   {
     __assume(&*result);
     new (static_cast<void*>(&*result)) value_type(*first);
-    ///@todo delete on exceptions
   }
+  g.commit();
   ///@todo separate function for scalar types ?
   return result;
 }
-#else
-{
-  ///@todo separate function for scalar types ?
-  detail::uninitialized_copy_guard<ForwardIterator> ucg(result);
-  for ( ; first != last; ++first )
-  {
-    ucg.construct_from(*first);
-  }
-  return ucg.commit();
-}
-#endif
 
-/// 20.6.10.2 uninitialized_fill [uninitialized.fill]
+template <class InputIterator, class Size, class ForwardIterator>
+__forceinline
+ForwardIterator
+  uninitialized_copy_n(InputIterator first, Size n, ForwardIterator result)
+{
+  typedef typename iterator_traits<ForwardIterator>::value_type value_type;
+  detail::revert_on_exception<ForwardIterator> g(result, result);
+  for ( ; n > 0; ++result, ++first, --n )
+  {
+    __assume(&*result);
+    new (static_cast<void*>(&*result)) value_type(*first);
+  }
+  g.commit();
+  ///@todo separate function for scalar types ?
+  return result;
+}
+
+///@}
+
+/// 20.7.10.2 uninitialized_fill [uninitialized.fill]
 template <class ForwardIterator, class T>
 __forceinline
 void
   uninitialized_fill(ForwardIterator first, ForwardIterator last, const T& x)
-#ifndef NTL_USE_UCG
 {
   typedef typename iterator_traits<ForwardIterator>::value_type value_type;
+  detail::revert_on_exception<ForwardIterator> g(first, first);
   for ( ; first != last; ++first )
   {
     __assume(&*first);
     new (static_cast<void*>(&*first)) value_type(x);
-    ///@todo delete on exceptions
   }
+  g.commit();
   ///@todo separate function for scalar types ?
 }
-#else
-{
-  ///@todo separate function for scalar types ?
-  detail::uninitialized_copy_guard<ForwardIterator> ucg(first);
-  for ( ; first != last; ++first )
-  {
-    ucg.construct_from(x);
-  }
 
-  assert(first == ucg.commit());
-}
-#endif
-
-/// 20.6.10.3 uninitialized_fill_n [uninitialized.fill.n]
+/// 20.7.10.3 uninitialized_fill_n [uninitialized.fill.n]
 template <class ForwardIterator, class Size, class T>
 __forceinline
 void
   uninitialized_fill_n(ForwardIterator first, Size n, const T& x)
-#ifndef NTL_USE_UCG
 {
   typedef typename iterator_traits<ForwardIterator>::value_type value_type;
+  detail::revert_on_exception<ForwardIterator> g(first, first);
   for ( ; n--; ++first )
   {
     __assume(&*first);
     new (static_cast<void*>(&*first)) value_type(x);
     ///@todo delete on exceptions
   }
+  g.commit();
   ///@todo separate function for scalar types ?
 }
-#else
-{
-  ///@todo separate function for scalar types ?
-  detail::uninitialized_copy_guard<ForwardIterator> ucg(first);
-  for ( ; n--; ++first )
-  {
-    ucg.construct_from(x);
-  }
 
-  assert(first == ucg.commit());
-}
-#endif
-
-///@}
 
 /// 20.6.11 Class template unique_ptr [unique.ptr]
 
