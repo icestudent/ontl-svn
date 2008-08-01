@@ -912,6 +912,7 @@ struct cxxrecord : public nt::exception::record
       }
       //return;
     }
+#ifdef NTL_SE_TRANSLATOR
     else
     if ( ehfi->tryblocktable_size > 0 && !destruct )
     {
@@ -921,6 +922,7 @@ struct cxxrecord : public nt::exception::record
       exception_pointers seh = { this, ctx };
       throw seh;
     }
+#endif
     else std::terminate();
   }
 };
