@@ -14,6 +14,18 @@
 namespace ntl {
 namespace nt {
 
+  struct time_fields
+  {
+    int16_t Year;        // range [1601...]
+    int16_t Month;       // range [1..12]
+    int16_t Day;         // range [1..31]
+    int16_t Hour;        // range [0..23]
+    int16_t Minute;      // range [0..59]
+    int16_t Second;      // range [0..59]
+    int16_t Milliseconds;// range [0..999]
+    int16_t Weekday;     // range [0..6] == [Sunday..Saturday]
+  };
+
 typedef system_time::type systime_t;
 typedef systime_t file_time;
 
@@ -23,6 +35,30 @@ systime_t inline query_system_time()
 {
   return user_shared_data::instance().SystemTime.get();
 }
+
+
+
+#ifdef NTL__SUPPRESS_IMPORTS
+__forceinline
+ntstatus NtQuerySystemTime(int64_t* SystemTime)
+{
+  *SystemTime = query_system_time();
+  return status::success;
+}
+#else
+NTL__EXTERNAPI 
+ntstatus __stdcall 
+  NtQuerySystemTime(int64_t* SystemTime);
+#endif
+
+NTL__EXTERNAPI
+void __stdcall
+  RtlTimeToTimeFields(int64_t* Time, time_fields* TimeFields);
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  RtlSystemTimeToLocalTime(int64_t* SystemTime, int64_t* LocalTime);
+
 
 }//namespace nt
 }//namespace ntl
