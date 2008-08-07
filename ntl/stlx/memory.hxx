@@ -280,8 +280,7 @@ struct revert_on_exception
       
     ~revert_on_exception()
     {
-      ///\note this works even if one pass a nullpointer to the guarded functions
-      if ( first )
+      if ( unwind() )
         for( iterator it = first; it != current; ++it)
         {
           // avoid unnecessary runtime check.
@@ -290,7 +289,10 @@ struct revert_on_exception
         }
     }
 
-    void commit() { first = 0; }
+    ///\note In the case one pass a nullpointer to the guarded function,
+    ///      undind would not be done, and I'm guess not required.
+    int unwind() const { return *reinterpret_cast<int const*>(&first); }
+    void commit() { *reinterpret_cast<int*>(&first) = 0; }
 
   private:
 
