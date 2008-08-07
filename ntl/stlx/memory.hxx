@@ -276,12 +276,12 @@ struct revert_on_exception
     typedef typename iterator_traits<iterator>::value_type value_type;
     
     revert_on_exception(const iterator & first, iterator & current)
-    : first(first), current(current) {/**/}
+    : first(first), current(current), ok(false) {/**/}
       
     ~revert_on_exception()
     {
-      if ( unwind() )
-        for( iterator it = first; it != current; ++it)
+      if ( !ok )
+        for ( iterator it( first ); it != current; ++it )
         {
           // avoid unnecessary runtime check.
           __assume(&*it);
@@ -289,15 +289,13 @@ struct revert_on_exception
         }
     }
 
-    ///\note In the case one pass a nullpointer to the guarded function,
-    ///      undind would not be done, and I'm guess not required.
-    int unwind() const { return *reinterpret_cast<int const*>(&first); }
-    void commit() { *reinterpret_cast<int*>(&first) = 0; }
+    void commit() { ok = true; }
 
   private:
 
-        iterator   first;
-        iterator & current;
+    iterator  first;
+    iterator& current;
+    bool            ok;
 
   // no value semantics
   revert_on_exception(const revert_on_exception&);
