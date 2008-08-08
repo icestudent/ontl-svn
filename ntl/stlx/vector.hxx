@@ -60,17 +60,17 @@ class vector
     void construct(size_type n, const T& value)
     {
       iterator i = begin_;
-      while ( n-- ) array_allocator.construct(i++, value);
+      while ( n-- ) allocator_.construct(i++, value);
       end_ = i;
     }
-    
+
     template <class InputIterator>
     __forceinline
     void construct(InputIterator first, size_type n)
     {
       iterator i = begin_;
       for ( ; n--; ++first, ++i )
-        array_allocator.construct(i, *first);
+        allocator_.construct(i, *first);
       end_ = i;
     }
 
@@ -81,7 +81,7 @@ class vector
       ///\todo specialize for InputIterator category
       // distance SHOULD be allways positive
       capacity_ = static_cast<size_type>(distance(first, last));
-      begin_ = array_allocator.allocate(capacity_);
+      begin_ = allocator_.allocate(capacity_);
       construct(first, capacity_);
     }
 
@@ -89,7 +89,7 @@ class vector
     void vector__disp(IntegralType n, IntegralType x, const true_type&)
     {
       capacity_ = static_cast<size_type>(n);
-      begin_ = array_allocator.allocate(capacity_);
+      begin_ = allocator_.allocate(capacity_);
       construct(static_cast<size_type>(n), static_cast<value_type>(x));
     }
 
@@ -98,15 +98,15 @@ class vector
     ///\name construct/copy/destroy [23.2.6.1]
 
     explicit vector(const Allocator& a = Allocator())
-    : array_allocator(a), begin_(0), end_(0), capacity_(0) {}
+    : allocator_(a), begin_(0), end_(0), capacity_(0) {}
 
     explicit vector(      size_type n,
                     const T& value      = T(),
                     const Allocator& a  = Allocator())
-    : array_allocator(a)
+    : allocator_(a)
     {
       capacity_ = n;
-      begin_= array_allocator.allocate(n);
+      begin_= allocator_.allocate(n);
       construct(n, value);
     }
 
@@ -114,35 +114,35 @@ class vector
     vector(InputIterator first,
            InputIterator last,
            const Allocator& a = Allocator())
-    : array_allocator(a)
+    : allocator_(a)
     {
       vector__disp(first, last, is_integral<InputIterator>::type());
     }
 
     __forceinline
     vector(const vector<T, Allocator>& x)
-    : array_allocator(x.array_allocator)
+    : allocator_(x.allocator_)
     {
       capacity_ = x.size();
       if ( !capacity_ )
         begin_ = end_ = 0;
       else
       {
-        begin_ = array_allocator.allocate(capacity_);
+        begin_ = allocator_.allocate(capacity_);
         construct(x.begin(), capacity_);
       }
     }
 
     __forceinline
     ~vector() __ntl_nothrow
-    { 
+    {
       clear();
-      if ( begin_ ) array_allocator.deallocate(begin_, capacity_);
+      if ( begin_ ) allocator_.deallocate(begin_, capacity_);
     }
 
     vector<T, Allocator>& operator=(const vector<T, Allocator>& x)
     {
-    //?  array_allocator = x.array_allocator;
+    //?  allocator_ = x.allocator_;
       assign(x.begin(), x.end());
       return *this;
     }
@@ -158,14 +158,14 @@ class vector
       clear();
       if ( capacity() < n )
       {
-        array_allocator.deallocate(begin_, capacity_);
+        allocator_.deallocate(begin_, capacity_);
         capacity_ = n;
-        begin_= array_allocator.allocate(n);
+        begin_= allocator_.allocate(n);
       }
       construct(n, u);
     }
 
-    allocator_type get_allocator() const  { return array_allocator; }
+    allocator_type get_allocator() const  { return allocator_; }
 
     ///@}
 
@@ -180,9 +180,9 @@ class vector
       size_type n = static_cast<size_type>(std::distance(first, last));
       if ( capacity() < n )
       {
-        array_allocator.deallocate(begin_, capacity_);
+        allocator_.deallocate(begin_, capacity_);
         capacity_ = n;
-        begin_= array_allocator.allocate(n);
+        begin_= allocator_.allocate(n);
       }
       construct(first, n);
     }
@@ -206,7 +206,7 @@ class vector
     const_reverse_iterator  rbegin() const
       { return const_reverse_iterator(end_); }
     reverse_iterator        rend()       { return reverse_iterator(begin_); }
-    const_reverse_iterator  rend() const 
+    const_reverse_iterator  rend() const
       { return const_reverse_iterator(begin_); }
 
     const_iterator          cbegin() const { return begin(); }
@@ -217,7 +217,7 @@ class vector
     ///\name  capacity [23.2.6.2]
 
     size_type size()      const { return static_cast<size_type>(end_- begin_); }
-    size_type max_size()  const { return array_allocator.max_size(); }
+    size_type max_size()  const { return allocator_.max_size(); }
     size_type capacity()  const { return capacity_; }
     bool      empty()     const { return begin_ == end_; }
 
@@ -229,7 +229,7 @@ class vector
     }
 
     void reserve(size_type n) __ntl_throws(bad_alloc) //throw(length_error)
-    { 
+    {
       if ( capacity() < n ) realloc(n);
     }
 
@@ -243,7 +243,7 @@ class vector
       check_bounds(n);
       return operator[](n);
     }
-    
+
     reference at(size_type n)
     {
       check_bounds(n);
@@ -271,7 +271,7 @@ class vector
       {
         old_mem = begin_;
         capacity_ = n + capacity_factor();
-        const iterator new_mem = array_allocator.allocate(capacity_);
+        const iterator new_mem = allocator_.allocate(capacity_);
         new_end = new_mem + difference_type(new_end - old_mem);
         //new_end += difference_type(new_mem - old_mem);        // dangerous alignment
         iterator dest = begin_ = new_mem;
@@ -283,15 +283,15 @@ class vector
       iterator r_src = end();
       iterator r_dest = end_ = new_end;
       while ( tail_size-- )
-        move(--r_dest, --r_src);      
-      if ( old_mem ) array_allocator.deallocate(old_mem, old_capacity);
+        move(--r_dest, --r_src);
+      if ( old_mem ) allocator_.deallocate(old_mem, old_capacity);
       return r_dest;
     }
-    
+
     iterator insert__impl(iterator position, size_type n, const T& x)
     {
       iterator r_dest = insert__blank_space(position, n);
-      while ( n-- ) array_allocator.construct(--r_dest, x);
+      while ( n-- ) allocator_.construct(--r_dest, x);
       return r_dest;
     }
 
@@ -307,7 +307,7 @@ class vector
                          InputIterator last, const random_access_iterator_tag &)
     {
       position = insert__blank_space(position, static_cast<size_type>(last - first));
-      while ( first != last ) array_allocator.construct(--position, *--last);
+      while ( first != last ) allocator_.construct(--position, *--last);
     }
 
     template <class InputIterator>
@@ -334,10 +334,10 @@ class vector
     void push_back(const T& x)
     {
       if ( size() == capacity() ) realloc(capacity_factor());
-      array_allocator.construct(end_++, x);
+      allocator_.construct(end_++, x);
     }
 
-    void pop_back() __ntl_nothrow { array_allocator.destroy(--end_); }
+    void pop_back() __ntl_nothrow { allocator_.destroy(--end_); }
 
     iterator insert(iterator position, const T& x)
     {
@@ -357,9 +357,9 @@ class vector
 
     __forceinline
     iterator erase(iterator position) __ntl_nothrow
-    { 
+    {
       // return erase(position, position + 1);
-      array_allocator.destroy(position);
+      allocator_.destroy(position);
       --end_;
       iterator i = position;
       do move(i, i + 1); while ( ++i != end_ );
@@ -369,7 +369,7 @@ class vector
     __forceinline
     iterator erase(iterator first, iterator last) __ntl_nothrow
     {
-      for ( iterator i = last; i != first;  ) array_allocator.destroy(--i);
+      for ( iterator i = last; i != first;  ) allocator_.destroy(--i);
       iterator const tail = first;
       for ( ; last != end_; ++first, ++last ) move(first, last);
       end_ = first;
@@ -388,11 +388,11 @@ class vector
     {
       difference_type n = end_ - begin_;
       end_ = begin_;
-      while ( n ) array_allocator.destroy(begin_ + --n);
+      while ( n ) allocator_.destroy(begin_ + --n);
     }
 
     ///@}
-    
+
   ///////////////////////////////////////////////////////////////////////////
   private:
 
@@ -414,7 +414,7 @@ class vector
     }
 
     vector(pointer first, size_type n, bool, const Allocator& a = Allocator())
-    : array_allocator(a), begin_(first), end_(last), capacity(last - first) {}
+    : allocator_(a), begin_(first), end_(last), capacity(last - first) {}
   //end extension
   #endif
 
@@ -422,7 +422,7 @@ class vector
     pointer         end_;
     size_type       capacity_;
 
-    mutable allocator_type  array_allocator;
+    mutable allocator_type  allocator_;
 
     // "stdexcept.hxx" includes this header
     // hack: MSVC doesn't look inside function body
@@ -433,21 +433,21 @@ class vector
 
     void move(const iterator  to, const iterator from) const
     {
-      array_allocator.construct(to, *from);
-      array_allocator.destroy(from);
+      allocator_.construct(to, *from);
+      allocator_.destroy(from);
     }
 
 
     void realloc(size_type n) __ntl_throws(bad_alloc)
     {
-      const iterator new_mem = array_allocator.allocate(n);
+      const iterator new_mem = allocator_.allocate(n);
       const size_type old_capacity = capacity_;
       capacity_ = n;
       iterator dest = new_mem;
       // this is safe for begin_ == 0 && end_ == 0, but keep vector() coherent
       for ( iterator src = begin_; src != end_; ++src, ++dest )
         move(dest, src);
-      if ( begin_ ) array_allocator.deallocate(begin_, old_capacity);
+      if ( begin_ ) allocator_.deallocate(begin_, old_capacity);
       begin_ = new_mem;
       end_ = dest;
     }
@@ -456,7 +456,7 @@ class vector
     //    capacity_ may be 0;
     //    for smal capacity_ values reallocation will be more efficient
     //      2,  4,  8,  16,  32,  64, 128, 256, 512
-    //      8, 24, 56, 120, 248, 504, 
+    //      8, 24, 56, 120, 248, 504,
     size_type capacity_factor() const { return (capacity_ + 4) * 2; }
 
 };//class vector
