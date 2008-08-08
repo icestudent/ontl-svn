@@ -189,15 +189,16 @@ struct nlpo2_impl<64>
     return(++n);
   }
 };
+inline bool ispo2(size_t n)
+{
+  return ((n&(n-1)) == 0) ? true : false;
+}
 
+// Is Power Of 2
 size_t nlpo2(size_t n)
 {
   return nlpo2_impl<sizeof(size_t) * 8>::get(n);
 }
-
-//#define NTL__VECTOR_ALLOCATION_POLICY__USER_DEFINED
-//#define NTL__VECTOR_ALLOCATION_POLICY__AGGRESSIVE
-//#define NTL__VECTOR_ALLOCATION_POLICY__CONSERVATIVE
 
 // Makes sure no more than one vector allocation policy is defined.
 #if (defined(NTL__VECTOR_ALLOCATION_POLICY__USER_DEFINED) && \
@@ -212,7 +213,7 @@ size_t nlpo2(size_t n)
 #if !defined(NTL__VECTOR_ALLOCATION_POLICY__USER_DEFINED) && \
     !defined(NTL__VECTOR_ALLOCATION_POLICY__AGGRESSIVE) && \
     !defined(NTL__VECTOR_ALLOCATION_POLICY__CONSERVATIVE)
-# define NTL__VECTOR_ALLOCATION_POLICY__CONSERVATIVE
+# define NTL__VECTOR_ALLOCATION_POLICY__AGGRESSIVE
 #endif
 
 // Interface to vector allocation policy.
@@ -223,23 +224,20 @@ size_t vector_allocation_policy(size_t min)
   return ::ntl_user_defined::vector_allocation_policy(min);
 
 #elif defined(NTL__VECTOR_ALLOCATION_POLICY__AGGRESSIVE)
-  return nlpo2(min);
+  // returns 0, if min is 0
+  // returns 4, if min is 1, 2, 3, 4
+  // returns min, if min is power of 2
+  // returns 8, if min is 5, 6, 7, 8
+  // returns 16, if min is 9, 10, 11..., 16
+  // and so on...
+  if(min <= 4)
+    return min;
+  return ispo2(min) ? min : nlpo2(min);
 
 #else // NTL__VECTOR_ALLOCATION_POLICY__CONSERVATIVE
   return min;
 #endif
 }
-
-template <bool>
-struct make_bool
-{
-  typedef false_type value;
-};
-template <>
-struct make_bool<true>
-{
-  typedef true_type value;
-};
 
 template <class Allocator>
 struct allocation_guard
@@ -424,23 +422,21 @@ class vector
     void assign(size_type n, const T& u)
     {
       clear();
-      if ( capacity() < n )
+      if ( capacity() >= n )
       {
-        alloc_.deallocate(begin_, capacity_);
-        capacity_ = 0;
-        begin_ = end_ = nullptr;
-        size_type new_capacity = detail::vector_allocation_policy(n);
-        allocation_guard g(alloc_, new_capacity);
-        capacity_ = new_capacity;
-        begin_ = end_ = g.get();
         detail::uninitailized_fill_n_a(begin_, n, u, alloc_);
-        g.commit();
-        end_ += n;
+        end_ = begin_ + n;
         return;
       }
 
-      detail::uninitailized_fill_n_a(begin_, n, u, alloc_);
-      end_ = begin_ + n;
+      size_type new_cap = detail::vector_allocation_policy(n);
+      allocation_guard g(alloc_, new_cap);
+      detail::uninitailized_fill_n_a(g.get(), n, u, alloc_);
+      alloc_.deallocate(begin_, capacity_);
+      begin_ = end_ = g.get();
+      end_ += n;
+      capacity_ = new_cap;
+      g.commit();
     }
 
     allocator_type get_allocator() const  { return alloc_; }
@@ -521,7 +517,20 @@ class vector
 
     void reserve(size_type n) __ntl_throws(bad_alloc) //throw(length_error)
     {
-      if ( capacity() < n ) realloc(n);
+      if (capacity_ >= n)
+        return;
+
+      size_type new_cap = detail::vector_allocation_policy(n);
+      allocation_guard g(alloc_, new_cap);
+      detail::uninitailized_copy_a(begin_, end_, g.get(), alloc_);
+      // no-throw begin
+      for(; begin_ != end_; ++begin_)
+        alloc_.destroy(begin_);
+      begin_ = end_ = g.get();
+      end_ += n;
+      capacity_ = new_cap;
+      g.commit();
+      // no-throw end
     }
 
     ///\name  element access
@@ -594,7 +603,7 @@ class vector
     }
 
     template <class InputIterator>
-   void insert__disp_it(iterator position, InputIterator first,
+    void insert__disp_it(iterator position, InputIterator first,
                          InputIterator last, const random_access_iterator_tag &)
     {
       position = insert__blank_space(position, static_cast<size_type>(last - first));
@@ -624,8 +633,9 @@ class vector
     __forceinline
     void push_back(const T& x)
     {
-      if ( size() == capacity() ) realloc(capacity_factor());
-      alloc_.construct(end_++, x);
+      reserve(size() + 1);
+      alloc_.construct(end_, x);
+      ++end_;
     }
 
     void pop_back() __ntl_nothrow { alloc_.destroy(--end_); }
@@ -727,29 +737,6 @@ class vector
       alloc_.construct(to, *from);
       alloc_.destroy(from);
     }
-
-
-    void realloc(size_type n) __ntl_throws(bad_alloc)
-    {
-      const iterator new_mem = alloc_.allocate(n);
-      const size_type old_capacity = capacity_;
-      capacity_ = n;
-      iterator dest = new_mem;
-      // this is safe for begin_ == 0 && end_ == 0, but keep vector() coherent
-      for ( iterator src = begin_; src != end_; ++src, ++dest )
-        move(dest, src);
-      if ( begin_ ) alloc_.deallocate(begin_, old_capacity);
-      begin_ = new_mem;
-      end_ = dest;
-    }
-
-    //  + 8/2 serves two purposes:
-    //    capacity_ may be 0;
-    //    for smal capacity_ values reallocation will be more efficient
-    //      2,  4,  8,  16,  32,  64, 128, 256, 512
-    //      8, 24, 56, 120, 248, 504,
-    size_type capacity_factor() const { return (capacity_ + 4) * 2; }
-
 };//class vector
 
 ///\name  Vector comparisons
