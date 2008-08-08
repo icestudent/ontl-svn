@@ -45,7 +45,7 @@ template<class T> struct constructible_with_allocator_prefix : false_type {};
 ///\name 20.6.3 Allocator propagation traits [allocator.propagation]
 template<class Alloc> struct allocator_propagate_never
 : false_type {};
-template<class Alloc> struct allocator_propagate_on_copy_construction 
+template<class Alloc> struct allocator_propagate_on_copy_construction
 : false_type {};
 template<class Alloc> struct allocator_propagate_on_move_assignment
 : false_type {};
@@ -76,7 +76,7 @@ template<class Alloc> struct allocator_propagation_map
   static void swap(Alloc& a, Alloc& b)
   {
 //    anywhy UB
-//    if ( allocator_propagate_on_move_assignment<Alloc>::value 
+//    if ( allocator_propagate_on_move_assignment<Alloc>::value
 //      || allocator_propagate_on_copy_assignment<Alloc>::value )
     if ( !(a == b ) )
       swap(a, b);
@@ -121,13 +121,13 @@ class allocator
 
 #ifndef NTL_STLEXT
     pointer address(typename add_reference<typename remove_const<typename remove_reference<reference>::type>::type>::type x) const
-    { 
+    {
       return &x;
     }
     const_pointer address(const_reference x) const { return &x; }
 #else
     template<typename value_type>
-    value_type * address(value_type& x) const 
+    value_type * address(value_type& x) const
     {
       const_pointer check_type = &x; (check_type);
       return &x;
@@ -147,7 +147,7 @@ class allocator
 
     __declspec(noalias)
     __forceinline
-    void deallocate(pointer p, size_type /* n */) 
+    void deallocate(pointer p, size_type /* n */)
     {
       ::operator delete(const_cast<remove_const<T>::type*>(p));//(address(*p));
     }
@@ -156,7 +156,7 @@ class allocator
 
     __forceinline
     void construct(pointer p, const T & val)
-    { 
+    {
       __assume(p);
       ///\todo ::new((void *)p ) T(std::forward<U>(val))
       ::new((void *)p) T(val);
@@ -165,7 +165,7 @@ class allocator
 //    __forceinline
     void destroy(const pointer p)
     {
-      p->T::/*< workaround MSVC's weird `scalar deleting destructor'*/ ~T(); 
+      p->T::/*< workaround MSVC's weird `scalar deleting destructor'*/ ~T();
     }
 
     ///\}
@@ -179,11 +179,11 @@ template<class T> struct allocator_propagate_never<allocator<T> >
 
 ///\name  20.6.5.2 allocator globals [allocator.globals]
 
-template<class T, class U> 
+template<class T, class U>
 inline
 bool
   operator==(const allocator<T>&, const allocator<U>&) __ntl_nothrow
-{ 
+{
   return true;
 }
 
@@ -191,7 +191,7 @@ template<class T, class U>
 inline
 bool
   operator!=(const allocator<T>&, const allocator<U>&) __ntl_nothrow
-{ 
+{
   return false;
 }
 
@@ -203,7 +203,7 @@ class scoped_allocator_adaptor;
 
 /// 20.6.7 Raw storage iterator [storage.iterator]
 template<class OutputIterator, class T>
-class raw_storage_iterator 
+class raw_storage_iterator
 : public iterator<output_iterator_tag, void, void, void, void>
 {
     typedef raw_storage_iterator<OutputIterator, T> this_type;
@@ -239,12 +239,12 @@ template <class T>
 __forceinline
 void
   return_temporary_buffer(T* p)
-{ 
+{
   // 20.6.1.1/7  n shall equal the value passed as the first argument
   //             to the invocation of allocate which returned p.
   // but allocator::deallocate() does not use n
   allocator<T>::size_type const n = 0;
-  allocator<T>().deallocate(p, n); 
+  allocator<T>().deallocate(p, n);
 }
 
 /// 20.6.9 construct_element [construct.element]
@@ -268,16 +268,16 @@ void construct_element(Alloc& alloc, T& r, Args&&... args);
 ///   In the following algorithms, if an exception is thrown there are no effects.
 
 namespace detail {
-  
+
 template <class ForwardIterator>
 struct revert_on_exception
 {
     typedef ForwardIterator iterator;
     typedef typename iterator_traits<iterator>::value_type value_type;
-    
+
     revert_on_exception(const iterator & first, iterator & current)
     : first(first), current(current), ok(false) {/**/}
-      
+
     ~revert_on_exception()
     {
       if ( !ok )
@@ -391,8 +391,8 @@ template <class T> struct default_delete
     void operator()(T* ptr) const { ::delete ptr; }
   private:
     // forbid incompatible ::delete[]
-    template <class U> default_delete(const default_delete<U[]>&);   
-    template <class U, size_t S> default_delete(const default_delete<U[S]>&);    
+    template <class U> default_delete(const default_delete<U[]>&);
+    template <class U, size_t S> default_delete(const default_delete<U[S]>&);
 };
 
 /// 20.6.11.1.2 default_delete<T[]> [unique.ptr.dltr.dflt1]
@@ -431,13 +431,13 @@ class unique_ptr<T, default_delete<T> >
     explicit unique_ptr(T* p) __ntl_nothrow : ptr(p) {}
     unique_ptr(T* p, const deleter_type &) __ntl_nothrow : ptr(p) {}
     unique_ptr(const unique_ptr& u) __ntl_nothrow : ptr(u.get())
-    { 
+    {
       u.release(); // it's here to help MSVC optimizing container operations
     }
-      
+
     template <class U/*, class E*/>
     unique_ptr(const unique_ptr<U, deleter_type>& u) __ntl_nothrow : ptr(u.get())
-    { 
+    {
       u.release();
     }
 
@@ -461,7 +461,7 @@ class unique_ptr<T, default_delete<T> >
     }
 
     const unique_ptr& operator=(unspecified_pointer_type *)
-    { 
+    {
       reset();
       return *this;
     }
@@ -479,7 +479,7 @@ class unique_ptr<T, default_delete<T> >
 
     ///\name 20.6.11.2.5 unique_ptr modifiers [unique.ptr.single.modifiers]
     T* release() const { T * const tmp = get(); set(0); return tmp; }
-    
+
     __forceinline
     void reset(T* p = 0) const __ntl_nothrow
     {
@@ -488,7 +488,7 @@ class unique_ptr<T, default_delete<T> >
     }
 
     void swap(const unique_ptr& u) const __ntl_nothrow { std::swap(ptr, u.ptr); }
-    
+
     ///\}
 
   ///////////////////////////////////////////////////////////////////////////
@@ -516,7 +516,7 @@ class unique_ptr<T[], default_delete<T[]> >
     unique_ptr() __ntl_nothrow : ptr(0) {}
     explicit unique_ptr(T* p) __ntl_nothrow : ptr(p) {}
     unique_ptr(T* p, const deleter_type &) __ntl_nothrow : ptr(p) {}
-    unique_ptr(const unique_ptr& u) __ntl_nothrow : ptr(u.get()) 
+    unique_ptr(const unique_ptr& u) __ntl_nothrow : ptr(u.get())
     {
       u.release();
     }
@@ -533,7 +533,7 @@ class unique_ptr<T[], default_delete<T[]> >
     }
 
     const unique_ptr& operator=(unspecified_pointer_type *)
-    { 
+    {
       reset();
       return *this;
     }
@@ -543,13 +543,13 @@ class unique_ptr<T[], default_delete<T[]> >
     T* get() const __ntl_nothrow { return ptr; }
 
     deleter_type& get_deleter() __ntl_nothrow
-    { 
+    {
       static deleter_type deleter;
       return deleter;
     }
 
     const deleter_type& get_deleter() const __ntl_nothrow
-    { 
+    {
       static const deleter_type deleter;
       return deleter;
     }
@@ -558,16 +558,16 @@ class unique_ptr<T[], default_delete<T[]> >
 
     ///\name 20.6.11.2.5 unique_ptr modifiers [unique.ptr.single.modifiers]
     T* release() const { T * const tmp = get(); set(0); return tmp; }
-    
+
     __forceinline
     void reset(T* p = 0) const __ntl_nothrow
-    { 
+    {
       if ( get() && get() != p ) get_deleter()(get());
       set(p);
     }
 
     void swap(const unique_ptr& u) const __ntl_nothrow { std::swap(ptr, u.ptr); }
-    
+
     ///\}
 
   ///////////////////////////////////////////////////////////////////////////
@@ -617,7 +617,7 @@ class unique_ptr<T[N], default_delete<T[N]> >
     }
 
     const unique_ptr& operator=(unspecified_pointer_type *)
-    { 
+    {
       reset();
       return *this;
     }
@@ -627,13 +627,13 @@ class unique_ptr<T[N], default_delete<T[N]> >
     T* get() const __ntl_nothrow { return ptr; }
 
     deleter_type& get_deleter() __ntl_nothrow
-    { 
+    {
       static deleter_type deleter;
       return deleter;
     }
 
     const deleter_type& get_deleter() const __ntl_nothrow
-    { 
+    {
       static const deleter_type deleter;
       return deleter;
     }
@@ -642,16 +642,16 @@ class unique_ptr<T[N], default_delete<T[N]> >
 
     ///\name 20.6.11.2.5 unique_ptr modifiers [unique.ptr.single.modifiers]
     T* release() const { T * const tmp = get(); set(0); return tmp; }
-    
+
     __forceinline
     void reset(T* p = 0) const __ntl_nothrow
-    { 
+    {
       if ( get() && get() != p ) get_deleter()(get());
       set(p);
     }
 
     void swap(const unique_ptr& u) const __ntl_nothrow { std::swap(ptr, u.ptr); }
-    
+
     ///\}
 
   ///////////////////////////////////////////////////////////////////////////
@@ -884,7 +884,7 @@ class shared_ptr : ntl::linked_ptr<T>
     /// 3 Effects: Equivalent to shared_ptr().swap(*this).
     __forceinline
     void reset() { shared_ptr().swap(*this); }
-    template<class Y> void reset(Y* p) { shared_ptr(p).swap(*this); } 
+    template<class Y> void reset(Y* p) { shared_ptr(p).swap(*this); }
     template<class Y, class D> void reset(Y* p, D d);
 
     ///\name  20.6.6.2.5 shared_ptr observers [util.smartptr.shared.obs]
@@ -898,18 +898,18 @@ class shared_ptr : ntl::linked_ptr<T>
 
     //bool unique()    const __ntl_nothrow { return base_type::unique(); }
     using base_type::unique;
-    
+
     //operator base_type::unspecified_bool_type() const __ntl_nothrow
-    //{ 
+    //{
     //  return base_type::operator base_type::unspecified_bool_type();
     //}
     using base_type::operator base_type::unspecified_bool_type;
-    
+
     ///@}
 
   ///////////////////////////////////////////////////////////////////////////
   private:
-  
+
     void set(T * p) { base_type::set(p); }
     void free() { delete base_type::get(); }
 
@@ -982,7 +982,7 @@ basic_ostream<E, T>&
 }
 
 ///\name  20.6.12.2.9 shared_ptr specialized algorithms [util.smartptr.shared.spec]
-template<class T> 
+template<class T>
 inline
 void
   swap(shared_ptr<T>& a, shared_ptr<T>& b) __ntl_nothrow
@@ -1004,7 +1004,7 @@ shared_ptr<T>
 
 template<class T, class U>
 inline
-shared_ptr<T> 
+shared_ptr<T>
   const_pointer_cast(shared_ptr<U> const& r);
 
 ///@}
@@ -1039,12 +1039,12 @@ class weak_ptr
     template<class Y> weak_ptr& operator=(shared_ptr<Y> const& r);
 
     ///\name  20.6.6.3.4 weak_ptr modifiers [util.smartptr.weak.mod]
-    
+
     void swap(weak_ptr& r);
     void reset();
 
     ///\name  20.6.6.3.5 weak_ptr observers [util.smartptr.weak.obs]
-    
+
     long use_count() const;
     bool expired() const;
     shared_ptr<T> lock() const;
@@ -1135,7 +1135,7 @@ class auto_ptr
 
     __forceinline
     void reset(X * p = 0)   __ntl_nothrow
-    { 
+    {
       if ( get() && get() != p ) delete get();
       set(p);
     }
@@ -1157,7 +1157,7 @@ class auto_ptr
 
   ///////////////////////////////////////////////////////////////////////////
   private:
-  
+
     X * ptr;
     void set(X * p) { ptr = p; }
 };
