@@ -8,6 +8,7 @@
 #ifndef NTL__STLX_VECTOR
 #define NTL__STLX_VECTOR
 
+#include "cstring.hxx"
 #include "algorithm.hxx"
 #include "iterator.hxx"
 #include "memory.hxx"
@@ -35,20 +36,55 @@ namespace std {
 namespace detail
 {
 
-// There should be a better place for things in the detail namespace.
+// There should be a better place for names in this (detail) namespace.
 // !fr3@K!
 
+
+template <class Allocator>
+struct destroyer
+{
+  typedef Allocator allocator_type;
+  typedef typename Allocator::value_type value_type;
+
+  destroyer(allocator_type& alloc) __ntl_nothrow
+  : array_alloc_(alloc) {}
+
+  void operator()(value_type& val) __ntl_nothrow
+  {
+    array_alloc_.destroy(&val);
+  }
+
+private:
+  allocator_type& array_alloc_;
+};
+
+template <class Allocator>
+destroyer<Allocator>
+  destructor_a(Allocator& alloc) __ntl_nothrow
+{
+  return destroyer<Allocator>(alloc);
+}
+
+/// The template function evaluates alloc.destroy(&(*(first + N))) once for each N in the range [0, count).
+template <class InputIterator, class Allocator>
+void destroy(InputIterator first,
+             InputIterator last,
+             Allocator& alloc) __ntl_nothrow
+{
+  for_each(first, last, destructor_a(alloc));
+}
+
 template <class ForwardIterator, class Allocator>
-struct range_construct_guard
+struct guarded_range_constructor
 {
   typedef ForwardIterator iterator;
   typedef Allocator allocator_type;
   typedef typename iterator_traits<ForwardIterator>::value_type value_type;
 
-  range_construct_guard(iterator first, allocator_type& alloc) __ntl_nothrow
+  guarded_range_constructor(iterator first, allocator_type& alloc) __ntl_nothrow
   : first_(first),
     current_(first),
-    alloc_(alloc),
+    array_alloc_(alloc),
     committed_(false)
   {
     // Making sure users don't get the wrong combinations of iterator
@@ -57,25 +93,24 @@ struct range_construct_guard
     // future.
     // !fr3@K!
     typedef value_type iterator_value_type;
-    typedef typename allocator_type::value_type allocator_value_type;
-    STATIC_ASSERT((is_same<iterator_value_type, allocator_value_type>::value));
+    typedef typename allocator_type::value_type array_allocator_value_type;
+    STATIC_ASSERT((is_same<iterator_value_type, array_allocator_value_type>::value));
   }
-  ~range_construct_guard() __ntl_nothrow
+  ~guarded_range_constructor() __ntl_nothrow
   {
     if(committed_)
       return;
 
-    for(; first_ != current_; ++first_)
-      alloc_.destroy(first_);
+    destroy(first_, current_, array_alloc_);
   }
 
-  void construct_from(const value_type& value)
+  void operator()(const value_type& value)
   {
-    alloc_.construct(current_, value);
+    array_alloc_.construct(array_alloc_.address(*current_), value);
     ++current_;
   }
 
-  iterator commit()
+  iterator commit() __ntl_nothrow
   {
     committed_ = true;
     return current_;
@@ -83,13 +118,13 @@ struct range_construct_guard
 
 private:
   // no value semantics
-  range_construct_guard(const range_construct_guard&);
-  range_construct_guard& operator=(const range_construct_guard&);
+  guarded_range_constructor(const guarded_range_constructor&);
+  guarded_range_constructor& operator=(const guarded_range_constructor&);
 
 private:
   iterator first_;
   iterator current_;
-  allocator_type& alloc_;
+  allocator_type& array_alloc_;
   bool committed_;
 };
 
@@ -99,13 +134,13 @@ void uninitailized_fill_a(ForwardIterator first,
                           const T& value,
                           Allocator& alloc)
 {
-  range_construct_guard<ForwardIterator, Allocator> g(first, alloc);
+  guarded_range_constructor<ForwardIterator, Allocator> ctor(first, alloc);
   for(; first != last; ++first)
   {
-    g.construct_from(value);
+    ctor(value);
   }
-  g.commit();
-  assert(first == g.commit());
+  ctor.commit();
+  assert(first == ctor.commit());
 }
 
 template <class ForwardIterator, class Size, class T, class Allocator>
@@ -114,13 +149,13 @@ void uninitailized_fill_n_a(ForwardIterator first,
                             const T& value,
                             Allocator& alloc)
 {
-  range_construct_guard<ForwardIterator, Allocator> g(first, alloc);
+  guarded_range_constructor<ForwardIterator, Allocator> ctor(first, alloc);
   for(; n; --n, ++first)
   {
-    g.construct_from(value);
+    ctor(value);
   }
-  g.commit();
-  assert(first == g.commit());
+  ctor.commit();
+  assert(first == ctor.commit());
 }
 
 template <class InputIterator, class ForwardIterator, class Allocator>
@@ -129,12 +164,12 @@ InputIterator uninitailized_copy_a(InputIterator first,
                                    ForwardIterator dst,
                                    Allocator& alloc)
 {
-  range_construct_guard<ForwardIterator, Allocator> g(dst, alloc);
+  guarded_range_constructor<ForwardIterator, Allocator> ctor(dst, alloc);
   for(; first != last; ++first, ++dst)
   {
-    g.construct_from(*first);
+    ctor(*first);
   }
-  return g.commit();
+  return ctor.commit();
 }
 
 template <class InputIterator,
@@ -146,12 +181,12 @@ InputIterator uninitailized_copy_n_a(InputIterator first,
                                      ForwardIterator dst,
                                      Allocator& alloc)
 {
-  range_construct_guard<ForwardIterator, Allocator> g(dst, alloc);
+  guarded_range_constructor<ForwardIterator, Allocator> ctor(dst, alloc);
   for(; n; ++first, ++dst)
   {
-    g.construct_from(*first);
+    ctor(*first);
   }
-  return g.commit();
+  return ctor.commit();
 }
 
 // Next Largest Power of 2, optionally used in
@@ -165,7 +200,7 @@ struct nlpo2_impl
 template <>
 struct nlpo2_impl<32>
 {
-  static uint32_t get(uint32_t n)
+  static uint32_t get(uint32_t n) __ntl_nothrow
   {
     n |= (n >> 1);
     n |= (n >> 2);
@@ -178,7 +213,7 @@ struct nlpo2_impl<32>
 template <>
 struct nlpo2_impl<64>
 {
-  static uint64_t get(uint64_t n)
+  static uint64_t get(uint64_t n) __ntl_nothrow
   {
     n |= (n >> 1);
     n |= (n >> 2);
@@ -189,13 +224,13 @@ struct nlpo2_impl<64>
     return(++n);
   }
 };
-inline bool ispo2(size_t n)
+inline bool ispo2(size_t n) __ntl_nothrow
 {
   return ((n&(n-1)) == 0) ? true : false;
 }
 
 // Is Power Of 2
-size_t nlpo2(size_t n)
+size_t nlpo2(size_t n) __ntl_nothrow
 {
   return nlpo2_impl<sizeof(size_t) * 8>::get(n);
 }
@@ -240,41 +275,116 @@ size_t vector_allocation_policy(size_t min)
 }
 
 template <class Allocator>
-struct allocation_guard
+struct guarded_allocator
 {
   typedef Allocator allocator_type;
   typedef typename Allocator::pointer pointer;
 
-  allocation_guard(allocator_type& alloc, size_t n)
-  : alloc_(alloc),
+  guarded_allocator(allocator_type& alloc, size_t n)
+  : array_alloc_(alloc),
     n_(n),
-    p_(alloc.allocate(n))
+    p_(alloc.allocate(n)),
+    committed_(false)
   {
   }
-  ~allocation_guard()
+  ~guarded_allocator() __ntl_nothrow
   {
-    if(p_ == nullptr)
+    if(committed_ == true)
       return;
 
-    alloc_.deallocate(p_, n_);
+    assert(p_ != nullptr);
+    array_alloc_.deallocate(p_, n_);
   }
 
-  pointer get() const
+  pointer get() const __ntl_nothrow
   {
     assert(p_ != nullptr);
     return p_;
   }
 
-  void commit()
+  void commit() __ntl_nothrow
   {
-    p_ = nullptr;
+    committed_ = true;
   }
 
   private:
-    allocator_type& alloc_;
+    allocator_type& array_alloc_;
     size_t n_;
     pointer p_;
+    bool committed_;
 };
+
+template <class InputIterator, class ForwardIterator>
+void relocate(
+  InputIterator first,
+  InputIterator last,
+  ForwardIterator dst) __ntl_nothrow
+{
+  // Making sure users don't get the wrong combinations of source
+  // iterators and destination iterators.
+  // Consider using concepts instead of static assertion in the
+  // future.
+  // !fr3@K!
+  typedef typename iterator_traits<InputIterator>::value_type src_type;
+  typedef typename iterator_traits<ForwardIterator>::value_type dst_type;
+  STATIC_ASSERT((is_same<src_type, dst_type>::value));
+
+  for(; first != last; ++first, ++dst)
+    memcpy(&(*dst), &(*first), sizeof(src_type));
+}
+
+template <class InputIterator, class ForwardIterator, class Allocator>
+struct guarded_relocator
+{
+  typedef typename iterator_traits<InputIterator>::value_type value_type;
+
+  guarded_relocator(InputIterator first,
+                   InputIterator last,
+                   ForwardIterator dst,
+                   Allocator& alloc) __ntl_nothrow
+  : dst_(dst),
+    dst_last_(dst),
+    array_alloc_(alloc),
+    committed_(false)
+  {
+    // Making sure users don't get the wrong combinations of source
+    // iterators and destination iterators.
+    // Consider using concepts instead of static assertion in the
+    // future.
+    // !fr3@K!
+    typedef typename iterator_traits<InputIterator>::value_type src_type;
+    typedef typename iterator_traits<ForwardIterator>::value_type dst_type;
+    STATIC_ASSERT((is_same<src_type, dst_type>::value));
+
+    for(; first != last; ++first, ++dst_last_)
+      memcpy(array_alloc_.address(*dst), array_alloc_.address(*first), sizeof(value_type));
+  }
+
+  ~guarded_relocator() __ntl_nothrow
+  {
+    if(committed_)
+      return;
+
+    destroy(dst_, dst_last_, array_alloc_);
+  }
+
+  void commit() __ntl_nothrow
+  {
+    committed_ = true;
+  }
+
+private:
+  ForwardIterator dst_;
+  ForwardIterator dst_last_;
+  Allocator& array_alloc_;
+  bool committed_;
+};
+
+template <class T>
+bool overlapping(const T* first, const T* last, const T* p) __ntl_nothrow
+{
+  return (p >= first && p < last) ? true : false;
+}
 
 } // namespace detail
 
@@ -302,12 +412,13 @@ class vector
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
   private:
-    typedef detail::allocation_guard<allocator_type> allocation_guard;
+    typedef detail::guarded_allocator<allocator_type> guarded_allocator;
+    typedef detail::guarded_relocator<iterator, iterator, allocator_type> guarded_relocator;
 
     void construct(size_type n, const T& value)
     {
       iterator i = begin_;
-      while ( n-- ) alloc_.construct(i++, value);
+      while ( n-- ) array_alloc_.construct(i++, value);
       end_ = i;
     }
 
@@ -317,32 +428,8 @@ class vector
     {
       iterator i = begin_;
       for ( ; n--; ++first, ++i )
-        alloc_.construct(i, *first);
+        array_alloc_.construct(i, *first);
       end_ = i;
-    }
-
-    template <class InputIterator>
-    void vector__disp(InputIterator first, InputIterator last,
-                      const input_iterator_tag)
-    {
-      capacity_ = 0;
-      begin_ = end_ = nullptr;
-
-      for(; first != last; ++first)
-        this->push_back(*first);
-    }
-
-    template <class ForwardIterator, class IteratorCategory>
-    void vector__disp(ForwardIterator first, ForwardIterator last,
-                      const IteratorCategory)
-    {
-      size_type n = distance(first, last);
-      capacity_ = detail::vector_allocation_policy(n);
-      allocation_guard g(alloc_, capacity_);
-      begin_ = end_ = g.get();
-      detail::uninitailized_copy_a(first, last, begin_, alloc_);
-      g.commit();
-      end_ += n;
     }
 
   public:
@@ -350,17 +437,17 @@ class vector
     ///\name construct/copy/destroy [23.2.6.1]
 
     explicit vector(const Allocator& a = Allocator())
-    : alloc_(a), capacity_(0), begin_(nullptr), end_(nullptr) {}
+    : array_alloc_(a), capacity_(0), begin_(nullptr), end_(nullptr) {}
 
     explicit vector(size_type n,
                     const T& value      = T(),
                     const Allocator& a  = Allocator())
-    : alloc_(a),
+    : array_alloc_(a),
       capacity_(detail::vector_allocation_policy(n)),
-      begin_(alloc_.allocate(capacity_)),
+      begin_(array_alloc_.allocate(capacity_)),
       end_(begin_)
     {
-      detail::uninitailized_fill_n_a(begin_, n, value, alloc_);
+      detail::uninitailized_fill_n_a(begin_, n, value, array_alloc_);
       end_ += n;
     }
 
@@ -368,29 +455,39 @@ class vector
     vector(InputIterator first,
            InputIterator last,
            const Allocator& a = Allocator())
-    : alloc_(a)
+    : array_alloc_(a),
+      begin_(nullptr),
+      end_(nullptr),
+      capacity_(0)
     {
-      vector__disp(
-        first,
-        last,
-        typename iterator_traits<InputIterator>::iterator_category());
+      // It's typical to implement assignment via a tmp obj and swap.
+      // But in this case it's much easier to implement a
+      // exception-safe (basic guaranty) version of range assign for
+      // InputIterator.
+      // Hint, with help from destructor.
+      // Therefore I choose to implement this constructor as such.
+      // !fr3@K!
+      vector tmp(array_alloc_);
+      tmp.assign(first, last);
+      this->swap(other);
     }
 
     __forceinline
     vector(const vector<T, Allocator>& x)
-    : alloc_(x.alloc_),
-      capacity_(detail::vector_allocation_policy(x.size()))
+    : array_alloc_(x.array_alloc_),
+      capacity_(detail::vector_allocation_policy(x.size())),
+      begin_(nullptr),
+      end_(nullptr)
     {
       if ( !capacity_ )
-      {
-        begin_ = end_ = nullptr;
         return;
-      }
 
-      allocation_guard g(alloc_, capacity_);
-      begin_ = end_ = g.get();
-      detail::uninitailized_copy_a(x.begin(), x.end(), begin_, alloc_);
-      g.commit();
+      guarded_allocator new_begin(array_alloc_, capacity_);
+      detail::uninitailized_copy_a(x.begin(), x.end(), new_begin.get(), array_alloc_);
+
+      // no-throw begin
+      new_begin.commit();
+      begin_ = end_ = new_begin.get();
       end_ += x.size();
     }
 
@@ -400,8 +497,9 @@ class vector
       if(capacity_ == 0)
         return;
 
+      assert(begin_ != nullptr);
       clear();
-      alloc_.deallocate(begin_, capacity_);
+      array_alloc_.deallocate(begin_, capacity_);
     }
 
     vector<T, Allocator>& operator=(const vector<T, Allocator>& x)
@@ -421,25 +519,19 @@ class vector
 
     void assign(size_type n, const T& u)
     {
-      clear();
-      if ( capacity() >= n )
+      if(detail::overlapping(begin_, end_, &u) == false)
       {
-        detail::uninitailized_fill_n_a(begin_, n, u, alloc_);
-        end_ = begin_ + n;
+        assign__n(n, u);
         return;
       }
 
-      size_type new_cap = detail::vector_allocation_policy(n);
-      allocation_guard g(alloc_, new_cap);
-      detail::uninitailized_fill_n_a(g.get(), n, u, alloc_);
-      alloc_.deallocate(begin_, capacity_);
-      begin_ = end_ = g.get();
-      end_ += n;
-      capacity_ = new_cap;
-      g.commit();
+      // Make a copy of `u`, before clear()ing.
+      // !fr3@K!
+      const T tmp(u);
+      assign__n(n, tmp);
     }
 
-    allocator_type get_allocator() const  { return alloc_; }
+    allocator_type get_allocator() const  { return array_alloc_; }
 
     ///@}
 
@@ -447,37 +539,69 @@ class vector
 
     template <class InputIterator>
     void assign__disp(InputIterator first, InputIterator last,
-                      const input_iterator_tag)
+                      const input_iterator_tag&)
     {
       clear();
       for(; first != last; ++first)
         push_back(*first);
     }
 
-    template <class ForwardIterator, class IteratorCategory>
+    template <class ForwardIterator>
     void assign__disp(ForwardIterator first, ForwardIterator last,
-                      const IteratorCategory)
+                      const forward_iterator_tag&)
     {
       clear();
       // distance SHOULD always be positive
       size_type n = static_cast<size_type>(distance(first, last));
-      if ( capacity() < n )
+      if(capacity() >= n)
       {
-        alloc_.deallocate(begin_, capacity_);
-        capacity_ = 0;
-        begin_ = end_ = nullptr;
-        size_type new_capacity = detail::vector_allocation_policy(n);
-        allocation_guard g(alloc_, new_capacity);
-        capacity_ = new_capacity;
-        begin_ = end_ = g.get();
-        detail::uninitailized_copy_a(first, last, begin_, alloc_);
-        g.commit();
-        end_ += n;
+        detail::destroy(begin_, end_, array_alloc_);
+        detail::uninitailized_copy_a(first, last, begin_, array_alloc_);
+        end_ = begin_ + n;
         return;
       }
 
-      detail::uninitailized_copy_a(first, last, begin_, alloc_);
-      end_ = begin_ + n;
+      size_type new_cap = detail::vector_allocation_policy(n);
+      guarded_allocator new_begin(array_alloc_, new_cap);
+      detail::uninitailized_copy_a(first, last, new_begin.get(), array_alloc_);
+
+      // no-throw begin
+      new_begin.commit();
+
+      detail::destroy(begin_, end_, array_alloc_);
+      if(capacity_)
+      {
+        assert(begin_ != nullptr);
+        array_alloc_.deallocate(begin_, capacity_);
+      }
+
+      begin_ = end_ = new_begin.get();
+      end_ += n;
+      capacity_ = new_cap;
+    }
+
+    void assign__n(size_type n, const T& u)
+    {
+      clear();
+      if ( capacity() >= n )
+      {
+        detail::uninitailized_fill_n_a(begin_, n, u, array_alloc_);
+        end_ = begin_ + n;
+        return;
+      }
+
+      size_type new_cap = detail::vector_allocation_policy(n);
+      guarded_allocator new_begin(array_alloc_, new_cap);
+      detail::uninitailized_fill_n_a(new_begin.get(), n, u, array_alloc_);
+
+      // no-throw begin
+      new_begin.commit();
+      if(capacity_)
+        array_alloc_.deallocate(begin_, capacity_);
+
+      begin_ = end_ = new_begin.get();
+      end_ += n;
+      capacity_ = new_cap;
     }
 
   public:
@@ -504,7 +628,7 @@ class vector
     ///\name  capacity [23.2.6.2]
 
     size_type size()      const { return static_cast<size_type>(end_- begin_); }
-    size_type max_size()  const { return alloc_.max_size(); }
+    size_type max_size()  const { return array_alloc_.max_size(); }
     size_type capacity()  const { return capacity_; }
     bool      empty()     const { return begin_ == end_; }
 
@@ -521,16 +645,14 @@ class vector
         return;
 
       size_type new_cap = detail::vector_allocation_policy(n);
-      allocation_guard g(alloc_, new_cap);
-      detail::uninitailized_copy_a(begin_, end_, g.get(), alloc_);
+      pointer new_begin = array_alloc_.allocate(new_cap);
+
       // no-throw begin
-      for(; begin_ != end_; ++begin_)
-        alloc_.destroy(begin_);
-      begin_ = end_ = g.get();
-      end_ += n;
+      detail::relocate(begin_, end_, new_begin);
+      array_alloc_.deallocate(begin_, capacity_);
+      end_ = new_begin + distance(begin_, end_);
+      begin_ = new_begin;
       capacity_ = new_cap;
-      g.commit();
-      // no-throw end
     }
 
     ///\name  element access
@@ -559,71 +681,163 @@ class vector
 
   private:
 
-    iterator insert__blank_space(const iterator position, const size_type n)
+    pointer insert__n(pointer position, size_type n, const T& x)
     {
-      const size_type old_capacity = capacity_;
-      iterator old_mem = 0;
-      iterator new_end = end_ + n;
-      // a hint to compiler - may be it'll eliminate  while ( tail_size-- ) ...
-      difference_type tail_size = end_ - position;
-      // realloc the first part if needed
-      if ( capacity_ < end_- begin_ + n )
+      if(capacity_ < this->size() + n)
       {
-        old_mem = begin_;
-        capacity_ = n + capacity_factor();
-        const iterator new_mem = alloc_.allocate(capacity_);
-        new_end = new_mem + difference_type(new_end - old_mem);
-        //new_end += difference_type(new_mem - old_mem);        // dangerous alignment
-        iterator dest = begin_ = new_mem;
-        // this is safe for begin_ == 0 && end_ == 0, but keep vector() intact
-        for ( iterator src = old_mem; src != position; ++src, ++dest )
-          move(dest, src);
+        // Self referencing protection.
+        // `x` is going to be relocate()ed, make a copy of it before
+        // it's relocated.
+        const T tmp(x);
+        return this->insert__n_realloc(position, n, x);
       }
-      // move the tail. iterators are reverse - may be no realloc
-      iterator r_src = end();
-      iterator r_dest = end_ = new_end;
-      while ( tail_size-- )
-        move(--r_dest, --r_src);
-      if ( old_mem ) alloc_.deallocate(old_mem, old_capacity);
-      return r_dest;
+
+      if(detail::overlapping(position, position + n, &x) == true)
+      {
+        // Self referencing protection.
+        // `x` is going to be relocate()ed, make a copy of it before
+        // it's relocated.
+        const T tmp(x);
+        return this->insert__n_no_realloc(position, n, tmp);
+      }
+
+      return this->insert__n_no_realloc(position, n, x);
     }
 
-    iterator insert__impl(iterator position, size_type n, const T& x)
+    pointer insert__n_realloc(pointer position, size_type n, const T& x)
     {
-      iterator r_dest = insert__blank_space(position, n);
-      while ( n-- ) alloc_.construct(--r_dest, x);
-      return r_dest;
+      const size_type old_size = this->size();
+      const size_type new_size = old_size + n;
+      const size_type new_cap = detail::vector_allocation_policy(old_size + n);
+      guarded_allocator new_begin(array_alloc_, new_cap);
+      pointer new_pos = new_begin.get() + distance(begin_, position);
+      detail::uninitailized_fill_n_a(new_pos, n, x, array_alloc_);
+
+      // no-throw begin
+      new_begin.commit();
+      detail::relocate(begin_, position, new_begin.get());
+      detail::relocate(position, end_, new_pos + n);
+      array_alloc_.deallocate(begin_, capacity_);
+      begin_ = end_ = new_begin.get();
+      end_ += (old_size + n);
+      capacity_ = new_cap;
+      return new_pos;
+    }
+
+    pointer insert__n_no_realloc(pointer position, size_type n, const T& x)
+    {
+      const size_type old_size = this->size();
+      const size_type new_size = old_size + n;
+      if(position + n < end_)
+      {
+        // Relocating in overlapping ranges.
+        // Relocates reversely to avoid race condition.
+        detail::guarded_relocator<reverse_iterator, reverse_iterator, allocator_type> reloc(
+          reverse_iterator(end_),
+          reverse_iterator(position),
+          reverse_iterator(position + n),
+          array_alloc_);
+        end_ = begin_ + distance(begin_, position);
+        detail::uninitailized_fill_n_a(position, n, x, array_alloc_);
+
+        // no-throw begin
+        reloc.commit();
+        end_ += n;
+        return position;
+      }
+
+      // Relocating in non-overlapping ranges.
+      // Relocates normally.
+      guarded_relocator reloc(
+        position,
+        end_,
+        position + n,
+        array_alloc_);
+
+      end_ = begin_ + distance(begin_, position);
+      detail::uninitailized_fill_n_a(position, n, x, array_alloc_);
+
+      // no-throw begin
+      reloc.commit();
+      end_ += n;
+      return position;
     }
 
     template <class InputIterator>
-    void insert__disp_it(iterator position, InputIterator first,
-                         InputIterator last, const input_iterator_tag&)
+    void insert__range(pointer position,
+                       InputIterator first,
+                       InputIterator last,
+                       const input_iterator_tag&)
     {
-      while ( first != last ) position = insert__impl(position, 1, *first++) + 1;
+      size_type offset = distance(begin_, position);
+      for(; first != last; ++first)
+      {
+        this->insert__n(position, 1, *first);
+      }
     }
 
-    template <class InputIterator>
-    void insert__disp_it(iterator position, InputIterator first,
-                         InputIterator last, const random_access_iterator_tag &)
+    template <class ForwardIterator>
+    void insert__range(pointer position,
+                       ForwardIterator first,
+                       ForwardIterator last,
+                       const forward_iterator_tag&)
     {
-      position = insert__blank_space(position, static_cast<size_type>(last - first));
-      while ( first != last ) alloc_.construct(--position, *--last);
+      const size_type n = distance(first, last);
+      const size_type old_size = this->size();
+      const size_type new_size = old_size + n;
+      if(capacity_ >= new_size)
+      {
+        // No reallocation needed.
+
+        // Though I don't know where it states this in the standard,
+        // STLport says the standard forbids checking for self
+        // referencing here.
+        // !fr3@K!
+        guarded_relocator reloc(
+          position,
+          end_,
+          position + n,
+          array_alloc_);
+
+        end_ = begin_ + distance(begin_, position);
+        detail::uninitailized_copy_a(first, last, position, array_alloc_);
+
+        // no-throw begin
+        reloc.commit();
+        end_ += n;
+        return;
+      }
+
+      // Reallocation required.
+      const size_type new_cap = detail::vector_allocation_policy(old_size + n);
+      guarded_allocator new_begin(array_alloc_, new_cap);
+      pointer new_pos = new_begin.get() + distance(begin_, position);
+      detail::uninitailized_copy_a(first, last, new_pos, array_alloc_);
+
+      // no-throw begin
+      new_begin.commit();
+      detail::relocate(begin_, position, new_begin.get());
+      detail::relocate(position, end_, new_pos + n);
+      array_alloc_.deallocate(begin_, capacity_);
+      begin_ = end_ = new_begin.get();
+      end_ += (old_size + n);
+      capacity_ = new_cap;
+      return;
     }
 
-    template <class InputIterator>
-    void insert__disp(iterator position, InputIterator first, InputIterator last,
-                      const false_type&)
+    void push_back__impl(const T& x)
     {
-      insert__disp_it(position, first, last,
-                      iterator_traits<InputIterator>::iterator_category());
+      reserve(size() + 1);
+      array_alloc_.construct(end_, x);
+      ++end_;
     }
 
-    template <class IntegralType>
-    void insert__disp(iterator position, IntegralType n, IntegralType x,
-                      const true_type&)
+    pointer erase__impl(pointer first, pointer last) __ntl_nothrow
     {
-      insert__impl(position, static_cast<size_type>(n),
-                  static_cast<value_type>(x));
+      detail::destroy(first, last, array_alloc_);
+      detail::relocate(last, end_, first);
+      end_ -= distance(first, last);
+      return first;
     }
 
   public:
@@ -633,63 +847,65 @@ class vector
     __forceinline
     void push_back(const T& x)
     {
-      reserve(size() + 1);
-      alloc_.construct(end_, x);
-      ++end_;
+      if(capacity_ == size() && detail::overlapping(begin_, end_, &x))
+      {
+        // Relocation required.
+        value_type tmp(x);
+        this->push_back__impl(tmp);
+      }
+
+      this->push_back__impl(x);
     }
 
-    void pop_back() __ntl_nothrow { alloc_.destroy(--end_); }
+    void pop_back() __ntl_nothrow { array_alloc_.destroy(--end_); }
 
-    iterator insert(iterator position, const T& x)
+    iterator insert(const_iterator position, const T& x)
     {
-      return insert__impl(position, 1, x);
+      pointer p = const_cast<pointer>(&(*position));
+      return insert__n(p, 1, x);
     }
 
-    void insert(iterator position, size_type n, const T& x)
+    void insert(const_iterator position, size_type n, const T& x)
     {
-      insert__impl(position, n, x);
+      pointer p = const_cast<pointer>(&(*position));
+      insert__n(p, n, x);
     }
 
     template <class InputIterator>
-    void insert(iterator position, InputIterator first, InputIterator last)
+    void insert(const_iterator position, InputIterator first, InputIterator last)
     {
-      insert__disp(position, first, last, is_integral<InputIterator>::type());
+      pointer p = const_cast<pointer>(&(*position));
+      insert__range(p, first, last, typename iterator_traits<InputIterator>::iterator_category());
     }
 
     __forceinline
-    iterator erase(iterator position) __ntl_nothrow
+    iterator erase(const_iterator position) __ntl_nothrow
     {
-      // return erase(position, position + 1);
-      alloc_.destroy(position);
-      --end_;
-      iterator i = position;
-      do move(i, i + 1); while ( ++i != end_ );
-      return position;
+      pointer p = const_cast<pointer>(position);
+      return this->erase__impl(position, position + 1);
     }
 
     __forceinline
-    iterator erase(iterator first, iterator last) __ntl_nothrow
+    iterator erase(const_iterator first, const_iterator last) __ntl_nothrow
     {
-      for ( iterator i = last; i != first;  ) alloc_.destroy(--i);
-      iterator const tail = first;
-      for ( ; last != end_; ++first, ++last ) move(first, last);
-      end_ = first;
-      return tail;
+      pointer f = const_cast<pointer>(first);
+      pointer l = const_cast<pointer>(last);
+      return this->erase__impl(f, l);
     }
 
     void swap(vector<T, Allocator>& x) __ntl_nothrow
     {
+      std::swap(array_alloc_, x.array_alloc_);
+      std::swap(capacity_, x.capacity_);
       std::swap(begin_, x.begin_);
       std::swap(end_, x.end_);
-      std::swap(capacity_, x.capacity_);
     }
 
     __forceinline
     void clear() __ntl_nothrow
     {
-      difference_type n = end_ - begin_;
+      detail::destroy(begin_, end_, array_alloc_);
       end_ = begin_;
-      while ( n ) alloc_.destroy(begin_ + --n);
     }
 
     ///@}
@@ -715,12 +931,13 @@ class vector
     }
 
     vector(pointer first, size_type n, bool, const Allocator& a = Allocator())
-    : alloc_(a), begin_(first), end_(last), capacity(last - first) {}
+    : array_alloc_(a), begin_(first), end_(last), capacity(last - first) {}
   //end extension
   #endif
 
-    mutable allocator_type  alloc_;
-
+    // Why mutable?
+    // !fr3@K!
+    mutable allocator_type  array_alloc_;
     size_type       capacity_;
     pointer         begin_;
     pointer         end_;
@@ -734,8 +951,8 @@ class vector
 
     void move(const iterator  to, const iterator from) const
     {
-      alloc_.construct(to, *from);
-      alloc_.destroy(from);
+      array_alloc_.construct(to, *from);
+      array_alloc_.destroy(from);
     }
 };//class vector
 
