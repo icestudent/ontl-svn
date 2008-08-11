@@ -1078,7 +1078,7 @@ class basic_string
     void alloc__new(size_type n)
     {
       n = __ntl_grow_heap_block_size(n + sizeof('\0'));
-      str.end_ = str.begin_ = str.alloc_.allocate(n);
+      str.end_ = str.begin_ = str.array_alloc_.allocate(n);
       str.capacity_ = n;
     }
 
