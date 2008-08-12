@@ -526,6 +526,7 @@ class vector
       }
 
       // Make a copy of `u`, before clear()ing.
+      // Checking for self referencing.
       // !fr3@K!
       const T tmp(u);
       assign__n(n, tmp);
@@ -555,11 +556,14 @@ class vector
       size_type n = static_cast<size_type>(distance(first, last));
       if(capacity() >= n)
       {
-        detail::destroy(begin_, end_, array_alloc_);
+        // No reallocation needed.
+
         detail::uninitailized_copy_a(first, last, begin_, array_alloc_);
         end_ = begin_ + n;
         return;
       }
+
+      // Reallocation required.
 
       size_type new_cap = detail::vector_allocation_policy(n);
       guarded_allocator new_begin(array_alloc_, new_cap);
@@ -585,10 +589,14 @@ class vector
       clear();
       if ( capacity() >= n )
       {
+        // No reallocation needed.
+
         detail::uninitailized_fill_n_a(begin_, n, u, array_alloc_);
         end_ = begin_ + n;
         return;
       }
+
+      // Reallocation required.
 
       size_type new_cap = detail::vector_allocation_policy(n);
       guarded_allocator new_begin(array_alloc_, new_cap);
@@ -772,7 +780,7 @@ class vector
       size_type offset = distance(begin_, position);
       for(; first != last; ++first)
       {
-        this->insert__n(position, 1, *first);
+        this->insert__n(begin_ + offset, 1, *first);
       }
     }
 
