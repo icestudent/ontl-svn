@@ -531,23 +531,19 @@ class vector
       if(capacity_ >= n)
       {
         // No reallocation needed.
-
         if(old_size >= n)
         {
-          // Has at least `n` managed elements.
-
-          // First copies [first, last) to begin_.
+          // `this ` has at least `n` managed elements.
           pointer new_end = copy(first, last, begin_);
 
           { // No-throw code block
-            // Destroies excessive elements
             detail::destroy(new_end, end_, array_allocator_);
             end_ = new_end;
           }
           return;
         }
 
-        // Has less than `n` managed elements.
+        // `this` has less than `n` managed elements.
         ForwardIterator anchor = first;
         advance(anchor, old_size);
         copy(first, anchor, begin_);
@@ -560,7 +556,6 @@ class vector
       }
 
       // Reallocation required.
-
       const size_type new_cap = detail::vector_allocation_policy(n);
       pointer new_begin = array_allocator_.allocate(new_cap);
 
@@ -588,39 +583,73 @@ class vector
       ForwardIterator anchor(first);
       advance(anchor, old_size);
       copy(first, anchor, begin_);
-      for(size_type idx = old_size; old_size != n; ++idx, ++anchor)
+      for(size_type idx = old_size; idx != n; ++idx, ++anchor)
       {
         array_allocator_.construct(&begin_[idx], *anchor);
         ++end_;
       }
     }
 
-    void assign__n(size_type n, const T& u)
+    void assign__n(const size_type n, const T& u)
     {
-      clear();
-      if ( capacity() >= n )
+      const size_type old_size = distance(begin_, end_);
+      if(capacity_ >= n)
       {
         // No reallocation needed.
+        if(old_size >= n)
+        {
+          // `this ` has at least `n` managed elements.
+          pointer new_end = begin_ + n;
+          fill(begin_, new_end, u);
 
-        detail::uninitailized_fill_n_a(begin_, n, u, array_allocator_);
-        end_ = begin_ + n;
+          { // No-throw code block
+            detail::destroy(new_end, end_, array_allocator_);
+            end_ = new_end;
+          }
+          return;
+        }
+
+        // `this` has less than `n` managed elements.
+        fill_n(begin_, old_size, u);
+        for(size_type idx = old_size; idx != n; ++idx)
+        {
+          array_allocator_.construct(&begin_[idx], u);
+          ++end_;
+        }
         return;
       }
 
       // Reallocation required.
+      const size_type new_cap = detail::vector_allocation_policy(n);
+      pointer new_begin = array_allocator_.allocate(new_cap);
 
-      size_type new_cap = detail::vector_allocation_policy(n);
-      guarded_allocation new_begin(array_allocator_, new_cap);
-      detail::uninitailized_fill_n_a(new_begin.get(), n, u, array_allocator_);
+      if(old_size >= n)
+      {
+        // Has at least `n` managed elements.
+        { // No-throw code block
+          detail::relocate(begin_, begin_ + n, new_begin);
+          detail::destroy(begin_ + n, end_, array_allocator_);
+          begin_ = end_ = new_begin;
+          end_ += n;
+          capacity_ = new_cap;
+        }
+        fill_n(begin_, old_size, u);
+        return;
+      }
 
-      // no-throw begin
-      new_begin.commit();
-      if(capacity_)
-        array_allocator_.deallocate(begin_, capacity_);
-
-      begin_ = end_ = new_begin.get();
-      end_ += n;
-      capacity_ = new_cap;
+      // Has less than `n` managed elements.
+      { // No-throw code block
+        detail::relocate(begin_, end_, new_begin);
+        begin_ = end_ = new_begin;
+        end_ += old_size;
+        capacity_ = new_cap;
+      }
+      fill_n(begin_, old_size, u);
+      for(size_type idx = old_size; idx != n; ++idx)
+      {
+        array_allocator_.construct(&begin_[idx], u);
+        ++end_;
+      }
     }
 
   public:
@@ -725,6 +754,8 @@ class vector
 
     pointer insert__n_realloc(pointer position, size_type n, const T& x)
     {
+      assert(capacity_ < this->size() + n);
+
       const size_type old_size = this->size();
       const size_type new_size = old_size + n;
       const size_type new_cap = detail::vector_allocation_policy(old_size + n);
@@ -745,6 +776,8 @@ class vector
 
     pointer insert__n_no_realloc(pointer position, size_type n, const T& x)
     {
+      assert((capacity_ < this->size() + n) == false);
+
       const size_type old_size = this->size();
       const size_type new_size = old_size + n;
       if(position + n < end_)
@@ -985,8 +1018,21 @@ class vector
     // Why mutable?
     // !fr3@K!
     mutable allocator_type  array_allocator_;
+
+    // 0 ~ 3: managed elements
+    //   x  : allocated but unused memory blocks
+    // + - + - + - + - + - + - + - + - + . .
+    // | 0 | 1 | 2 | 3 | x | x | x | x |   :
+    // + - + - + - + - + - + - + - + - + . .
+    //   ^               ^               ^
+    //   |               |               |
+    // begin_           end_      begin_ + capacity_
+
+    // Size, in elements, of the memory buffer `begin_` points to.
     size_type       capacity_;
+    // Pointer to the begining of memory buffer.
     pointer         begin_;
+    // Pointer to one pass the last managed elements in buffer.
     pointer         end_;
 
     // "stdexcept.hxx" includes this header
