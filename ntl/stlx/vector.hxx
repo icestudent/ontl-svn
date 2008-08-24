@@ -473,7 +473,7 @@ class vector
       assign__disp(
         first,
         last,
-        typename iterator_traits<InputIterator>::iterator_category());
+        is_integral<InputIterator>());
     }
 
     void assign(size_type n, const T& u)
@@ -499,6 +499,22 @@ class vector
 
     template <class InputIterator>
     void assign__disp(InputIterator first, InputIterator last,
+                      const false_type& /*is_integral*/)
+    {
+      this->assign__range(
+        first,
+        last,
+        typename iterator_traits<InputIterator>::iterator_category());
+    }
+    template <class InputIterator>
+    void assign__disp(InputIterator first, InputIterator last,
+                      const true_type& /*is_integral*/)
+    {
+      this->assign(size_type(first), value_type(last));
+    }
+
+    template <class InputIterator>
+    void assign__range(InputIterator first, InputIterator last,
                       const input_iterator_tag&)
     {
       clear();
@@ -507,7 +523,7 @@ class vector
     }
 
     template <class ForwardIterator>
-    void assign__disp(ForwardIterator first, ForwardIterator last,
+    void assign__range(ForwardIterator first, ForwardIterator last,
                       const forward_iterator_tag&)
     {
       clear();
@@ -731,6 +747,31 @@ class vector
     }
 
     template <class InputIterator>
+    void insert__dispatch(const_iterator position,
+                          InputIterator first,
+                          InputIterator last,
+                          const false_type& /*is_integral*/)
+    {
+      pointer p = const_cast<pointer>(&(*position));
+      this->insert__range(
+        p,
+        first,
+        last,
+        typename iterator_traits<InputIterator>::iterator_category());
+    }
+    template <class InputIterator>
+    void insert__dispatch(const_iterator position,
+                          InputIterator first,
+                          InputIterator last,
+                          const true_type& /*is_integral*/)
+    {
+      this->insert(
+        position,
+        size_type(first),
+        value_type(last));
+    }
+
+    template <class InputIterator>
     void insert__range(pointer position,
                        InputIterator first,
                        InputIterator last,
@@ -841,8 +882,11 @@ class vector
     template <class InputIterator>
     void insert(const_iterator position, InputIterator first, InputIterator last)
     {
-      pointer p = const_cast<pointer>(&(*position));
-      insert__range(p, first, last, typename iterator_traits<InputIterator>::iterator_category());
+      this->insert__dispatch(
+        position,
+        first,
+        last,
+        is_integral<InputIterator>());
     }
 
     __forceinline
