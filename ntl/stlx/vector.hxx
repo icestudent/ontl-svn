@@ -874,6 +874,27 @@ class vector
         // STLport says the standard forbids checking for self
         // referencing here.
         // !fr3@K!
+
+        if(position + n < end_)
+        {
+          // Relocating in overlapping ranges.
+          // Relocates reversely to avoid race condition.
+          detail::guarded_relocation<reverse_iterator, reverse_iterator, allocator_type> reloc(
+            reverse_iterator(end_),
+            reverse_iterator(position),
+            reverse_iterator(position + n),
+            array_allocator_);
+          end_ = begin_ + distance(begin_, position);
+          detail::uninitailized_copy_a(first, last, position, array_allocator_);
+
+          // no-throw begin
+          reloc.commit();
+          end_ += n;
+          return;
+        }
+
+        // Relocating in non-overlapping ranges.
+        // Relocates normally.
         guarded_relocation reloc(
           position,
           end_,
