@@ -733,10 +733,14 @@ class vector
     {
       if(capacity_ < this->size() + n)
       {
-        // Self referencing protection.
-        // `x` is going to be relocate()ed, make a copy of it before
-        // it's relocated.
-        const T tmp(x);
+        if(detail::overlapping(begin_, end_, &x) == true)
+        {
+          // Self referencing protection.
+          // `x` is going to be relocate()ed, make a copy of it before
+          // it's relocated.
+          const T tmp(x);
+          return this->insert__n_realloc(position, n, tmp);
+        }
         return this->insert__n_realloc(position, n, x);
       }
 
