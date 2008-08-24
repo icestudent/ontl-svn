@@ -526,37 +526,73 @@ class vector
     void assign__range(ForwardIterator first, ForwardIterator last,
                       const forward_iterator_tag&)
     {
-      clear();
-      // distance SHOULD always be positive
-      size_type n = static_cast<size_type>(distance(first, last));
-      if(capacity() >= n)
+      const size_type n = distance(first, last);
+      const size_type old_size = distance(begin_, end_);
+      if(capacity_ >= n)
       {
         // No reallocation needed.
 
-        detail::uninitailized_copy_a(first, last, begin_, array_allocator_);
-        end_ = begin_ + n;
+        if(old_size >= n)
+        {
+          // Has at least `n` managed elements.
+
+          // First copies [first, last) to begin_.
+          pointer new_end = copy(first, last, begin_);
+
+          { // No-throw code block
+            // Destroies excessive elements
+            detail::destroy(new_end, end_, array_allocator_);
+            end_ = new_end;
+          }
+          return;
+        }
+
+        // Has less than `n` managed elements.
+        ForwardIterator anchor = first;
+        advance(anchor, old_size);
+        copy(first, anchor, begin_);
+        for(size_type idx = old_size; idx != n; ++idx, ++anchor)
+        {
+          array_allocator_.construct(&begin_[idx], *anchor);
+          ++end_;
+        }
         return;
       }
 
       // Reallocation required.
 
-      size_type new_cap = detail::vector_allocation_policy(n);
-      guarded_allocation new_begin(array_allocator_, new_cap);
-      detail::uninitailized_copy_a(first, last, new_begin.get(), array_allocator_);
+      const size_type new_cap = detail::vector_allocation_policy(n);
+      pointer new_begin = array_allocator_.allocate(new_cap);
 
-      // no-throw begin
-      new_begin.commit();
-
-      detail::destroy(begin_, end_, array_allocator_);
-      if(capacity_)
+      if(old_size >= n)
       {
-        assert(begin_ != nullptr);
-        array_allocator_.deallocate(begin_, capacity_);
+        // Has at least `n` managed elements.
+        { // No-throw code block
+          detail::relocate(begin_, begin_ + n, new_begin);
+          detail::destroy(begin_ + n, end_, array_allocator_);
+          begin_ = end_ = new_begin;
+          end_ += n;
+          capacity_ = new_cap;
+        }
+        copy_n(first, old_size, begin_);
+        return;
       }
 
-      begin_ = end_ = new_begin.get();
-      end_ += n;
-      capacity_ = new_cap;
+      // Has less than `n` managed elements.
+      { // No-throw code block
+        detail::relocate(begin_, end_, new_begin);
+        begin_ = end_ = new_begin;
+        end_ += old_size;
+        capacity_ = new_cap;
+      }
+      ForwardIterator anchor(first);
+      advance(anchor, old_size);
+      copy(first, anchor, begin_);
+      for(size_type idx = old_size; old_size != n; ++idx, ++anchor)
+      {
+        array_allocator_.construct(&begin_[idx], *anchor);
+        ++end_;
+      }
     }
 
     void assign__n(size_type n, const T& u)
