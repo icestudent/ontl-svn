@@ -814,7 +814,7 @@ class vector
                        const input_iterator_tag&)
     {
       size_type offset = distance(begin_, position);
-      for(; first != last; ++first)
+      for(; first != last; ++first, ++offset)
       {
         this->insert__n(begin_ + offset, 1, *first);
       }
