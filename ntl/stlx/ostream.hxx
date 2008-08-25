@@ -288,10 +288,10 @@ class basic_ostream
       if ( this->rdbuf() )
       {
         ///\note no sentry as it'll result in recursive call
-        if ( this->good() )
+        if ( good() )
         {
           ///\note STLPort doesn't have this line (as one above, but that doesn't matter)
-          if ( this->tie() ) this->tie()->flush();
+          if ( tie() ) tie()->flush();
           if ( this->rdbuf()->pubsync() == -1 )
             this->setstate(ios_base::badbit);
         }

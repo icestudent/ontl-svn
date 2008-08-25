@@ -1,14 +1,15 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  20.4 Metaprogramming and type traits [meta]
+ *  DTR: 4 Metaprogramming and type traits [tr.meta]
  *
  ****************************************************************************
  */
 
-// sorry, MSVC 2005+ only
+// sorry, MSVC 2005 only
 
 #include "cstddef.hxx"
 #include "limits.hxx"
+//#include "utility.hxx"//std::pair
 
 #ifndef NTL__STLX_TYPE_TRAITS
 #define NTL__STLX_TYPE_TRAITS
@@ -21,7 +22,7 @@
 
 namespace std {
 
-/// 20.4.3 Helper classes [meta.help]
+/// 4.3 Helper classes [tr.meta.help]
 template <class T, T v>
 struct integral_constant
 {
@@ -34,7 +35,7 @@ typedef integral_constant<bool, true>   true_type;
 typedef integral_constant<bool, false>  false_type;
 
 
-// 20.4.5 Relationships between types [meta.rel]
+// 4.6 Relationships between types [tr.meta.rel]
 
 template <class T, class U> struct is_same : false_type {};
 template <class T> struct is_same<T, T> : true_type {};
@@ -47,9 +48,9 @@ template <class From, class To> struct is_convertible
 : public integral_constant<bool, __is_convertible_to(From, To)> {};
 
 
-// 20.4.6 Transformations between types [meta.trans]
+// 4.7 Transformations between types [tr.meta.trans]
 
-// 20.4.6.1 Const-volatile modifications [meta.trans.cv]
+// 4.7.1 Const-volatile modifications [tr.meta.trans.cv]
 
 template <class T> struct remove_const              { typedef T type; };
 template <class T> struct remove_const<const T>     { typedef T type; };
@@ -80,7 +81,7 @@ _CHECK_TRAIT((is_same<add_volatile<int>::type, volatile int>::value));
 template <class T> struct add_cv { typedef const volatile T type; };
 _CHECK_TRAIT((is_same<add_cv<int>::type, volatile const int>::value));
 
-// 20.4.6.2 Reference modifications [meta.trans.ref]
+// 4.7.2 Reference modifications [tr.meta.trans.ref]
 
 template <class T> struct remove_reference     { typedef T type; };
 template <class T> struct remove_reference<T&> { typedef T type; };
@@ -97,7 +98,7 @@ _CHECK_TRAIT((is_same<add_lvalue_reference<int>::type, int&>::value));
 
 template <class T> struct add_reference : add_lvalue_reference<T> {};
 
-// 20.4.6.3 Array modifications [meta.trans.arr]
+// 4.7.3 Array modifications [tr.meta.trans.arr]
 
 template <class T> struct remove_extent { typedef T type; };
 template <class T> struct remove_extent<T[]> { typedef T type; };
@@ -117,7 +118,7 @@ _CHECK_TRAIT((is_same<remove_all_extents<int[2]>::type, int>::value));
 _CHECK_TRAIT((is_same<remove_all_extents<int[2][3]>::type, int>::value));
 _CHECK_TRAIT((is_same<remove_all_extents<int[][3][6]>::type, int>::value));
 
-// 20.4.6.4 Pointer modifications [meta.trans.ptr]
+// 4.7.4 Pointer modifications [tr.meta.trans.ptr]
 
 template <class T> struct remove_pointer     { typedef T type; };
 template <class T> struct remove_pointer<T*> { typedef T type; };
@@ -129,7 +130,7 @@ template <class T> struct add_pointer<T&> { typedef typename remove_reference<T>
 _CHECK_TRAIT((is_same<add_pointer<volatile int>::type, volatile int*>::value));
 _CHECK_TRAIT((is_same<add_pointer<int*&>::type, int**>::value));
 
-// 20.4.7 Other transformations [meta.trans.other]
+// 4.8 Other transformations [tr.meta.trans.other]
 
 #pragma warning(push)
 #pragma warning(disable:4324) // structure was padded due to __declspec(align())
@@ -192,14 +193,12 @@ template <bool, class IfTrueType, class IfFalseType> struct conditional;
 template <class T, class F> struct conditional<true, T, F>  { typedef T type; }; 
 template <class T, class F> struct conditional<false, T, F> { typedef F type; }; 
 
-// 20.4.5 Unary Type Traits [meta.unary]
+// 4.5 Unary Type Traits [tr.meta.unary]
 
 #define NTL__STLX_DEF_TRAIT(X)\
   template <class T> struct X : public integral_constant<bool, __##X(T)> {};
-#define NTL__STLX_DEF_TRAIT2(X,Y)\
-  template <class T> struct X : public integral_constant<bool, __##Y(T)> {};
 
-// 20.4.4.1 Primary Type Categories [meta.unary.cat]
+// 4.5.1 Primary Type Categories [tr.meta.unary.cat]
 
 template <class T> struct is_void                      : public false_type {};
 template <>        struct is_void<void>                : public true_type {};
@@ -421,7 +420,7 @@ template <class T> struct decay
 };
 
 
-// 20.4.4.2 Composite type traits [meta.unary.comp]
+// 4.5.2 Composite type traits [tr.meta.unary.comp]
 
 template <class T> struct is_reference
 : public integral_constant<
@@ -471,7 +470,7 @@ template <class T> struct is_compound
        || is_member_pointer<T>::value
        > {};
 
-// 20.4.4.3 Type properties [meta.unary.prop]
+// 4.5.3 Type properties [tr.meta.unary.prop]
 
 template <class T> struct is_const          : public false_type {};
 template <class T> struct is_const<const T> : public true_type {};
@@ -504,17 +503,17 @@ NTL__STLX_DEF_TRAIT(is_polymorphic)
 
 NTL__STLX_DEF_TRAIT(is_abstract)
 
-NTL__STLX_DEF_TRAIT2(has_trivial_default_constructor, has_trivial_constructor)
+NTL__STLX_DEF_TRAIT(has_trivial_constructor)
 
-NTL__STLX_DEF_TRAIT2(has_trivial_copy_constructor, has_trivial_copy)
+NTL__STLX_DEF_TRAIT(has_trivial_copy)
 
 NTL__STLX_DEF_TRAIT(has_trivial_assign)
 
 NTL__STLX_DEF_TRAIT(has_trivial_destructor)
 
-NTL__STLX_DEF_TRAIT2(has_nothrow_default_constructor, has_nothrow_constructor)
+NTL__STLX_DEF_TRAIT(has_nothrow_constructor)
 
-NTL__STLX_DEF_TRAIT2(has_nothrow_copy_constructor, has_nothrow_copy)
+NTL__STLX_DEF_TRAIT(has_nothrow_copy)
 
 NTL__STLX_DEF_TRAIT(has_nothrow_assign)
 

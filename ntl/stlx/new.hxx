@@ -108,25 +108,7 @@ void  operator delete[] (void*, void*) __ntl_nothrow            {}
 
 #undef operator
 
-
-///\name Variable-size structures support
-struct varsize_tag {};
-__declspec(selectany)
-extern const varsize_tag varsize;
-
-__forceinline
-void* operator new(std::size_t size, const varsize_tag&, std::size_t aux_size)
-{
-  return ::operator new(size+aux_size);
-}
-
-__forceinline
-void operator delete(void* ptr, const varsize_tag&, std::size_t)
-{
-  return ::operator delete(ptr);
-}
 ///@}
-
 /**@} lib_support_dynamic */
 /**@} lib_language_support */
 

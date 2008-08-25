@@ -18,7 +18,7 @@ namespace std {
 /// 25.1.1 For each [lib.alg.foreach]
 template<class InputIterator, class Function>
 __forceinline
-Function
+Function 
   for_each(InputIterator first, InputIterator last, Function f)
 {
   while ( first != last ) f(*first++);
@@ -48,7 +48,7 @@ InputIterator
 /// 25.1.3 Find End [lib.alg.find.end]
 template<class ForwardIterator1, class ForwardIterator2>
 __forceinline
-ForwardIterator1
+ForwardIterator1 
   find_end(ForwardIterator1 first1, ForwardIterator1 last1,
            ForwardIterator2 first2, ForwardIterator2 last2);
 
@@ -101,7 +101,7 @@ ForwardIterator
     if ( ++i == last )  return ++first;
     if ( *first == *i ) return first;
     first = i;
-  }
+  }  
 }
 
 /// 25.1.5 Adjacent find [lib.alg.adjacent.find]
@@ -118,7 +118,7 @@ ForwardIterator
     if ( ++i == last )  return ++first;
     if ( pred(*first, *i) != false ) return first;
     first = i;
-  }
+  }  
 }
 
 /// 25.1.6 Count [lib.alg.count]
@@ -311,30 +311,6 @@ OutputIterator
   return result;
 }
 
-template<class InputIterator, class Size, class OutputIterator>
-OutputIterator
-  copy_n(InputIterator first, Size n, OutputIterator result)
-{
-  for(; n; --n, ++first, ++result)
-  {
-    *result = *first;
-  }
-  return result;
-}
-
-template<class InputIterator, class OutputIterator, class Predicate>
-OutputIterator
-  copy_if(InputIterator first, InputIterator last,
-          OutputIterator result, Predicate pred)
-{
-  for(; first != last; ++first, ++result)
-  {
-    if(pred(*first) == true)
-      *result = *first;
-  }
-}
-
-
 template<class BidirectionalIterator1, class BidirectionalIterator2>
 __forceinline
 BidirectionalIterator2
@@ -409,7 +385,7 @@ OutputIterator
 template<class ForwardIterator, class T>
 __forceinline
 void
-  replace(ForwardIterator first, ForwardIterator last,
+  replace(ForwardIterator first, ForwardIterator last, 
           const T& old_value, const T& new_value)
 {
   for ( ; first != last; ++first )
@@ -489,7 +465,7 @@ void
 template<class InputIterator, class OutputIterator, class T>
 __forceinline
 OutputIterator
-  remove_copy(InputIterator first, InputIterator last,
+  remove_copy(InputIterator first, InputIterator last, 
               OutputIterator result, const T& value)
 {
   for ( ; first != last; ++first )
@@ -538,7 +514,7 @@ ForwardIterator
   first = find_if(first, last, pred);
   ForwardIterator i = first;
   i = ( i == last ) ? i : remove_copy_if(++i, last, first, pred);
-  return i;
+  return i; 
 }
 
 /// 25.2.8 Unique [lib.alg.unique]
@@ -560,7 +536,7 @@ OutputIterator
 template<class InputIterator, class OutputIterator, class BinaryPredicate>
 __forceinline
 OutputIterator
-  unique_copy(InputIterator first, InputIterator last,
+  unique_copy(InputIterator first, InputIterator last, 
               OutputIterator result, BinaryPredicate pred)
 {
   while ( first != last )
@@ -690,7 +666,7 @@ template<class InputIterator, class RandomAccessIterator>
 inline
 RandomAccessIterator
   partial_sort_copy(InputIterator first, InputIterator last,
-                    RandomAccessIterator result_first,
+                    RandomAccessIterator result_first, 
                     RandomAccessIterator result_last);
 
 template<class InputIterator, class RandomAccessIterator, class Compare>
@@ -723,7 +699,7 @@ ForwardIterator
 template<class ForwardIterator, class T, class Compare>
 inline
 ForwardIterator
-  lower_bound(ForwardIterator first, ForwardIterator last,
+  lower_bound(ForwardIterator first, ForwardIterator last, 
               const T& value, Compare comp);
 
 template<class ForwardIterator, class T>
@@ -756,7 +732,7 @@ bool
 template<class ForwardIterator, class T, class Compare>
 inline
 bool
-  binary_search(ForwardIterator first, ForwardIterator last,
+  binary_search(ForwardIterator first, ForwardIterator last, 
                 const T& value, Compare comp);
 
 // 25.3.4, merge:
@@ -1035,13 +1011,13 @@ bool
  * Copyright (c) 1997
  * Moscow Center for SPARC Technology
  *
- * Copyright (c) 1999
+ * Copyright (c) 1999 
  * Boris Fomitchev
  *
  * This material is provided "as is", with absolutely no warranty expressed
  * or implied. Any use is at your own risk.
  *
- * Permission to use or copy this software for any purpose is hereby granted
+ * Permission to use or copy this software for any purpose is hereby granted 
  * without fee, provided the above notices are retained on all copies.
  * Permission to modify the code and to distribute modified code is granted,
  * provided the above notices are retained, and a notice that the code was

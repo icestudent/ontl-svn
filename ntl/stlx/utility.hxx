@@ -24,9 +24,7 @@ namespace std {
  *@{
  */
 
-/// 20.2.1 Operators [operators]
-/// 1 To avoid redundant definitions of operator!= out of operator== and
-///   operators >, <=, and >= out of operator<, the library provides the following:
+/// Operators [20.2.1 lib.operators]
 namespace rel_ops {
 
 template<class T> inline
@@ -45,9 +43,6 @@ bool operator>=(const T & x, const T & y) { return !(x < y); }
 
 
 /// Pairs [20.2.2 lib.pairs]
-#pragma warning(push)
-// assignment operator could not be generated if either T is const
-#pragma warning(disable:4512)
 template<class T1, class T2>
 struct pair
 {
@@ -63,7 +58,6 @@ struct pair
     template<class U, class V>
     pair(const pair<U, V> & p) : first(p.first), second(p.second) {}
 };
-#pragma warning(pop)
 
 ///\name  Comparisons
 ///@{

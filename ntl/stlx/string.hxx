@@ -18,7 +18,7 @@
 //#include "stdexcept.hxx"
 #include "vector.hxx"
 
-#ifndef EOF // should be moved to "stdio.hxx" ?
+#ifndef EOF // should be removed to "stdio.hxx" ?
 #define EOF -1
 #endif
 
@@ -166,7 +166,7 @@ class basic_string
     ///\name 21.3.2 basic_string constructors and assigment operators [string.cons]
 
     /// 1 Effects: Constructs an object of class basic_string.
-    /// Postconditions:
+    /// Postconditions: 
     /// - data() a non-null pointer that is copyable and can have 0 added to it;
     /// - size() == 0;
     /// - capacity() an unspecified value.
@@ -174,8 +174,8 @@ class basic_string
 
 
     /// 2 Effects: Constructs an object of class basic_string as indicated below.
-    ///   The stored Allocator value is copied from str.get_allocator().
-    /// Postconditions:
+    ///   The stored Allocator value is copied from str.get_allocator(). 
+    /// Postconditions: 
     /// - data() points at the first element of an allocated copy of the
     ///   array whose first element is pointed at by str.data();
     /// - size() == str.size();
@@ -188,7 +188,7 @@ class basic_string
     /// 6 Effects: Constructs an object of class basic_string and determines
     ///   the effective length rlen of the initial string value as the smaller
     ///   of n and str.size() - pos.
-    /// Postconditions:
+    /// Postconditions: 
     /// - data() points at the first element of an allocated copy of rlen
     ///   consecutive elements of the string controlled by str beginning
     ///   at position pos;
@@ -204,7 +204,7 @@ class basic_string
     /// 8 Effects: Constructs an object of class basic_string and determines
     ///   its initial string value from the array of charT of length n whose
     ///   first element is designated by s.
-    /// Postconditions:
+    /// Postconditions: 
     /// - data() points at the first element of an allocated copy of the
     ///   array whose first element is pointed at by s;
     /// - size() == n;
@@ -216,14 +216,14 @@ class basic_string
     /// 10 Effects: Constructs an object of class basic_string and determines
     ///   its initial string value from the array of charT of length traits::length(s)
     ///   whose first element is designated by s.
-    /// Postconditions:
+    /// Postconditions: 
     /// - data() points at the first element of an allocated copy of the
     ///   array whose first element is pointed at by s;
     /// - size() == traits::length(s);
     /// - capacity() is at least as large as size().
     basic_string(const charT* s, const Allocator& a = Allocator())
     : str(a)
-    {
+    { 
       assert_ptr(s);
       // small hack: copy terminating 0 to avoid case when n == 0
       size_type n = traits_type::length(s) + 1; // include '\0'
@@ -238,7 +238,7 @@ class basic_string
     /// Effects: Constructs an object of class basic_string and determines
     ///   its initial string value from the array of charT of length Size
     ///   whose elements are designated by s.
-    /// Postconditions:
+    /// Postconditions: 
     /// - data() points at the first element of an allocated copy of the array s;
     /// - size() == Size;
     /// - capacity() is at least as large as size().
@@ -250,7 +250,7 @@ class basic_string
     /// 13 Effects: Constructs an object of class basic_string and determines
     ///   its initial string value by repeating the charlikeobject c for all
     ///   n elements.
-    /// Postconditions:
+    /// Postconditions: 
     /// - data() points at the first element of an allocated array of
     ///   n elements, each storing the initial value c;
     /// - size() = n;
@@ -261,7 +261,7 @@ class basic_string
     /// 14 Effects: If InputIterator is an integral type, equivalent to
     ///   basic_string(static_cast<size_type>(begin), static_cast<value_type>(end), a)
     /// 15 Otherwise constructs a string from the values in the range [begin, end)
-    ///   with Postconditions:
+    ///   with Postconditions: 
     /// - data() points at the first element of an allocated copy of
     ///   the sequence [begin, end);
     /// - size() == distance(begin, end);
@@ -395,7 +395,7 @@ class basic_string
     /// 5 Requires: !empty()
     /// 6 Effects: Equivalent to operator[](0).
     const charT& front() const { _Assert(!empty()); return operator[](0); }
-    charT& front()             { _Assert(!empty()); return operator[](0); }
+    charT& front()             { _Assert(!empty()); return operator[](0); }       
 
     /// 7 Requires: !empty()
     /// 8 Effects: Equivalent to operator[](size() - 1).
@@ -416,7 +416,7 @@ class basic_string
 
   template<class String>
     basic_string& operator+=(const String& str)
-    {
+    { 
       return append(str.data(), str.size());
     }
 
@@ -433,6 +433,7 @@ class basic_string
     basic_string& append(const basic_string& str, size_type pos, size_type n)
     {
       this->str.insert(this->str.end(), str.begin() + pos, str.max__it(pos, n));
+
       return *this;
     }
 
@@ -560,7 +561,7 @@ class basic_string
     iterator erase(iterator position) { return str.erase(position); }
 
     iterator erase(iterator first, iterator last)
-    {
+    { 
       return str.erase(first, last);
     }
 
@@ -583,7 +584,7 @@ class basic_string
 
     basic_string& replace(size_type pos, size_type n1, const charT* s);
     basic_string& replace(size_type pos, size_type n1, size_type n2, charT c);
-
+    
     basic_string& replace(iterator i1, iterator i2, const basic_string& str);
     basic_string& replace(iterator i1, iterator i2, const charT* s, size_type n);
     basic_string& replace(iterator i1, iterator i2, const charT* s);
@@ -624,7 +625,7 @@ class basic_string
       static const charT empty;
       return /*size()*/ capacity() ? begin() : &empty;
     }
-
+    
     allocator_type get_allocator() const { return str.get_allocator(); }
 
     ///\name   21.3.7.2 basic_string::find [string::find]
@@ -662,7 +663,7 @@ class basic_string
     {
       return find(s, pos, traits_type::length(s));
     }
-
+    
     /// 7 Returns: find(basic_string<charT,traits,Allocator>(1,c),pos).
     size_type find(charT c, size_type pos = 0) const
     {
@@ -693,7 +694,7 @@ class basic_string
       size_type & xpos = pos;
       if ( xpos > size() || xpos + n > size() )
         xpos = size() - n;
-      while ( xpos + n > 0 )
+      while ( xpos + n > 0 ) 
       {
         for ( size_type i = 0; i != n; ++i )
           if ( !traits_type::eq(*(begin() + xpos + i), *(s + i)) )
@@ -704,7 +705,7 @@ class basic_string
       }
       return npos;
     }
-
+  
     /// 5 Returns: rfind(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
     size_type rfind(const charT* s, size_type pos = npos) const
@@ -924,8 +925,8 @@ class basic_string
     int compare(const basic_string& str) const
     {
       const int r = traits_type::compare(begin(), str.begin(),
-                                            std::min(size(), str.size()));
-      return r != 0 ? r : size() - str.size();
+                                            (std::min)(size(), str.size()));
+      return r != 0 ? r : size() - str.size();   
     }
 
     int compare(size_type pos1, size_type n1, const basic_string& str) const;
@@ -1066,7 +1067,7 @@ class basic_string
     basic_string append_to__reserved(const basic_string & str)
     {
       iterator to = this->str.end_;
-      for ( const_iterator from = str.begin(); from != str.end(); )
+      for ( const_iterator from = str.begin(); from != str.end(); ) 
         traits_type::assign(*to++, *from++);
       this->str.end_ = to;
       return *this;
@@ -1078,7 +1079,7 @@ class basic_string
     void alloc__new(size_type n)
     {
       n = __ntl_grow_heap_block_size(n + sizeof('\0'));
-      str.end_ = str.begin_ = str.array_allocator_.allocate(n);
+      str.end_ = str.begin_ = str.array_allocator.allocate(n);
       str.capacity_ = n;
     }
 
@@ -1264,7 +1265,7 @@ void
 
 template<class charT, class traits, class Allocator>
 basic_istream<charT,traits>&
-  operator>>(basic_istream<charT,traits>& is,
+  operator>>(basic_istream<charT,traits>& is, 
              basic_string<charT,traits,Allocator>& str);
 
 template<class charT, class traits, class Allocator>
@@ -1279,7 +1280,7 @@ basic_istream<charT,traits>&
 
 template<class charT, class traits, class Allocator>
 basic_istream<charT,traits>&
-  getline(basic_istream<charT,traits>& is,
+  getline(basic_istream<charT,traits>& is, 
           basic_string<charT,traits,Allocator>& str);
 
 typedef basic_string<char>    string;
