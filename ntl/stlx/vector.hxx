@@ -25,9 +25,33 @@
 
 namespace std {
 
-namespace detail
+namespace ext
 {
 
+// Interface to vector allocation policy.
+// TODO: thread safety
+// Example:
+//   // Change the policy to "conservative".
+//   ext::vector_allocation_policy::reset(ext::vector_allocation_policy::conservative);
+//
+struct vector_allocation_policy
+{
+  typedef size_t (*policy_t)(size_t);
+
+  static size_t get(size_t min) __ntl_nothrow;
+  static policy_t reset(policy_t new_policy) __ntl_nothrow;
+
+  static size_t aggressive(size_t min) __ntl_nothrow;
+  static size_t conservative(size_t min) __ntl_nothrow;
+
+  // See my comment for `vap`
+  // !fr3@K!
+  //private:
+  // static policy_t policy;
+};
+
+namespace detail
+{
 // Is Power Of 2, optionally used in
 // vector_allocation_policy().
 // Ref: http://www.aggregate.org/MAGIC/#Is%20Power%20of%202
@@ -50,44 +74,61 @@ inline uint64_t nlpo2(uint64_t n) __ntl_nothrow
   return(++n);
 }
 
-// Makes sure no more than one vector allocation policy is defined.
-#if (defined(NTL__VECTOR_ALLOCATION_POLICY__USER_DEFINED) && \
-    (defined(NTL__VECTOR_ALLOCATION_POLICY__AGGRESSIVE) || \
-     defined(NTL__VECTOR_ALLOCATION_POLICY__CONSERVATIVE))) || \
-     (defined(NTL__VECTOR_ALLOCATION_POLICY__AGGRESSIVE) && \
-      defined(NTL__VECTOR_ALLOCATION_POLICY__CONSERVATIVE))
-# error Only one vector capacity policy is allowed!
-#endif
-
-// Defines default vector allocation behavior, if none defined.
-#if !defined(NTL__VECTOR_ALLOCATION_POLICY__USER_DEFINED) && \
-    !defined(NTL__VECTOR_ALLOCATION_POLICY__AGGRESSIVE) && \
-    !defined(NTL__VECTOR_ALLOCATION_POLICY__CONSERVATIVE)
-# define NTL__VECTOR_ALLOCATION_POLICY__AGGRESSIVE
-#endif
-
-// Interface to vector allocation policy.
-inline size_t vector_allocation_policy(size_t min)
+template <class NotUsed>
+struct vap
 {
-#if defined(NTL__VECTOR_ALLOCATION_POLICY__USER_DEFINED)
-  // user with user-defined policy must declare their policy as:
-  return ::ntl_user_defined::vector_allocation_policy(min);
+  // The static member data ::stl::ext::detailvap::policy should really
+  // be declared in class ::std::ext::vector_allocation_policy. But
+  // the member would also need to be defined in a cpp file.
+  // This class template is a hack to eliminate that need.
+  // !fr3@K!
+  static vector_allocation_policy::policy_t policy;
+};
+} // namespace detail
 
-#elif defined(NTL__VECTOR_ALLOCATION_POLICY__AGGRESSIVE)
-  // returns 0, if min is 0
-  // returns 4, if min is 1, 2, 3, 4
-  // returns min, if min is power of 2
-  // returns 8, if min is 5, 6, 7, 8
-  // returns 16, if min is 9, 10, 11..., 16
-  // and so on...
+// static
+inline size_t vector_allocation_policy::get(size_t min)
+{
+  return detail::vap<void>::policy(min);
+}
+
+// static
+inline vector_allocation_policy::policy_t
+  vector_allocation_policy::reset(policy_t new_policy)
+{
+  policy_t tmp(detail::vap<void>::policy);
+  detail::vap<void>::policy = new_policy;
+  return tmp;
+}
+
+// static
+inline size_t vector_allocation_policy::aggressive(size_t min)
+{
   if(min <= 4)
     return min;
-  return ispo2(min) ? min : size_t(nlpo2(min));
-
-#else // NTL__VECTOR_ALLOCATION_POLICY__CONSERVATIVE
-  return min;
-#endif
+  return detail::ispo2(min) ? min : size_t(detail::nlpo2(min));
 }
+// static
+inline size_t vector_allocation_policy::conservative(size_t min)
+{
+  return min;
+}
+
+
+namespace detail
+{
+// Static member data can be defined in header.
+// !fr3@K!
+// Default policy is aggressive.
+template <class NotUsed>
+typename vector_allocation_policy::policy_t
+  vap<NotUsed>::policy = ::std::ext::vector_allocation_policy::aggressive;
+} // namespace detail
+
+} // namespace ext
+
+namespace detail
+{
 
 template <class T>
 bool overlapping(const T* first, const T* last, const T* p) __ntl_nothrow
@@ -146,7 +187,7 @@ class vector
                     const T& value      = T(),
                     const Allocator& a  = Allocator())
     : array_allocator_(a),
-      capacity_(detail::vector_allocation_policy(n)),
+      capacity_(ext::vector_allocation_policy::get(n)),
       begin_(array_allocator_.allocate(capacity_)),
       end_(begin_)
     {
@@ -178,7 +219,7 @@ class vector
     __forceinline
     vector(const vector<T, Allocator>& x)
     : array_allocator_(x.array_allocator_),
-      capacity_(detail::vector_allocation_policy(x.size())),
+      capacity_(ext::vector_allocation_policy::get(x.size())),
       begin_(nullptr),
       end_(nullptr)
     {
@@ -302,7 +343,7 @@ class vector
       }
 
       // Reallocation required.
-      const size_type new_cap = detail::vector_allocation_policy(n);
+      const size_type new_cap = ext::vector_allocation_policy::get(n);
       pointer new_begin = array_allocator_.allocate(new_cap);
 
       if(old_size >= n)
@@ -366,7 +407,7 @@ class vector
       }
 
       // Reallocation required.
-      const size_type new_cap = detail::vector_allocation_policy(n);
+      const size_type new_cap = ext::vector_allocation_policy::get(n);
       pointer new_begin = array_allocator_.allocate(new_cap);
 
       if(old_size >= n)
@@ -437,7 +478,7 @@ class vector
       if (capacity_ >= n)
         return;
 
-      size_type new_cap = detail::vector_allocation_policy(n);
+      size_type new_cap = ext::vector_allocation_policy::get(n);
       pointer new_begin = array_allocator_.allocate(new_cap);
 
       // no-throw begin
@@ -508,7 +549,7 @@ class vector
 
       const size_type old_size = this->size();
       const size_type new_size = old_size + n;
-      const size_type new_cap = detail::vector_allocation_policy(old_size + n);
+      const size_type new_cap = ext::vector_allocation_policy::get(old_size + n);
 
       guarded_allocation new_begin(array_allocator_, new_cap);
       pointer new_pos = new_begin.get() + distance(begin_, position);
@@ -661,7 +702,7 @@ class vector
       }
 
       // Reallocation required.
-      const size_type new_cap = detail::vector_allocation_policy(old_size + n);
+      const size_type new_cap = ext::vector_allocation_policy::get(old_size + n);
       guarded_allocation new_begin(array_allocator_, new_cap);
       pointer new_pos = new_begin.get() + distance(begin_, position);
       detail::uninitailized_copy_a(first, last, new_pos, array_allocator_);
