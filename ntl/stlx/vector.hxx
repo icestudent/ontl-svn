@@ -85,7 +85,7 @@ struct guarded_range_constructor
   : first_(first),
     current_(first),
     array_allocator_(alloc),
-    committed_(false)
+    dismissed_(false)
   {
     // Making sure users don't get the wrong combinations of iterator
     // and allocator.
@@ -98,7 +98,7 @@ struct guarded_range_constructor
   }
   ~guarded_range_constructor() __ntl_nothrow
   {
-    if(committed_)
+    if(dismissed_)
       return;
 
     destroy(first_, current_, array_allocator_);
@@ -110,9 +110,9 @@ struct guarded_range_constructor
     ++current_;
   }
 
-  iterator commit() __ntl_nothrow
+  iterator dismiss() __ntl_nothrow
   {
-    committed_ = true;
+    dismissed_ = true;
     return current_;
   }
 
@@ -125,7 +125,7 @@ private:
   iterator first_;
   iterator current_;
   allocator_type& array_allocator_;
-  bool committed_;
+  bool dismissed_;
 };
 
 template <class ForwardIterator, class T, class Allocator>
@@ -139,8 +139,8 @@ void uninitailized_fill_a(ForwardIterator first,
   {
     ctor(value);
   }
-  ctor.commit();
-  assert(first == ctor.commit());
+  ctor.dismiss();
+  assert(first == ctor.dismiss());
 }
 
 template <class ForwardIterator, class Size, class T, class Allocator>
@@ -154,8 +154,8 @@ void uninitailized_fill_n_a(ForwardIterator first,
   {
     ctor(value);
   }
-  ctor.commit();
-  assert(first == ctor.commit());
+  ctor.dismiss();
+  assert(first == ctor.dismiss());
 }
 
 template <class InputIterator, class ForwardIterator, class Allocator>
@@ -169,7 +169,7 @@ InputIterator uninitailized_copy_a(InputIterator first,
   {
     ctor(*first);
   }
-  return ctor.commit();
+  return ctor.dismiss();
 }
 
 template <class InputIterator,
@@ -186,7 +186,7 @@ InputIterator uninitailized_copy_n_a(InputIterator first,
   {
     ctor(*first);
   }
-  return ctor.commit();
+  return ctor.dismiss();
 }
 
 // Is Power Of 2, optionally used in
@@ -260,12 +260,12 @@ struct guarded_allocation
   : array_allocator_(alloc),
     n_(n),
     p_(alloc.allocate(n)),
-    committed_(false)
+    dismissed_(false)
   {
   }
   ~guarded_allocation() __ntl_nothrow
   {
-    if(committed_ == true)
+    if(dismissed_ == true)
       return;
 
     assert(p_ != nullptr);
@@ -278,16 +278,16 @@ struct guarded_allocation
     return p_;
   }
 
-  void commit() __ntl_nothrow
+  void dismiss() __ntl_nothrow
   {
-    committed_ = true;
+    dismissed_ = true;
   }
 
   private:
     allocator_type& array_allocator_;
     size_t n_;
     pointer p_;
-    bool committed_;
+    bool dismissed_;
 };
 
 template <class InputIterator, class ForwardIterator>
@@ -321,7 +321,7 @@ struct guarded_relocation
   : dst_(dst),
     dst_last_(dst),
     array_allocator_(alloc),
-    committed_(false)
+    dismissed_(false)
   {
     // Making sure users don't get the wrong combinations of source
     // iterators and destination iterators.
@@ -338,22 +338,22 @@ struct guarded_relocation
 
   ~guarded_relocation() __ntl_nothrow
   {
-    if(committed_)
+    if(dismissed_)
       return;
 
     destroy(dst_, dst_last_, array_allocator_);
   }
 
-  void commit() __ntl_nothrow
+  void dismiss() __ntl_nothrow
   {
-    committed_ = true;
+    dismissed_ = true;
   }
 
 private:
   ForwardIterator dst_;
   ForwardIterator dst_last_;
   Allocator& array_allocator_;
-  bool committed_;
+  bool dismissed_;
 };
 
 template <class T>
@@ -445,7 +445,7 @@ class vector
       detail::uninitailized_copy_a(x.begin(), x.end(), new_begin.get(), array_allocator_);
 
       // no-throw begin
-      new_begin.commit();
+      new_begin.dismiss();
       begin_ = end_ = new_begin.get();
       end_ += x.size();
       // no-throw end
@@ -772,7 +772,7 @@ class vector
       detail::uninitailized_fill_n_a(new_pos, n, x, array_allocator_);
 
       // no-throw begin
-      new_begin.commit();
+      new_begin.dismiss();
       detail::relocate(begin_, position, new_begin.get());
       detail::relocate(position, end_, new_pos + n);
       array_allocator_.deallocate(begin_, capacity_);
@@ -802,7 +802,7 @@ class vector
         detail::uninitailized_fill_n_a(position, n, x, array_allocator_);
 
         // no-throw begin
-        reloc.commit();
+        reloc.dismiss();
         end_ += n;
         return position;
       }
@@ -819,7 +819,7 @@ class vector
       detail::uninitailized_fill_n_a(position, n, x, array_allocator_);
 
       // no-throw begin
-      reloc.commit();
+      reloc.dismiss();
       end_ += n;
       return position;
     }
@@ -894,7 +894,7 @@ class vector
           detail::uninitailized_copy_a(first, last, position, array_allocator_);
 
           // no-throw begin
-          reloc.commit();
+          reloc.dismiss();
           end_ += n;
           return;
         }
@@ -911,7 +911,7 @@ class vector
         detail::uninitailized_copy_a(first, last, position, array_allocator_);
 
         // no-throw begin
-        reloc.commit();
+        reloc.dismiss();
         end_ += n;
         return;
       }
@@ -923,7 +923,7 @@ class vector
       detail::uninitailized_copy_a(first, last, new_pos, array_allocator_);
 
       // no-throw begin
-      new_begin.commit();
+      new_begin.dismiss();
       detail::relocate(begin_, position, new_begin.get());
       detail::relocate(position, end_, new_pos + n);
       array_allocator_.deallocate(begin_, capacity_);
