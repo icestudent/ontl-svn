@@ -165,7 +165,7 @@ InputIterator uninitailized_copy_a(InputIterator first,
                                    Allocator& alloc)
 {
   guarded_range_constructor<ForwardIterator, Allocator> ctor(dst, alloc);
-  for(; first != last; ++first, ++dst)
+  for(; first != last; ++first)
   {
     ctor(*first);
   }
@@ -182,7 +182,7 @@ InputIterator uninitailized_copy_n_a(InputIterator first,
                                      Allocator& alloc)
 {
   guarded_range_constructor<ForwardIterator, Allocator> ctor(dst, alloc);
-  for(; n; ++first, ++dst)
+  for(; n; --n, ++first)
   {
     ctor(*first);
   }
@@ -448,6 +448,7 @@ class vector
       new_begin.commit();
       begin_ = end_ = new_begin.get();
       end_ += x.size();
+      // no-throw end
     }
 
     __forceinline
@@ -484,7 +485,7 @@ class vector
         return;
       }
 
-      // Make a copy of `u`, before clear()ing.
+      // Make a copy of `u`, before it gets overridden.
       // Checking for self referencing.
       // !fr3@K!
       const T tmp(u);
@@ -515,7 +516,7 @@ class vector
 
     template <class InputIterator>
     void assign__range(InputIterator first, InputIterator last,
-                      const input_iterator_tag&)
+                       const input_iterator_tag&)
     {
       clear();
       for(; first != last; ++first)
@@ -524,7 +525,7 @@ class vector
 
     template <class ForwardIterator>
     void assign__range(ForwardIterator first, ForwardIterator last,
-                      const forward_iterator_tag&)
+                       const forward_iterator_tag&)
     {
       const size_type n = distance(first, last);
       const size_type old_size = distance(begin_, end_);
@@ -533,24 +534,25 @@ class vector
         // No reallocation needed.
         if(old_size >= n)
         {
-          // `this ` has at least `n` managed elements.
+          // `this` has at least `n` managed elements.
           pointer new_end = copy(first, last, begin_);
 
-          { // No-throw code block
-            detail::destroy(new_end, end_, array_allocator_);
-            end_ = new_end;
-          }
+          // no-throw begin
+          detail::destroy(new_end, end_, array_allocator_);
+          end_ = new_end;
+          // no-throw end
           return;
         }
 
         // `this` has less than `n` managed elements.
+        // no-throw begin
         ForwardIterator anchor = first;
         advance(anchor, old_size);
-        copy(first, anchor, begin_);
-        for(size_type idx = old_size; idx != n; ++idx, ++anchor)
+        // no-throw end
+        copy_n(first, old_size, begin_);
+        for(pointer new_end = begin_ + n; end_ != new_end; ++end_, ++anchor)
         {
-          array_allocator_.construct(&begin_[idx], *anchor);
-          ++end_;
+          array_allocator_.construct(end_, *anchor);
         }
         return;
       }
@@ -561,32 +563,33 @@ class vector
 
       if(old_size >= n)
       {
-        // Has at least `n` managed elements.
-        { // No-throw code block
-          detail::relocate(begin_, begin_ + n, new_begin);
-          detail::destroy(begin_ + n, end_, array_allocator_);
-          begin_ = end_ = new_begin;
-          end_ += n;
-          capacity_ = new_cap;
-        }
+        // `this` has at least `n` managed elements.
+        // no-throw begin
+        detail::relocate(begin_, begin_ + n, new_begin);
+        detail::destroy(begin_ + n, end_, array_allocator_);
+        begin_ = end_ = new_begin;
+        end_ += n;
+        capacity_ = new_cap;
+        // no-throw end
         copy_n(first, old_size, begin_);
         return;
       }
 
-      // Has less than `n` managed elements.
-      { // No-throw code block
-        detail::relocate(begin_, end_, new_begin);
-        begin_ = end_ = new_begin;
-        end_ += old_size;
-        capacity_ = new_cap;
-      }
+      // `this` has less than `n` managed elements.
+      // no-throw begin
+      detail::relocate(begin_, end_, new_begin);
+      begin_ = end_ = new_begin;
+      end_ += old_size;
+      capacity_ = new_cap;
+
       ForwardIterator anchor(first);
       advance(anchor, old_size);
-      copy(first, anchor, begin_);
-      for(size_type idx = old_size; idx != n; ++idx, ++anchor)
+      const size_type diff = n - old_size;
+      // no-throw end
+      copy_n(first, old_size, begin_);
+      for(pointer new_end = begin_ + n; end_ != new_end; ++end_, ++anchor)
       {
-        array_allocator_.construct(&begin_[idx], *anchor);
-        ++end_;
+        array_allocator_.construct(end_, *anchor);
       }
     }
 
@@ -598,23 +601,22 @@ class vector
         // No reallocation needed.
         if(old_size >= n)
         {
-          // `this ` has at least `n` managed elements.
+          // `this` has at least `n` managed elements.
           pointer new_end = begin_ + n;
           fill(begin_, new_end, u);
 
-          { // No-throw code block
-            detail::destroy(new_end, end_, array_allocator_);
-            end_ = new_end;
-          }
+          // no-throw begin
+          detail::destroy(new_end, end_, array_allocator_);
+          end_ = new_end;
+          // no-throw end
           return;
         }
 
         // `this` has less than `n` managed elements.
         fill_n(begin_, old_size, u);
-        for(size_type idx = old_size; idx != n; ++idx)
+        for(pointer new_end = begin_ + n; end_ != new_end; ++end_)
         {
-          array_allocator_.construct(&begin_[idx], u);
-          ++end_;
+          array_allocator_.construct(end_, u);
         }
         return;
       }
@@ -625,30 +627,29 @@ class vector
 
       if(old_size >= n)
       {
-        // Has at least `n` managed elements.
-        { // No-throw code block
-          detail::relocate(begin_, begin_ + n, new_begin);
-          detail::destroy(begin_ + n, end_, array_allocator_);
-          begin_ = end_ = new_begin;
-          end_ += n;
-          capacity_ = new_cap;
-        }
+        // `this` has at least `n` managed elements.
+        // no-throw begin
+        detail::relocate(begin_, begin_ + n, new_begin);
+        detail::destroy(begin_ + n, end_, array_allocator_);
+        begin_ = end_ = new_begin;
+        end_ += n;
+        capacity_ = new_cap;
+        // no-throw end
         fill_n(begin_, old_size, u);
         return;
       }
 
-      // Has less than `n` managed elements.
-      { // No-throw code block
-        detail::relocate(begin_, end_, new_begin);
-        begin_ = end_ = new_begin;
-        end_ += old_size;
-        capacity_ = new_cap;
-      }
+      // `this` has less than `n` managed elements.
+      // no-throw begin
+      detail::relocate(begin_, end_, new_begin);
+      begin_ = end_ = new_begin;
+      end_ += old_size;
+      capacity_ = new_cap;
+      // no-throw end
       fill_n(begin_, old_size, u);
-      for(size_type idx = old_size; idx != n; ++idx)
+      for(pointer new_end = begin_ + n; end_ != new_end; ++end_)
       {
-        array_allocator_.construct(&begin_[idx], u);
-        ++end_;
+        array_allocator_.construct(end_, u);
       }
     }
 
@@ -701,6 +702,7 @@ class vector
       end_ = new_begin + distance(begin_, end_);
       begin_ = new_begin;
       capacity_ = new_cap;
+      // no-throw end
     }
 
     ///\name  element access
@@ -763,8 +765,10 @@ class vector
       const size_type old_size = this->size();
       const size_type new_size = old_size + n;
       const size_type new_cap = detail::vector_allocation_policy(old_size + n);
+
       guarded_allocation new_begin(array_allocator_, new_cap);
       pointer new_pos = new_begin.get() + distance(begin_, position);
+
       detail::uninitailized_fill_n_a(new_pos, n, x, array_allocator_);
 
       // no-throw begin
@@ -794,6 +798,7 @@ class vector
           reverse_iterator(position + n),
           array_allocator_);
         end_ = begin_ + distance(begin_, position);
+
         detail::uninitailized_fill_n_a(position, n, x, array_allocator_);
 
         // no-throw begin
@@ -809,8 +814,8 @@ class vector
         end_,
         position + n,
         array_allocator_);
-
       end_ = begin_ + distance(begin_, position);
+
       detail::uninitailized_fill_n_a(position, n, x, array_allocator_);
 
       // no-throw begin
@@ -863,17 +868,17 @@ class vector
                        ForwardIterator last,
                        const forward_iterator_tag&)
     {
+      // Though I don't know where it states this in the standard,
+      // STLport says the standard forbids checking for self
+      // referencing in range insertion.
+      // !fr3@K!
+
       const size_type n = distance(first, last);
       const size_type old_size = this->size();
       const size_type new_size = old_size + n;
       if(capacity_ >= new_size)
       {
         // No reallocation needed.
-
-        // Though I don't know where it states this in the standard,
-        // STLport says the standard forbids checking for self
-        // referencing here.
-        // !fr3@K!
 
         if(position + n < end_)
         {
@@ -885,6 +890,7 @@ class vector
             reverse_iterator(position + n),
             array_allocator_);
           end_ = begin_ + distance(begin_, position);
+
           detail::uninitailized_copy_a(first, last, position, array_allocator_);
 
           // no-throw begin
@@ -900,8 +906,8 @@ class vector
           end_,
           position + n,
           array_allocator_);
-
         end_ = begin_ + distance(begin_, position);
+
         detail::uninitailized_copy_a(first, last, position, array_allocator_);
 
         // no-throw begin
@@ -1040,9 +1046,7 @@ class vector
   //end extension
   #endif
 
-    // Why mutable?
-    // !fr3@K!
-    mutable allocator_type  array_allocator_;
+    allocator_type  array_allocator_;
 
     // 0 ~ 3: managed elements
     //   x  : allocated but unused memory blocks
@@ -1065,12 +1069,6 @@ class vector
     void check_bounds(size_type n) const //__ntl_throws(out_of_range)
     {
       if ( n > size() ) __ntl_throw (out_of_range(__FUNCTION__));
-    }
-
-    void move(const iterator  to, const iterator from) const
-    {
-      array_allocator_.construct(to, *from);
-      array_allocator_.destroy(from);
     }
 };//class vector
 
