@@ -130,7 +130,7 @@ struct vap
 // static
 inline size_t vector_allocation_policy::get(size_t min)
 {
-  return detail::vap<void>::policy(min);
+  return max(detail::vap<void>::policy(min), min);
 }
 
 // static
