@@ -6,8 +6,21 @@
 #include <cassert>
 
 namespace std {
-namespace detail
+namespace ext {
+namespace detail {
+template <class T>
+struct destructor
 {
+  typedef T value_type;
+
+  destructor() __ntl_nothrow
+  {}
+
+  void operator()(value_type& val) __ntl_nothrow
+  {
+    val.~value_type();
+  }
+};
 
 template <class Allocator>
 struct destructor_a
@@ -27,12 +40,7 @@ private:
   allocator_type& array_allocator_;
 };
 
-template <class Allocator>
-destructor_a<Allocator>
-  destructor(Allocator& alloc) __ntl_nothrow
-{
-  return destructor_a<Allocator>(alloc);
-}
+} // namespace detail
 
 /// The template function evaluates alloc.destroy(&(*(first + N))) once for each N in the range [0, count).
 template <class InputIterator, class Allocator>
@@ -40,10 +48,18 @@ void destroy(InputIterator first,
              InputIterator last,
              Allocator& alloc) __ntl_nothrow
 {
-  for_each(first, last, destructor(alloc));
+  for_each(first, last, detail::destructor_a<Allocator>(alloc));
 }
 
-template <class ForwardIterator, class Allocator>
+template <class InputIterator>
+void destroy(InputIterator first,
+             InputIterator last) __ntl_nothrow
+{
+  typedef typename iterator_traits<InputIterator>::value_type value_type;
+  for_each(first, last, detail::destructor<value_type>());
+}
+
+template <class ForwardIterator, class Allocator = void>
 struct guarded_range_constructor
 {
   typedef ForwardIterator iterator;
@@ -94,6 +110,49 @@ private:
   iterator first_;
   iterator current_;
   allocator_type& array_allocator_;
+  bool dismissed_;
+};
+
+template <class ForwardIterator>
+struct guarded_range_constructor<ForwardIterator, void>
+{
+  typedef ForwardIterator iterator;
+  typedef typename iterator_traits<ForwardIterator>::value_type value_type;
+
+  guarded_range_constructor(iterator first) __ntl_nothrow
+  : first_(first),
+    current_(first),
+    dismissed_(false)
+  {
+  }
+  ~guarded_range_constructor() __ntl_nothrow
+  {
+    if(dismissed_)
+      return;
+
+    destroy(first_, current_);
+  }
+
+  void operator()(const value_type& value)
+  {
+    new (current_) value_type(value);
+    ++current_;
+  }
+
+  iterator dismiss() __ntl_nothrow
+  {
+    dismissed_ = true;
+    return current_;
+  }
+
+private:
+  // no value semantics
+  guarded_range_constructor(const guarded_range_constructor&);
+  guarded_range_constructor& operator=(const guarded_range_constructor&);
+
+private:
+  iterator first_;
+  iterator current_;
   bool dismissed_;
 };
 
@@ -296,7 +355,7 @@ private:
 #endif
 };
 
-} // namespace detail
+} // namespace ext
 }//namespace std
 
 #endif//#ifndef NTL__STLX_ESAFETY
