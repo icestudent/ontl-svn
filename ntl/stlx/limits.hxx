@@ -12,6 +12,7 @@
 #include "cstdint.hxx"
 #include "climits.hxx"
 #include "cfloat.hxx"
+#include "exception.hxx"
 
 namespace std {
 
@@ -111,7 +112,7 @@ class numeric_limits<bool>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<bool> 
+};//template class numeric_limits<bool>
 
 template<> class numeric_limits<char>
 {
@@ -148,7 +149,7 @@ template<> class numeric_limits<char>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<char> 
+};//template class numeric_limits<char>
 
 template<> class numeric_limits<wchar_t>
 {
@@ -185,7 +186,7 @@ template<> class numeric_limits<wchar_t>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<wchar_t> 
+};//template class numeric_limits<wchar_t>
 
 template<> class numeric_limits<signed char>
 {
@@ -222,7 +223,7 @@ template<> class numeric_limits<signed char>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<signed char> 
+};//template class numeric_limits<signed char>
 
 template<> class numeric_limits<short>
 {
@@ -259,7 +260,7 @@ template<> class numeric_limits<short>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<short> 
+};//template class numeric_limits<short>
 
 template<> class numeric_limits<int>
 {
@@ -296,7 +297,7 @@ template<> class numeric_limits<int>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<int> 
+};//template class numeric_limits<int>
 
 template<> class numeric_limits<long>
 {
@@ -333,7 +334,7 @@ template<> class numeric_limits<long>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<long> 
+};//template class numeric_limits<long>
 
 template<> class numeric_limits<long long>
 {
@@ -370,7 +371,7 @@ template<> class numeric_limits<long long>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<long long> 
+};//template class numeric_limits<long long>
 
 template<> class numeric_limits<unsigned char>
 {
@@ -407,7 +408,7 @@ template<> class numeric_limits<unsigned char>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<unsigned char> 
+};//template class numeric_limits<unsigned char>
 
 template<> class numeric_limits<unsigned short>
 {
@@ -444,7 +445,7 @@ template<> class numeric_limits<unsigned short>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<unsigned shrt> 
+};//template class numeric_limits<unsigned shrt>
 
 template<> class numeric_limits<unsigned int>
 {
@@ -481,7 +482,7 @@ template<> class numeric_limits<unsigned int>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<unsigned int> 
+};//template class numeric_limits<unsigned int>
 
 template<> class numeric_limits<unsigned long>
 {
@@ -518,7 +519,7 @@ template<> class numeric_limits<unsigned long>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<unsigned long> 
+};//template class numeric_limits<unsigned long>
 
 template<> class numeric_limits<unsigned long long>
 {
@@ -555,7 +556,7 @@ template<> class numeric_limits<unsigned long long>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<unsigned long long> 
+};//template class numeric_limits<unsigned long long>
 
 union __fvalue { uint8_t raw[sizeof(float)]; float value; };
 STATIC_ASSERT(sizeof(__fvalue) == 4);
@@ -621,7 +622,7 @@ template<> class numeric_limits<float>
     static const  bool  traps             = true;
     static const  bool  tinyness_before   = true;
     static const  float_round_style round_style = round_to_nearest;
-};//template class numeric_limits<float> 
+};//template class numeric_limits<float>
 
 template<> class numeric_limits<double>
 {
@@ -658,7 +659,7 @@ template<> class numeric_limits<double>
     static const  bool  traps             = true;
     static const  bool  tinyness_before   = true;
     static const  float_round_style round_style = round_to_nearest;
-};//template class numeric_limits<double> 
+};//template class numeric_limits<double>
 
 template<> class numeric_limits<long double>
 {
@@ -695,7 +696,7 @@ template<> class numeric_limits<long double>
     static const  bool  traps             = true;
     static const  bool  tinyness_before   = true;
     static const  float_round_style round_style = round_to_nearest;
-};//template class numeric_limits<long double> 
+};//template class numeric_limits<long double>
 
 /**@} lib_support_limits */
 /**@} lib_language_support */
