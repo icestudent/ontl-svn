@@ -10,6 +10,7 @@
 #ifndef NTL__STLX_MEMORY
 #define NTL__STLX_MEMORY
 
+#include <stlx/esafety.hxx>
 #include "cstddef.hxx"
 #include "exception.hxx"
 #include "iterator.hxx"
@@ -267,42 +268,6 @@ void construct_element(Alloc& alloc, T& r, Args&&... args);
 ///   assignment, comparison, or dereference of valid iterators.
 ///   In the following algorithms, if an exception is thrown there are no effects.
 
-namespace detail {
-
-template <class ForwardIterator>
-struct revert_on_exception
-{
-    typedef ForwardIterator iterator;
-    typedef typename iterator_traits<iterator>::value_type value_type;
-
-    revert_on_exception(const iterator & first, iterator & current)
-    : first(first), current(current), ok(false) {/**/}
-
-    ~revert_on_exception()
-    {
-      if ( !ok )
-        for ( iterator it( first ); it != current; ++it )
-        {
-          // avoid unnecessary runtime check.
-          __assume(&*it);
-          (&*it)->~value_type();
-        }
-    }
-
-    void commit() { ok = true; }
-
-  private:
-
-    iterator  first;
-    iterator& current;
-    bool            ok;
-
-  // no value semantics
-  revert_on_exception(const revert_on_exception&);
-  revert_on_exception& operator=(const revert_on_exception&);
-};
-} // namespace detail
-
 ///\name  20.7.10.1 uninitialized_copy [uninitialized.copy]
 
 template <class InputIterator, class ForwardIterator>
@@ -312,16 +277,13 @@ ForwardIterator
                      InputIterator    last,
                      ForwardIterator  result)
 {
-  typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-  detail::revert_on_exception<ForwardIterator> g(result, result);
+  ext::guarded_range_constructor<ForwardIterator> guarded_ctor(result);
   for ( ; first != last; ++result, ++first )
   {
-    __assume(&*result);
-    new (static_cast<void*>(&*result)) value_type(*first);
+    guarded_ctor(*first);
   }
-  g.commit();
+  return guarded_ctor.dismiss();
   ///@todo separate function for scalar types ?
-  return result;
 }
 
 template <class InputIterator, class Size, class ForwardIterator>
@@ -329,16 +291,13 @@ __forceinline
 ForwardIterator
   uninitialized_copy_n(InputIterator first, Size n, ForwardIterator result)
 {
-  typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-  detail::revert_on_exception<ForwardIterator> g(result, result);
-  for ( ; n > 0; ++result, ++first, --n )
+  ext::guarded_range_constructor<ForwardIterator> guarded_ctor(result);
+  for ( ; n; ++result, ++first )
   {
-    __assume(&*result);
-    new (static_cast<void*>(&*result)) value_type(*first);
+    guarded_ctor(*first);
   }
-  g.commit();
+  return guarded_ctor.dismiss();
   ///@todo separate function for scalar types ?
-  return result;
 }
 
 ///@}
@@ -349,14 +308,12 @@ __forceinline
 void
   uninitialized_fill(ForwardIterator first, ForwardIterator last, const T& x)
 {
-  typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-  detail::revert_on_exception<ForwardIterator> g(first, first);
+  ext::guarded_range_constructor<ForwardIterator> guarded_ctor(first);
   for ( ; first != last; ++first )
   {
-    __assume(&*first);
-    new (static_cast<void*>(&*first)) value_type(x);
+    guarded_ctor(x);
   }
-  g.commit();
+  guarded_ctor.dismiss();
   ///@todo separate function for scalar types ?
 }
 
@@ -366,15 +323,12 @@ __forceinline
 void
   uninitialized_fill_n(ForwardIterator first, Size n, const T& x)
 {
-  typedef typename iterator_traits<ForwardIterator>::value_type value_type;
-  detail::revert_on_exception<ForwardIterator> g(first, first);
-  for ( ; n--; ++first )
+  ext::guarded_range_constructor<ForwardIterator> guarded_ctor(first);
+  for ( ; n; --n, ++first )
   {
-    __assume(&*first);
-    new (static_cast<void*>(&*first)) value_type(x);
-    ///@todo delete on exceptions
+    guarded_ctor(x);
   }
-  g.commit();
+  guarded_ctor.dismiss();
   ///@todo separate function for scalar types ?
 }
 

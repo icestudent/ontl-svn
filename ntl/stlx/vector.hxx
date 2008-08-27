@@ -8,13 +8,14 @@
 #ifndef NTL__STLX_VECTOR
 #define NTL__STLX_VECTOR
 
-#include "esafety.hxx"
-#include "cstring.hxx"
-#include "algorithm.hxx"
-#include "iterator.hxx"
-#include "memory.hxx"
-#include "type_traits.hxx"
-#include "cassert.hxx"
+#include <stlx/math.hxx>
+#include <stlx/esafety.hxx>
+#include <cstring>
+#include <algorithm>
+#include <iterator>
+#include <memory>
+#include <type_traits>
+#include <cassert>
 
 #ifdef _MSC_VER
 # pragma warning(push)
@@ -25,8 +26,7 @@
 
 namespace std {
 
-namespace ext
-{
+namespace ext {
 
 // Interface to vector allocation policy.
 // TODO: thread safety
@@ -50,72 +50,9 @@ struct vector_allocation_policy
   // static policy_t policy;
 };
 
-namespace detail
-{
-// Is Power Of 2, optionally used in
-// vector_allocation_policy().
-// Ref: http://www.aggregate.org/MAGIC/#Is%20Power%20of%202
-template <class UnsignedIntegerType>
-inline bool ispo2(UnsignedIntegerType n) __ntl_nothrow
-{
-  STATIC_ASSERT(is_integral<UnsignedIntegerType>::value && is_unsigned<UnsignedIntegerType>::value);
-  return ((n&(n-1)) == 0) ? true : false;
-}
+namespace detail {
 
-// Next Largest Power of 2, optionally used in
-// vector_allocation_policy().
-// Ref: http://www.aggregate.org/MAGIC/#Next%20Largest%20Power%20of%202
-template <class UnsignedIntegerType>
-typename enable_if<sizeof(UnsignedIntegerType) == 1, UnsignedIntegerType>::type
-  nlpo2_impl(UnsignedIntegerType n) __ntl_nothrow
-{
-  n |= (n >> 1);
-  n |= (n >> 2);
-  n |= (n >> 4);
-  return(++n);
-}
-template <class UnsignedIntegerType>
-typename enable_if<sizeof(UnsignedIntegerType) == 2, UnsignedIntegerType>::type
-  nlpo2_impl(UnsignedIntegerType n) __ntl_nothrow
-{
-  n |= (n >> 1);
-  n |= (n >> 2);
-  n |= (n >> 4);
-  n |= (n >> 8);
-  return(++n);
-}
-template <class UnsignedIntegerType>
-typename enable_if<sizeof(UnsignedIntegerType) == 4, UnsignedIntegerType>::type
-  nlpo2_impl(UnsignedIntegerType n) __ntl_nothrow
-{
-  n |= (n >> 1);
-  n |= (n >> 2);
-  n |= (n >> 4);
-  n |= (n >> 8);
-  n |= (n >> 16);
-  return(++n);
-}
-template <class UnsignedIntegerType>
-typename enable_if<sizeof(UnsignedIntegerType) == 8, UnsignedIntegerType>::type
-  nlpo2_impl(UnsignedIntegerType n) __ntl_nothrow
-{
-  n |= (n >> 1);
-  n |= (n >> 2);
-  n |= (n >> 4);
-  n |= (n >> 8);
-  n |= (n >> 16);
-  n |= (n >> 32);
-  return(++n);
-}
-
-template <class UnsignedIntegerType>
-inline UnsignedIntegerType nlpo2(UnsignedIntegerType n) __ntl_nothrow
-{
-  STATIC_ASSERT(is_integral<UnsignedIntegerType>::value && is_unsigned<UnsignedIntegerType>::value);
-  return nlpo2_impl(n);
-}
-
-template <class NotUsed>
+template <class NotUsed = void>
 struct vap
 {
   // The static member data ::stl::ext::detailvap::policy should really
@@ -125,20 +62,26 @@ struct vap
   // !fr3@K!
   static vector_allocation_policy::policy_t policy;
 };
+// Static member data can be defined in header.
+// !fr3@K!
+// Default policy is aggressive.
+template <class NotUsed>
+typename vector_allocation_policy::policy_t
+  vap<NotUsed>::policy = ::std::ext::vector_allocation_policy::aggressive;
 } // namespace detail
 
 // static
 inline size_t vector_allocation_policy::get(size_t min)
 {
-  return max(detail::vap<void>::policy(min), min);
+  return max(detail::vap<>::policy(min), min);
 }
 
 // static
 inline vector_allocation_policy::policy_t
   vector_allocation_policy::reset(policy_t new_policy)
 {
-  policy_t tmp(detail::vap<void>::policy);
-  detail::vap<void>::policy = new_policy;
+  policy_t tmp(detail::vap<>::policy);
+  detail::vap<>::policy = new_policy;
   return tmp;
 }
 
@@ -147,24 +90,13 @@ inline size_t vector_allocation_policy::aggressive(size_t min)
 {
   if(min <= sizeof(void*))
     return min;
-  return detail::ispo2(min) ? min : size_t(detail::nlpo2(min));
+  return ext::ispo2(min) ? min : size_t(ext::nlpo2(min));
 }
 // static
 inline size_t vector_allocation_policy::conservative(size_t min)
 {
   return min;
 }
-
-
-namespace detail
-{
-// Static member data can be defined in header.
-// !fr3@K!
-// Default policy is aggressive.
-template <class NotUsed>
-typename vector_allocation_policy::policy_t
-  vap<NotUsed>::policy = ::std::ext::vector_allocation_policy::aggressive;
-} // namespace detail
 
 } // namespace ext
 
@@ -214,8 +146,8 @@ class vector
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
   private:
-    typedef detail::guarded_allocation<allocator_type> guarded_allocation;
-    typedef detail::guarded_relocation<iterator, iterator, allocator_type> guarded_relocation;
+    typedef ext::guarded_allocation<allocator_type> guarded_allocation;
+    typedef ext::guarded_relocation<iterator, iterator, allocator_type> guarded_relocation;
 
   public:
 
@@ -232,7 +164,7 @@ class vector
       begin_(array_allocator_.allocate(capacity_)),
       end_(begin_)
     {
-      detail::uninitailized_fill_n_a(begin_, n, value, array_allocator_);
+      ext::uninitailized_fill_n_a(begin_, n, value, array_allocator_);
       end_ += n;
     }
 
@@ -268,7 +200,7 @@ class vector
         return;
 
       guarded_allocation new_begin(array_allocator_, capacity_);
-      detail::uninitailized_copy_a(x.begin(), x.end(), new_begin.get(), array_allocator_);
+      ext::uninitailized_copy_a(x.begin(), x.end(), new_begin.get(), array_allocator_);
 
       // no-throw begin
       new_begin.dismiss();
@@ -364,7 +296,7 @@ class vector
           pointer new_end = copy(first, last, begin_);
 
           // no-throw begin
-          detail::destroy(new_end, end_, array_allocator_);
+          ext::destroy(new_end, end_, array_allocator_);
           end_ = new_end;
           // no-throw end
           return;
@@ -391,8 +323,8 @@ class vector
       {
         // `this` has at least `n` managed elements.
         // no-throw begin
-        detail::relocate(begin_, begin_ + n, new_begin);
-        detail::destroy(begin_ + n, end_, array_allocator_);
+        ext::relocate(begin_, begin_ + n, new_begin);
+        ext::destroy(begin_ + n, end_, array_allocator_);
         begin_ = end_ = new_begin;
         end_ += n;
         capacity_ = new_cap;
@@ -403,7 +335,7 @@ class vector
 
       // `this` has less than `n` managed elements.
       // no-throw begin
-      detail::relocate(begin_, end_, new_begin);
+      ext::relocate(begin_, end_, new_begin);
       begin_ = end_ = new_begin;
       end_ += old_size;
       capacity_ = new_cap;
@@ -432,7 +364,7 @@ class vector
           fill(begin_, new_end, u);
 
           // no-throw begin
-          detail::destroy(new_end, end_, array_allocator_);
+          ext::destroy(new_end, end_, array_allocator_);
           end_ = new_end;
           // no-throw end
           return;
@@ -455,8 +387,8 @@ class vector
       {
         // `this` has at least `n` managed elements.
         // no-throw begin
-        detail::relocate(begin_, begin_ + n, new_begin);
-        detail::destroy(begin_ + n, end_, array_allocator_);
+        ext::relocate(begin_, begin_ + n, new_begin);
+        ext::destroy(begin_ + n, end_, array_allocator_);
         begin_ = end_ = new_begin;
         end_ += n;
         capacity_ = new_cap;
@@ -467,7 +399,7 @@ class vector
 
       // `this` has less than `n` managed elements.
       // no-throw begin
-      detail::relocate(begin_, end_, new_begin);
+      ext::relocate(begin_, end_, new_begin);
       begin_ = end_ = new_begin;
       end_ += old_size;
       capacity_ = new_cap;
@@ -523,7 +455,7 @@ class vector
       pointer new_begin = array_allocator_.allocate(new_cap);
 
       // no-throw begin
-      detail::relocate(begin_, end_, new_begin);
+      ext::relocate(begin_, end_, new_begin);
       array_allocator_.deallocate(begin_, capacity_);
       end_ = new_begin + distance(begin_, end_);
       begin_ = new_begin;
@@ -595,12 +527,12 @@ class vector
       guarded_allocation new_begin(array_allocator_, new_cap);
       pointer new_pos = new_begin.get() + distance(begin_, position);
 
-      detail::uninitailized_fill_n_a(new_pos, n, x, array_allocator_);
+      ext::uninitailized_fill_n_a(new_pos, n, x, array_allocator_);
 
       // no-throw begin
       new_begin.dismiss();
-      detail::relocate(begin_, position, new_begin.get());
-      detail::relocate(position, end_, new_pos + n);
+      ext::relocate(begin_, position, new_begin.get());
+      ext::relocate(position, end_, new_pos + n);
       array_allocator_.deallocate(begin_, capacity_);
       begin_ = end_ = new_begin.get();
       end_ += (old_size + n);
@@ -618,14 +550,14 @@ class vector
       {
         // Relocating in overlapping ranges.
         // Relocates reversely to avoid race condition.
-        detail::guarded_relocation<reverse_iterator, reverse_iterator, allocator_type> reloc(
+        ext::guarded_relocation<reverse_iterator, reverse_iterator, allocator_type> reloc(
           reverse_iterator(end_),
           reverse_iterator(position),
           reverse_iterator(position + n),
           array_allocator_);
         end_ = begin_ + distance(begin_, position);
 
-        detail::uninitailized_fill_n_a(position, n, x, array_allocator_);
+        ext::uninitailized_fill_n_a(position, n, x, array_allocator_);
 
         // no-throw begin
         reloc.dismiss();
@@ -642,7 +574,7 @@ class vector
         array_allocator_);
       end_ = begin_ + distance(begin_, position);
 
-      detail::uninitailized_fill_n_a(position, n, x, array_allocator_);
+      ext::uninitailized_fill_n_a(position, n, x, array_allocator_);
 
       // no-throw begin
       reloc.dismiss();
@@ -710,14 +642,14 @@ class vector
         {
           // Relocating in overlapping ranges.
           // Relocates reversely to avoid race condition.
-          detail::guarded_relocation<reverse_iterator, reverse_iterator, allocator_type> reloc(
+          ext::guarded_relocation<reverse_iterator, reverse_iterator, allocator_type> reloc(
             reverse_iterator(end_),
             reverse_iterator(position),
             reverse_iterator(position + n),
             array_allocator_);
           end_ = begin_ + distance(begin_, position);
 
-          detail::uninitailized_copy_a(first, last, position, array_allocator_);
+          ext::uninitailized_copy_a(first, last, position, array_allocator_);
 
           // no-throw begin
           reloc.dismiss();
@@ -734,7 +666,7 @@ class vector
           array_allocator_);
         end_ = begin_ + distance(begin_, position);
 
-        detail::uninitailized_copy_a(first, last, position, array_allocator_);
+        ext::uninitailized_copy_a(first, last, position, array_allocator_);
 
         // no-throw begin
         reloc.dismiss();
@@ -746,12 +678,12 @@ class vector
       const size_type new_cap = ext::vector_allocation_policy::get(old_size + n);
       guarded_allocation new_begin(array_allocator_, new_cap);
       pointer new_pos = new_begin.get() + distance(begin_, position);
-      detail::uninitailized_copy_a(first, last, new_pos, array_allocator_);
+      ext::uninitailized_copy_a(first, last, new_pos, array_allocator_);
 
       // no-throw begin
       new_begin.dismiss();
-      detail::relocate(begin_, position, new_begin.get());
-      detail::relocate(position, end_, new_pos + n);
+      ext::relocate(begin_, position, new_begin.get());
+      ext::relocate(position, end_, new_pos + n);
       array_allocator_.deallocate(begin_, capacity_);
       begin_ = end_ = new_begin.get();
       end_ += (old_size + n);
@@ -768,8 +700,8 @@ class vector
 
     pointer erase__impl(pointer first, pointer last) __ntl_nothrow
     {
-      detail::destroy(first, last, array_allocator_);
-      detail::relocate(last, end_, first);
+      ext::destroy(first, last, array_allocator_);
+      ext::relocate(last, end_, first);
       end_ -= distance(first, last);
       return first;
     }
@@ -841,7 +773,7 @@ class vector
     __forceinline
     void clear() __ntl_nothrow
     {
-      detail::destroy(begin_, end_, array_allocator_);
+      ext::destroy(begin_, end_, array_allocator_);
       end_ = begin_;
     }
 
