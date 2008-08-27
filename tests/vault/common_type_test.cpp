@@ -1,3 +1,12 @@
+template<typename Type, size_t N = 0>
+struct xshow_type
+{
+  char _[0];
+};
+
+#define SHOWT(T) xshow_type<T, __COUNTER__> _Join(__x_show_type, __COUNTER__);
+#pragma warning(disable:4101)
+
 #include <type_traits>
 using namespace std;
 
@@ -93,10 +102,10 @@ void test01()
   //COMMON_TYPE_TEST_2_IMPL(cv_qual type1 &&, type2, type3, JOIN(uid,r))
 
 #define COMMON_TYPE_TEST_ALL_2(type1, type2, type3, uid) \
-  COMMON_TYPE_TEST_2(NO_CV, type1, type2, type3, uid); \
-  COMMON_TYPE_TEST_2(const, type1, type2, type3, uid); \
-  COMMON_TYPE_TEST_2(volatile, type1, type2, type3, uid); \
-  COMMON_TYPE_TEST_2(const volatile, type1, type2, type3, uid)
+  COMMON_TYPE_TEST_2(NO_CV, type1, type2, type3, JOIN(uid,0)); \
+  COMMON_TYPE_TEST_2(const, type1, type2, type3, JOIN(uid,1)); \
+  COMMON_TYPE_TEST_2(volatile, type1, type2, type3, JOIN(uid,2)); \
+  COMMON_TYPE_TEST_2(const volatile, type1, type2, type3, JOIN(uid,3))
 
 template<class T, class U>
 struct xcommon_type
@@ -114,9 +123,10 @@ void test02()
   using std::is_same;
 
   typedef common_type<int&>::type ct0;
-  typedef common_type<int&, int>::type ct1;
+  typedef common_type<int&, const int>::type ct1;
   typedef common_type<int, int&>::type ct2;
-  VERIFY((is_same<ct0, int>::value));
+  VERIFY((is_same<ct0, int&>::value));
+  VERIFY((is_const<ct1>::value == 0));
   VERIFY((is_same<ct1, int>::value));
   VERIFY((is_same<ct2, int>::value));
 
@@ -127,14 +137,114 @@ void test02()
   VERIFY((is_same<xct1, int>::value));
   VERIFY((is_same<xct2, int>::value));
 
-#if 0
-  COMMON_TYPE_TEST_2(NO_CV, int, int, int, 1);
+  typedef common_type<const int, int>::type xct4;
+  VERIFY((is_same<xct4, int>::value));
+
+#if 1
+  COMMON_TYPE_TEST_2(const , int, int, int, 0);
   COMMON_TYPE_TEST_ALL_2(int, int, int, 1);
   COMMON_TYPE_TEST_ALL_2(int, double, double, 2);
+  COMMON_TYPE_TEST_2(NO_CV, int, double, double, 2);
   COMMON_TYPE_TEST_2(NO_CV, A, A, A, 3);
-  COMMON_TYPE_TEST_2(const, A, A, const A, 4);
-  COMMON_TYPE_TEST_2(NO_CV, B, A, A, 5);  
+  COMMON_TYPE_TEST_2(const, A, A, A, 4);
+  COMMON_TYPE_TEST_2(NO_CV, B, A, A, 5);
 #endif
 }
+
+
+template<typename T, typename U>
+class promote
+{
+  static bool true_or_false();
+  static T makeT();
+  static U makeU();
+
+  template<typename Result>
+  static void test(Result)
+  {
+    //typedef Result result_type;
+    xshow_type<Result, 10 + is_const<Result>::value> x;
+  }
+
+  typedef typename remove_reference<typename remove_cv<T>::type>::type rawT;
+  typedef typename remove_reference<typename remove_cv<U>::type>::type rawU;
+
+public:
+  /**
+   *	@brief правила продвижения
+   *  1) если типы равны (без квалификаторов), то выбирается один из них (также без квалификатора [см. show()])
+   *  2) если один тип конвертируется в другой, то выбираем тот, в который можно сконвертировать
+   *  3) иначе результат - void
+   **/
+  typedef typename common_type<T,U>::type type;
+
+  static void show()
+  {
+    test(true_or_false() ? makeT() : makeU());
+    //test(makeT() + makeU());
+  }
+
+  static void select()
+  {
+    SHOWT(type);
+  }
+
+};
+
+template<class T, class U>
+struct xselect
+{
+  typedef typename remove_cv<typename remove_reference<T>::type>::type rawT;
+  typedef typename remove_cv<typename remove_reference<U>::type>::type rawU;
+  
+  typedef 
+    typename conditional<is_same<rawT, rawU>::value, rawT,
+      typename conditional<is_arithmetic<rawT>::value && is_arithmetic<rawU>::value, typename conditional<(sizeof(T) < sizeof(U)), rawU, rawT>::type,
+        typename conditional<is_convertible<rawT,rawU>::value, rawU,
+          typename conditional<is_convertible<rawU,rawT>::value, rawT, void
+                              >::type
+                            >::type
+                          >::type
+                        >::type type;
+};
+
+void promo_test()
+{
+  //promote<int, int>::select();                // int
+  //promote<const int, int>::select();          // const int
+  //promote<int, const int>::select();          // const int
+  //promote<volatile int, int>::select();       // int
+  //promote<const volatile int, int>::select(); // int
+  //promote<int&, int>::select();               // int
+  //promote<int&, int&>::select();              // int
+  //promote<int, int*>::select();               // void
+
+  //xshow_type<const int> z;
+
+  //promote<const int, int >::select();              // int
+  typedef xselect<const volatile int&, int>::type sic;
+  typedef xselect<short, int>::type sic2;
+  //xshow_type<xselect<const volatile int&, int>::type, sizeof(sic)> x;
+  //xshow_type<sic2, sizeof(sic2)> x2;
+  //promote<int, short>::select();              // int
+  //promote<int, double>::select();              // int
+  //promote<short int, int>::select();              // int
+  //promote<double, int>::select();              // int
+  //promote<const A, const A>::select();              // int
+
+  //promote<const int, short>::show();                // int
+  //promote<int, int>::show();                // int
+  //promote<const int, int>::show();          // const int
+  //promote<volatile int, int>::show();       // int
+  //promote<const volatile int, int>::show(); // int
+  //promote<int&, int>::show();               // int
+  //promote<int&, int&>::show();              // int
+  //promote<int, int*>::show();               // void
+
+  //promote<short, int>::show();              // int
+  //promote<A, const A>::show();              // int
+  //xshow_type<char, __is_convertible_to(int, short)> x;
+}
+
 
 } // namespace
