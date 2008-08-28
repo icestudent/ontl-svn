@@ -12,7 +12,7 @@
 #include "cstdint.hxx"
 #include "climits.hxx"
 #include "cfloat.hxx"
-#include "exception.hxx"
+#include "excptdef.hxx"
 
 namespace std {
 

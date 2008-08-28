@@ -1,9 +1,9 @@
 /**\file*********************************************************************
-*                                                                     \brief
-*  Numerics library [25 lib.numerics]
-*
-****************************************************************************
-*/
+ *                                                                     \brief
+ *  Numerics library [25 lib.numerics]
+ *
+ ****************************************************************************
+ */
 
 #ifndef NTL__STLX_NUMERICS
 #define NTL__STLX_NUMERICS
@@ -18,7 +18,7 @@ namespace std {
   // 26.6.1 Accumulate [accumulate]
   template <class InputIterator, class T>
   __forceinline
-  T 
+  T
     accumulate(InputIterator first, InputIterator last, T init)
   {
     while(first != last){
@@ -31,7 +31,7 @@ namespace std {
   // 26.6.1 Accumulate [accumulate]
   template <class InputIterator, class T, class BinaryOperation>
   __forceinline
-  T 
+  T
     accumulate(InputIterator first, InputIterator last, T init, BinaryOperation binary_op)
   {
     while(first != last){
