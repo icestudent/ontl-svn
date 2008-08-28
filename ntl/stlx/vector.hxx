@@ -202,11 +202,13 @@ class vector
       guarded_allocation new_begin(array_allocator_, capacity_);
       ext::uninitailized_copy_a(x.begin(), x.end(), new_begin.get(), array_allocator_);
 
-      // no-throw begin
+      NTL__NOTHROW_GUARD_ENGAGE();
+      ext::nothrow_guard ntg;
       new_begin.dismiss();
       begin_ = end_ = new_begin.get();
       end_ += x.size();
-      // no-throw end
+      ntg.dismiss();
+      NTL__NOTHROW_GUARD_DISMISS();
     }
 
     __forceinline
@@ -295,18 +297,19 @@ class vector
           // `this` has at least `n` managed elements.
           pointer new_end = copy(first, last, begin_);
 
-          // no-throw begin
+          NTL__NOTHROW_GUARD_ENGAGE();
           ext::destroy(new_end, end_, array_allocator_);
           end_ = new_end;
-          // no-throw end
+          NTL__NOTHROW_GUARD_DISMISS();
           return;
         }
 
         // `this` has less than `n` managed elements.
-        // no-throw begin
+        NTL__NOTHROW_GUARD_ENGAGE();
         ForwardIterator anchor = first;
         advance(anchor, old_size);
-        // no-throw end
+        NTL__NOTHROW_GUARD_DISMISS();
+
         copy_n(first, old_size, begin_);
         for(pointer new_end = begin_ + n; end_ != new_end; ++end_, ++anchor)
         {
@@ -322,19 +325,20 @@ class vector
       if(old_size >= n)
       {
         // `this` has at least `n` managed elements.
-        // no-throw begin
+        NTL__NOTHROW_GUARD_ENGAGE();
         ext::relocate(begin_, begin_ + n, new_begin);
         ext::destroy(begin_ + n, end_, array_allocator_);
         begin_ = end_ = new_begin;
         end_ += n;
         capacity_ = new_cap;
-        // no-throw end
+        NTL__NOTHROW_GUARD_DISMISS();
+
         copy_n(first, old_size, begin_);
         return;
       }
 
       // `this` has less than `n` managed elements.
-      // no-throw begin
+      NTL__NOTHROW_GUARD_ENGAGE();
       ext::relocate(begin_, end_, new_begin);
       begin_ = end_ = new_begin;
       end_ += old_size;
@@ -343,7 +347,8 @@ class vector
       ForwardIterator anchor(first);
       advance(anchor, old_size);
       const size_type diff = n - old_size;
-      // no-throw end
+      NTL__NOTHROW_GUARD_DISMISS();
+
       copy_n(first, old_size, begin_);
       for(pointer new_end = begin_ + n; end_ != new_end; ++end_, ++anchor)
       {
@@ -363,10 +368,10 @@ class vector
           pointer new_end = begin_ + n;
           fill(begin_, new_end, u);
 
-          // no-throw begin
+          NTL__NOTHROW_GUARD_ENGAGE();
           ext::destroy(new_end, end_, array_allocator_);
           end_ = new_end;
-          // no-throw end
+          NTL__NOTHROW_GUARD_DISMISS();
           return;
         }
 
@@ -386,24 +391,26 @@ class vector
       if(old_size >= n)
       {
         // `this` has at least `n` managed elements.
-        // no-throw begin
+        NTL__NOTHROW_GUARD_ENGAGE();
         ext::relocate(begin_, begin_ + n, new_begin);
         ext::destroy(begin_ + n, end_, array_allocator_);
         begin_ = end_ = new_begin;
         end_ += n;
         capacity_ = new_cap;
-        // no-throw end
+        NTL__NOTHROW_GUARD_DISMISS();
+
         fill_n(begin_, old_size, u);
         return;
       }
 
       // `this` has less than `n` managed elements.
-      // no-throw begin
+      NTL__NOTHROW_GUARD_ENGAGE();
       ext::relocate(begin_, end_, new_begin);
       begin_ = end_ = new_begin;
       end_ += old_size;
       capacity_ = new_cap;
-      // no-throw end
+      NTL__NOTHROW_GUARD_DISMISS();
+
       fill_n(begin_, old_size, u);
       for(pointer new_end = begin_ + n; end_ != new_end; ++end_)
       {
@@ -454,13 +461,13 @@ class vector
       size_type new_cap = ext::vector_allocation_policy::get(n);
       pointer new_begin = array_allocator_.allocate(new_cap);
 
-      // no-throw begin
+      NTL__NOTHROW_GUARD_ENGAGE();
       ext::relocate(begin_, end_, new_begin);
       array_allocator_.deallocate(begin_, capacity_);
       end_ = new_begin + distance(begin_, end_);
       begin_ = new_begin;
       capacity_ = new_cap;
-      // no-throw end
+      NTL__NOTHROW_GUARD_DISMISS();
     }
 
     ///\name  element access
@@ -529,7 +536,7 @@ class vector
 
       ext::uninitailized_fill_n_a(new_pos, n, x, array_allocator_);
 
-      // no-throw begin
+      NTL__NOTHROW_GUARD_ENGAGE();
       new_begin.dismiss();
       ext::relocate(begin_, position, new_begin.get());
       ext::relocate(position, end_, new_pos + n);
@@ -537,6 +544,7 @@ class vector
       begin_ = end_ = new_begin.get();
       end_ += (old_size + n);
       capacity_ = new_cap;
+      NTL__NOTHROW_GUARD_DISMISS();
       return new_pos;
     }
 
@@ -559,9 +567,10 @@ class vector
 
         ext::uninitailized_fill_n_a(position, n, x, array_allocator_);
 
-        // no-throw begin
+        NTL__NOTHROW_GUARD_ENGAGE();
         reloc.dismiss();
         end_ += n;
+        NTL__NOTHROW_GUARD_DISMISS();
         return position;
       }
 
@@ -576,9 +585,10 @@ class vector
 
       ext::uninitailized_fill_n_a(position, n, x, array_allocator_);
 
-      // no-throw begin
+      NTL__NOTHROW_GUARD_ENGAGE();
       reloc.dismiss();
       end_ += n;
+      NTL__NOTHROW_GUARD_DISMISS();
       return position;
     }
 
@@ -651,9 +661,10 @@ class vector
 
           ext::uninitailized_copy_a(first, last, position, array_allocator_);
 
-          // no-throw begin
+          NTL__NOTHROW_GUARD_ENGAGE();
           reloc.dismiss();
           end_ += n;
+          NTL__NOTHROW_GUARD_DISMISS();
           return;
         }
 
@@ -668,9 +679,10 @@ class vector
 
         ext::uninitailized_copy_a(first, last, position, array_allocator_);
 
-        // no-throw begin
+        NTL__NOTHROW_GUARD_ENGAGE();
         reloc.dismiss();
         end_ += n;
+        NTL__NOTHROW_GUARD_DISMISS();
         return;
       }
 
@@ -680,7 +692,7 @@ class vector
       pointer new_pos = new_begin.get() + distance(begin_, position);
       ext::uninitailized_copy_a(first, last, new_pos, array_allocator_);
 
-      // no-throw begin
+      NTL__NOTHROW_GUARD_ENGAGE();
       new_begin.dismiss();
       ext::relocate(begin_, position, new_begin.get());
       ext::relocate(position, end_, new_pos + n);
@@ -688,6 +700,7 @@ class vector
       begin_ = end_ = new_begin.get();
       end_ += (old_size + n);
       capacity_ = new_cap;
+      NTL__NOTHROW_GUARD_DISMISS();
       return;
     }
 
@@ -700,9 +713,11 @@ class vector
 
     pointer erase__impl(pointer first, pointer last) __ntl_nothrow
     {
+      NTL__NOTHROW_GUARD_ENGAGE();
       ext::destroy(first, last, array_allocator_);
       ext::relocate(last, end_, first);
       end_ -= distance(first, last);
+      NTL__NOTHROW_GUARD_DISMISS();
       return first;
     }
 
@@ -764,17 +779,21 @@ class vector
 
     void swap(vector<T, Allocator>& x) __ntl_nothrow
     {
+      NTL__NOTHROW_GUARD_ENGAGE();
       std::swap(array_allocator_, x.array_allocator_);
       std::swap(capacity_, x.capacity_);
       std::swap(begin_, x.begin_);
       std::swap(end_, x.end_);
+      NTL__NOTHROW_GUARD_DISMISS();
     }
 
     __forceinline
     void clear() __ntl_nothrow
     {
+      NTL__NOTHROW_GUARD_ENGAGE();
       ext::destroy(begin_, end_, array_allocator_);
       end_ = begin_;
+      NTL__NOTHROW_GUARD_DISMISS();
     }
 
     ///@}

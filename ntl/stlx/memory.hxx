@@ -277,7 +277,7 @@ ForwardIterator
                      InputIterator    last,
                      ForwardIterator  result)
 {
-  ext::guarded_range_constructor<ForwardIterator> guarded_ctor(result);
+  detail::guarded_range_constructor<ForwardIterator> guarded_ctor(result);
   for ( ; first != last; ++result, ++first )
   {
     guarded_ctor(*first);
@@ -291,7 +291,7 @@ __forceinline
 ForwardIterator
   uninitialized_copy_n(InputIterator first, Size n, ForwardIterator result)
 {
-  ext::guarded_range_constructor<ForwardIterator> guarded_ctor(result);
+  detail::guarded_range_constructor<ForwardIterator> guarded_ctor(result);
   for ( ; n; ++result, ++first )
   {
     guarded_ctor(*first);
@@ -308,7 +308,7 @@ __forceinline
 void
   uninitialized_fill(ForwardIterator first, ForwardIterator last, const T& x)
 {
-  ext::guarded_range_constructor<ForwardIterator> guarded_ctor(first);
+  detail::guarded_range_constructor<ForwardIterator> guarded_ctor(first);
   for ( ; first != last; ++first )
   {
     guarded_ctor(x);
@@ -323,7 +323,7 @@ __forceinline
 void
   uninitialized_fill_n(ForwardIterator first, Size n, const T& x)
 {
-  ext::guarded_range_constructor<ForwardIterator> guarded_ctor(first);
+  detail::guarded_range_constructor<ForwardIterator> guarded_ctor(first);
   for ( ; n; --n, ++first )
   {
     guarded_ctor(x);
