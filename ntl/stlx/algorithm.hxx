@@ -298,15 +298,12 @@ ForwardIterator
 
 /// 25.2.1 Copy [lib.alg.copy]
 template<class InputIterator, class OutputIterator>
-__forceinline
 OutputIterator
   copy(InputIterator first, InputIterator last, OutputIterator result)
 {
-  while ( first != last )
+  for(; first != last; ++first, ++result)
   {
     *result = *first;
-    ++result;
-    ++first;
   }
   return result;
 }
@@ -332,6 +329,7 @@ OutputIterator
     if(pred(*first) == true)
       *result = *first;
   }
+  return result;
 }
 
 
