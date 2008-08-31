@@ -4,7 +4,23 @@ struct xshow_type
   char _[0];
 };
 
+template<int value>
+struct xshow_value
+{
+  char _[0];
+};
+
+template<__int64 value>
+struct xshow_value64
+{
+  char _[0];
+};
+
 #define SHOWT(T) xshow_type<T> _Join(__x_show_type, __COUNTER__);
+#define SHOWV(V) xshow_value<V> _Join(__x_show_value, __COUNTER__);
+#define SHOWLV(V) xshow_value64<V> _Join(__x_show_value64, __COUNTER__);
+
+#pragma warning(disable:4101)
 
 #include <stlx/chrono.hxx>
 
@@ -19,8 +35,18 @@ using namespace ntl;
 using namespace ntl::nt;
 using namespace std;
 
+
+#include <ctime>
+
+void test2()
+{
+  clock_t program_time = clock();
+  assert(program_time > 0);
+}
+
 int consoleapp::main()
 {
+  test2();
   systime_t sysnow = query_system_time();
   time_t tnow = time();
 
@@ -42,6 +68,8 @@ int consoleapp::main()
   std::time_t t2 = system_clock::to_time_t(t1);
   system_clock::time_point t3 = system_clock::from_time_t(t2);
 
+  int $ = 1, $$ = 2;
+  int $$$ = $ + $$;
 
   return 0;
 }
