@@ -4,6 +4,12 @@ struct xshow_type
   char _[0];
 };
 
+template<ratio_t N, ratio_t D>
+struct xshow_type<std::ratio<N,D>>
+{
+  char _[0];
+};
+
 template<int value>
 struct xshow_value
 {

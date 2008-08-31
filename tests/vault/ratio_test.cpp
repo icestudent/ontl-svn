@@ -1,4 +1,5 @@
 /// this tests are taked from the GCC
+//#define SMALL_RATIO
 #include <ratio>
 
 namespace {
@@ -10,12 +11,41 @@ using namespace std;
 
 
 template<ratio_t N, ratio_t D>
-struct print_ratio
+struct xshow_ratio
 {
   char _[0];
 };
 
-#define SHOWT(T) print_ratio<T::num, T::den>  _Join(__xxx , __COUNTER__);
+template<typename T>
+struct xshow_type
+{
+  char _[0];
+};
+
+template<ratio_t N, ratio_t D>
+struct xshow_type<std::ratio<N,D>>
+{
+  typedef std::ratio<N,D> ratio;
+  xshow_ratio<ratio::num, ratio::den> _;
+};
+
+
+template<int value>
+struct xshow_value
+{
+  char _[0];
+};
+
+template<__int64 value>
+struct xshow_value64
+{
+  char _[0];
+};
+
+#define SHOWR(T) xshow_type<T> _Join(__x_show_type, __COUNTER__);
+#define SHOWT(T) xshow_type<T> _Join(__x_show_type, __COUNTER__);
+#define SHOWV(V) xshow_value<V> _Join(__x_show_value, __COUNTER__);
+#define SHOWLV(V) xshow_value64<V> _Join(__x_show_value64, __COUNTER__);
 
 typedef ratio<5,- 3>   five_thirds;       // five_thirds::num == 5, five_thirds::den == 3
 typedef ratio<25, 15> also_five_thirds;  // also_five_thirds::num == 5, also_five_thirds::den == 3
@@ -27,6 +57,9 @@ typedef ratio<25, 15> also_five_thirds;  // also_five_thirds::num == 5, also_fiv
 #define VERIFY(e) STATIC_ASSERT(e)
 
 typedef ratio_divide<five_thirds, also_five_thirds>::type one;  // one::num == 1, one::den == 1
+
+typedef std::ratio<1920,1200> hd;
+SHOWR(hd);
 
 std::ratio<1,3> r0;
 std::ratio<2,6> r1;  
