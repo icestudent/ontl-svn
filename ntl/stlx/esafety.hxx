@@ -118,7 +118,7 @@ struct guarded_range_constructor<ForwardIterator, void>
 
   void operator()(const value_type& value)
   {
-    new (current_) value_type(value);
+    new (&*current_) value_type(value);
     ++current_;
   }
 
