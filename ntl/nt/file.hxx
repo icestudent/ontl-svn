@@ -391,6 +391,9 @@ class file_handler : public handle, public device_traits<file_handler>
 typedef basic_file<file_handler> file;
 
 }//namespace nt
+
+using nt::file;
+
 }//namespace ntl
 
 #endif//#ifndef NTL__NT_FILE

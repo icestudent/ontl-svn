@@ -137,10 +137,8 @@ class map:
 
     map<Key, T, Compare, Allocator>& operator=(const map<Key, T, Compare, Allocator> & x)
     {
-      if ( this != &x )
-      {
+      if(this != &x)
         val_comp_ = x.val_comp_;
-      }
       return *this;
     }
 #ifdef NTL__CXX

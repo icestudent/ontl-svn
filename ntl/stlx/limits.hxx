@@ -13,6 +13,8 @@
 #include "climits.hxx"
 #include "cfloat.hxx"
 
+#include "excptdef.hxx"
+
 namespace std {
 
 /**\addtogroup  lib_language_support *** Language support library [18] ******
@@ -44,16 +46,17 @@ class numeric_limits
 {
   public:
     static const  bool  is_specialized    = false;
-    static        T     (min)()         __ntl_nothrow;// { return T(false); }
-    static        T     (max)()         __ntl_nothrow;// { return T(false); }
+    static        T     min()             __ntl_nothrow;// { return T(false); }
+    static        T     max()             __ntl_nothrow;// { return T(false); }
+    static        T     lowest()          __ntl_nothrow;// { return T(false); }
     static const  int   digits            = 0;
     static const  int   digits10          = 0;
     static const  bool  is_signed         = false;
     static const  bool  is_integer        = false;
     static const  bool  is_exact          = false;
     static const  int   radix             = 0;
-    static        T     epsilon()       __ntl_nothrow;// { return T(false); }
-    static        T     round_error() __ntl_nothrow;// { return T(false); }
+    static        T     epsilon()         __ntl_nothrow;// { return T(false); }
+    static        T     round_error()     __ntl_nothrow;// { return T(false); }
     static const  int   min_exponent      = 0;
     static const  int   min_exponent10    = 0;
     static const  int   max_exponent      = 0;
@@ -63,17 +66,17 @@ class numeric_limits
     static const  bool  has_signaling_NaN = false;
     static const  float_denorm_style  has_denorm  = denorm_absent;
     static const  bool  has_denorm_loss   = false;
-    static        T     infinity()      __ntl_nothrow;// { return T(false); }
-    static        T     quiet_NaN()     __ntl_nothrow;// { return T(false); }
-    static        T     signaling_NaN() __ntl_nothrow;// { return T(false); }
-    static        T     denorm_min()    __ntl_nothrow;// { return T(false); }
+    static        T     infinity()        __ntl_nothrow;// { return T(false); }
+    static        T     quiet_NaN()       __ntl_nothrow;// { return T(false); }
+    static        T     signaling_NaN()   __ntl_nothrow;// { return T(false); }
+    static        T     denorm_min()      __ntl_nothrow;// { return T(false); }
     static const  bool  is_iec559         = false;
     static const  bool  is_bounded        = false;
     static const  bool  is_modulo         = false;
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits
+}; //template class numeric_limits
 
 template<>
 class numeric_limits<bool>
@@ -82,8 +85,9 @@ class numeric_limits<bool>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return false; }
-    static        T     (max)()         __ntl_nothrow { return true; }
+    static        T     min()         __ntl_nothrow { return false; }
+    static        T     max()         __ntl_nothrow { return true; }
+    static        T     lowest()      __ntl_nothrow { return false; }
     static const  int   digits            = 1;
     static const  int   digits10          = 0;
     static const  bool  is_signed         = false;
@@ -111,7 +115,7 @@ class numeric_limits<bool>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<bool> 
+}; //template class numeric_limits<bool> 
 
 template<> class numeric_limits<char>
 {
@@ -119,8 +123,9 @@ template<> class numeric_limits<char>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return CHAR_MIN; }
-    static        T     (max)()         __ntl_nothrow { return CHAR_MAX; }
+    static        T     min()         __ntl_nothrow { return CHAR_MIN; }
+    static        T     max()         __ntl_nothrow { return CHAR_MAX; }
+    static        T     lowest()      __ntl_nothrow { return CHAR_MIN; }
     static const  int   digits            = CHAR_BIT + (CHAR_MIN>>(CHAR_BIT-1));
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = (CHAR_MIN>>(CHAR_BIT-1)) != 0;
@@ -148,7 +153,7 @@ template<> class numeric_limits<char>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<char> 
+}; //template class numeric_limits<char> 
 
 template<> class numeric_limits<wchar_t>
 {
@@ -156,8 +161,9 @@ template<> class numeric_limits<wchar_t>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return WCHAR_MIN; }
-    static        T     (max)()         __ntl_nothrow { return WCHAR_MAX; }
+    static        T     min()         __ntl_nothrow { return WCHAR_MIN; }
+    static        T     max()         __ntl_nothrow { return WCHAR_MAX; }
+    static        T     lowest()      __ntl_nothrow { return WCHAR_MIN; }
     static const  int   digits            = sizeof(T) * CHAR_BIT - (WCHAR_MIN ? 1 : 0);
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = (WCHAR_MIN ? 1 : 0);
@@ -185,7 +191,7 @@ template<> class numeric_limits<wchar_t>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<wchar_t> 
+}; //template class numeric_limits<wchar_t> 
 
 template<> class numeric_limits<signed char>
 {
@@ -193,8 +199,9 @@ template<> class numeric_limits<signed char>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return SCHAR_MIN; }
-    static        T     (max)()         __ntl_nothrow { return SCHAR_MAX; }
+    static        T     min()         __ntl_nothrow { return SCHAR_MIN; }
+    static        T     max()         __ntl_nothrow { return SCHAR_MAX; }
+    static        T     lowest()      __ntl_nothrow { return SCHAR_MIN; }
     static const  int   digits            = CHAR_BIT - 1;
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = true;
@@ -222,7 +229,7 @@ template<> class numeric_limits<signed char>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<signed char> 
+}; //template class numeric_limits<signed char> 
 
 template<> class numeric_limits<short>
 {
@@ -230,8 +237,9 @@ template<> class numeric_limits<short>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return SHRT_MIN; }
-    static        T     (max)()         __ntl_nothrow { return SHRT_MAX; }
+    static        T     min()         __ntl_nothrow { return SHRT_MIN; }
+    static        T     max()         __ntl_nothrow { return SHRT_MAX; }
+    static        T     lowest()      __ntl_nothrow { return SHRT_MIN; }
     static const  int   digits            = sizeof(T) * CHAR_BIT - 1;
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = true;
@@ -259,7 +267,7 @@ template<> class numeric_limits<short>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<short> 
+}; //template class numeric_limits<short> 
 
 template<> class numeric_limits<int>
 {
@@ -267,8 +275,9 @@ template<> class numeric_limits<int>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return INT_MIN; }
-    static        T     (max)()         __ntl_nothrow { return INT_MAX; }
+    static        T     min()         __ntl_nothrow { return INT_MIN; }
+    static        T     max()         __ntl_nothrow { return INT_MAX; }
+    static        T     lowest()      __ntl_nothrow { return INT_MIN; }
     static const  int   digits            = sizeof(T) * CHAR_BIT - 1;
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = true;
@@ -296,7 +305,7 @@ template<> class numeric_limits<int>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<int> 
+}; //template class numeric_limits<int> 
 
 template<> class numeric_limits<long>
 {
@@ -304,8 +313,9 @@ template<> class numeric_limits<long>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return LONG_MIN; }
-    static        T     (max)()         __ntl_nothrow { return LONG_MAX; }
+    static        T     min()         __ntl_nothrow { return LONG_MIN; }
+    static        T     max()         __ntl_nothrow { return LONG_MAX; }
+    static        T     lowest()      __ntl_nothrow { return LONG_MIN; }
     static const  int   digits            = sizeof(T) * CHAR_BIT - 1;
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = true;
@@ -333,7 +343,7 @@ template<> class numeric_limits<long>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<long> 
+}; //template class numeric_limits<long> 
 
 template<> class numeric_limits<long long>
 {
@@ -341,8 +351,9 @@ template<> class numeric_limits<long long>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return LLONG_MIN; }
-    static        T     (max)()         __ntl_nothrow { return LLONG_MAX; }
+    static        T     min()         __ntl_nothrow { return LLONG_MIN; }
+    static        T     max()         __ntl_nothrow { return LLONG_MAX; }
+    static        T     lowest()      __ntl_nothrow { return LLONG_MIN; }
     static const  int   digits            = sizeof(T) * CHAR_BIT - 1;
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = true;
@@ -370,7 +381,7 @@ template<> class numeric_limits<long long>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<long long> 
+}; //template class numeric_limits<long long> 
 
 template<> class numeric_limits<unsigned char>
 {
@@ -378,8 +389,9 @@ template<> class numeric_limits<unsigned char>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return 0; }
-    static        T     (max)()         __ntl_nothrow { return UCHAR_MAX; }
+    static        T     min()         __ntl_nothrow { return 0; }
+    static        T     max()         __ntl_nothrow { return UCHAR_MAX; }
+    static        T     lowest()      __ntl_nothrow { return 0; }
     static const  int   digits            = CHAR_BIT - 1;
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = false;
@@ -407,7 +419,7 @@ template<> class numeric_limits<unsigned char>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<unsigned char> 
+}; //template class numeric_limits<unsigned char> 
 
 template<> class numeric_limits<unsigned short>
 {
@@ -415,8 +427,9 @@ template<> class numeric_limits<unsigned short>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return 0; }
-    static        T     (max)()         __ntl_nothrow { return USHRT_MAX; }
+    static        T     min()         __ntl_nothrow { return 0; }
+    static        T     max()         __ntl_nothrow { return USHRT_MAX; }
+    static        T     lowest()      __ntl_nothrow { return 0; }
     static const  int   digits            = sizeof(T) * CHAR_BIT;
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = false;
@@ -444,7 +457,7 @@ template<> class numeric_limits<unsigned short>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<unsigned shrt> 
+}; //template class numeric_limits<unsigned shrt> 
 
 template<> class numeric_limits<unsigned int>
 {
@@ -452,8 +465,9 @@ template<> class numeric_limits<unsigned int>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return 0; }
-    static        T     (max)()         __ntl_nothrow { return UINT_MAX; }
+    static        T     min()         __ntl_nothrow { return 0; }
+    static        T     max()         __ntl_nothrow { return UINT_MAX; }
+    static        T     lowest()      __ntl_nothrow { return 0; }
     static const  int   digits            = sizeof(T) * CHAR_BIT;
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = false;
@@ -481,7 +495,7 @@ template<> class numeric_limits<unsigned int>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<unsigned int> 
+}; //template class numeric_limits<unsigned int> 
 
 template<> class numeric_limits<unsigned long>
 {
@@ -489,8 +503,9 @@ template<> class numeric_limits<unsigned long>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return 0; }
-    static        T     (max)()         __ntl_nothrow { return ULONG_MAX; }
+    static        T     min()         __ntl_nothrow { return 0; }
+    static        T     max()         __ntl_nothrow { return ULONG_MAX; }
+    static        T     lowest()      __ntl_nothrow { return 0; }
     static const  int   digits            = sizeof(T) * CHAR_BIT;
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = false;
@@ -518,7 +533,7 @@ template<> class numeric_limits<unsigned long>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<unsigned long> 
+}; //template class numeric_limits<unsigned long> 
 
 template<> class numeric_limits<unsigned long long>
 {
@@ -526,8 +541,9 @@ template<> class numeric_limits<unsigned long long>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)()         __ntl_nothrow { return 0; }
-    static        T     (max)()         __ntl_nothrow { return ULLONG_MAX; }
+    static        T     min()         __ntl_nothrow { return 0; }
+    static        T     max()         __ntl_nothrow { return ULLONG_MAX; }
+    static        T     lowest()      __ntl_nothrow { return 0; }
     static const  int   digits            = sizeof(T) * CHAR_BIT;
     static const  int   digits10          = digits * 301 / 1000;
     static const  bool  is_signed         = false;
@@ -555,7 +571,7 @@ template<> class numeric_limits<unsigned long long>
     static const  bool  traps             = false;
     static const  bool  tinyness_before   = false;
     static const  float_round_style round_style = round_toward_zero;
-};//template class numeric_limits<unsigned long long> 
+}; //template class numeric_limits<unsigned long long> 
 
 union __fvalue { uint8_t raw[sizeof(float)]; float value; };
 STATIC_ASSERT(sizeof(__fvalue) == 4);
@@ -592,8 +608,9 @@ template<> class numeric_limits<float>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)() __ntl_nothrow { return FLT_MIN; }
-    static        T     (max)() __ntl_nothrow { return FLT_MAX; }
+    static        T     min() __ntl_nothrow { return FLT_MIN; }
+    static        T     max() __ntl_nothrow { return FLT_MAX; }
+    static        T     lowest()      __ntl_nothrow { return FLT_MIN; }
     static const  int   digits            = FLT_MANT_DIG;
     static const  int   digits10          = FLT_DIG;
     static const  bool  is_signed         = true;
@@ -611,17 +628,17 @@ template<> class numeric_limits<float>
     static const  bool  has_signaling_NaN = true;
     static const  float_denorm_style  has_denorm  = denorm_present;
     static const  bool  has_denorm_loss   = true;
-    static T infinity()  __ntl_nothrow      { return __float_infinity.value; }
-    static T quiet_NaN() __ntl_nothrow      { return __float_quiet_NaN.value; }
-    static T signaling_NaN() __ntl_nothrow  { return __float_signaling_NaN.value; }
-    static T denorm_min() __ntl_nothrow     { return __float_denorm_min.value; }
+    static        T infinity()  __ntl_nothrow      { return __float_infinity.value; }
+    static        T quiet_NaN() __ntl_nothrow      { return __float_quiet_NaN.value; }
+    static        T signaling_NaN() __ntl_nothrow  { return __float_signaling_NaN.value; }
+    static        T denorm_min() __ntl_nothrow     { return __float_denorm_min.value; }
     static const  bool  is_iec559         = true;
     static const  bool  is_bounded        = true;
     static const  bool  is_modulo         = false;
     static const  bool  traps             = true;
     static const  bool  tinyness_before   = true;
     static const  float_round_style round_style = round_to_nearest;
-};//template class numeric_limits<float> 
+}; //template class numeric_limits<float> 
 
 template<> class numeric_limits<double>
 {
@@ -629,8 +646,9 @@ template<> class numeric_limits<double>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)() __ntl_nothrow { return DBL_MIN; }
-    static        T     (max)() __ntl_nothrow { return DBL_MAX; }
+    static        T     min() __ntl_nothrow { return DBL_MIN; }
+    static        T     max() __ntl_nothrow { return DBL_MAX; }
+    static        T     lowest()      __ntl_nothrow { return DBL_MIN; }
     static const  int   digits            = DBL_MANT_DIG;
     static const  int   digits10          = DBL_DIG;
     static const  bool  is_signed         = true;
@@ -648,17 +666,17 @@ template<> class numeric_limits<double>
     static const  bool  has_signaling_NaN = true;
     static const  float_denorm_style  has_denorm  = denorm_present;
     static const  bool  has_denorm_loss   = true;
-    static T infinity()  __ntl_nothrow      { return __double_infinity.value; }
-    static T quiet_NaN() __ntl_nothrow      { return __double_quiet_NaN.value; }
-    static T signaling_NaN() __ntl_nothrow  { return __double_signaling_NaN.value; }
-    static T denorm_min() __ntl_nothrow     { return __double_denorm_min.value; }
+    static        T infinity()  __ntl_nothrow      { return __double_infinity.value; }
+    static        T quiet_NaN() __ntl_nothrow      { return __double_quiet_NaN.value; }
+    static        T signaling_NaN() __ntl_nothrow  { return __double_signaling_NaN.value; }
+    static        T denorm_min() __ntl_nothrow     { return __double_denorm_min.value; }
     static const  bool  is_iec559         = true;
     static const  bool  is_bounded        = true;
     static const  bool  is_modulo         = false;
     static const  bool  traps             = true;
     static const  bool  tinyness_before   = true;
     static const  float_round_style round_style = round_to_nearest;
-};//template class numeric_limits<double> 
+}; //template class numeric_limits<double> 
 
 template<> class numeric_limits<long double>
 {
@@ -666,8 +684,9 @@ template<> class numeric_limits<long double>
 
   public:
     static const  bool  is_specialized    = true;
-    static        T     (min)() __ntl_nothrow { return LDBL_MIN; }
-    static        T     (max)() __ntl_nothrow { return LDBL_MAX; }
+    static        T     min() __ntl_nothrow { return LDBL_MIN; }
+    static        T     max() __ntl_nothrow { return LDBL_MAX; }
+    static        T     lowest()      __ntl_nothrow { return LDBL_MIN; }
     static const  int   digits            = LDBL_MANT_DIG;
     static const  int   digits10          = LDBL_DIG;
     static const  bool  is_signed         = true;
@@ -685,17 +704,17 @@ template<> class numeric_limits<long double>
     static const  bool  has_signaling_NaN = true;
     static const  float_denorm_style  has_denorm  = denorm_present;
     static const  bool  has_denorm_loss   = true;
-    static T infinity()  __ntl_nothrow      { return __long_double_infinity.value; }
-    static T quiet_NaN() __ntl_nothrow      { return __long_double_quiet_NaN.value; }
-    static T signaling_NaN() __ntl_nothrow  { return __long_double_signaling_NaN.value; }
-    static T denorm_min() __ntl_nothrow     { return __long_double_denorm_min.value; }
+    static        T infinity()  __ntl_nothrow      { return __long_double_infinity.value; }
+    static        T quiet_NaN() __ntl_nothrow      { return __long_double_quiet_NaN.value; }
+    static        T signaling_NaN() __ntl_nothrow  { return __long_double_signaling_NaN.value; }
+    static        T denorm_min() __ntl_nothrow     { return __long_double_denorm_min.value; }
     static const  bool  is_iec559         = true;
     static const  bool  is_bounded        = true;
     static const  bool  is_modulo         = false;
     static const  bool  traps             = true;
     static const  bool  tinyness_before   = true;
     static const  float_round_style round_style = round_to_nearest;
-};//template class numeric_limits<long double> 
+}; //template class numeric_limits<long double> 
 
 /**@} lib_support_limits */
 /**@} lib_language_support */

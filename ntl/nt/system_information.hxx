@@ -105,11 +105,14 @@ enum system_information_class
   SystemWatchdogTimerHandler            = 71,
   SystemWatchdogTimerInformation        = 72,
   SystemLogicalProcessorInformation     = 73,
-  SystemVerifierTriageInformation       = 74,
-  SystemSuperfetchInformation           = 75,
-  SystemMemoryListInformation           = 76,
+  SystemWow64SharedInformation          = 74,
+  SystemRegisterFirmwareTableInformationHandler = 75,
+  SystemFirmwareTableInformation        = 76,
   SystemModuleInformationEx             = 77,
-  SystemReserveInformation              = 78,
+  SystemVerifierTriageInformation       = 78,
+  SystemSuperfetchInformation           = 79,
+  SystemMemoryListInformation           = 80,
+  SystemFileCacheInformationEx          = 81,
 };
 
 

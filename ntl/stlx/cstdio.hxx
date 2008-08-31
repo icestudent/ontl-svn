@@ -10,8 +10,12 @@
 #ifndef NTL__STLX_CSTDIO
 #define NTL__STLX_CSTDIO
 
+#include "array.hxx"
 #include "cstddef.hxx"
 #include "cstdarg.hxx"
+#include "memory.hxx"
+#include "string.hxx"
+#include "nt/peb.hxx"
 
 #ifndef _INC_STDLIB// MSVC compatibility
 
@@ -34,17 +38,36 @@ namespace std {
 /**\addtogroup  lib_general_utilities ** C Library filees [c.files  ] *******
  *@{*/
 
-  typedef long long fpos_t;
-
 #ifndef _INC_STDLIB// MSVC compatibility
 
   using ::_snprintf; using ::_vsnprintf;
 
 #else
 
-using ::va_list;
+  using ::va_list;
 
 #endif
+
+#ifndef MAX_PATH
+  #define MAX_PATH 260
+#endif
+
+#ifndef L_tmpnam
+  #define L_tmpnam (MAX_PATH-14)
+#endif
+
+typedef long long fpos_t;
+
+//#define EOF in string.hxx
+
+#define SEEK_CUR  1
+#define SEEK_END  2
+#define SEEK_SET  0
+
+#define stderr reinterpret_cast<FILE*>(&ntl::nt::peb::instance().ProcessParameters->StandardError)
+#define stdin  reinterpret_cast<FILE*>(&ntl::nt::peb::instance().ProcessParameters->StandardInput)
+#define stdout reinterpret_cast<FILE*>(&ntl::nt::peb::instance().ProcessParameters->StandardOutput)
+
 
 /**@} lib_general_utilities
  */

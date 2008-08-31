@@ -10,6 +10,7 @@
 #define NTL__NT_DEBUG
 
 #include "basedef.hxx"
+#include "string.hxx"
 
 namespace ntl {
   namespace nt {
@@ -35,21 +36,23 @@ namespace ntl {
       };
     };
 
-     NTL__EXTERNAPI
+   NTL__EXTERNAPI
       ntstatus __stdcall
-        DbgPrint(
-          const char  Format[],
-          ...
-          );
+      DbgPrint(
+      const char  Format[],
+      ...
+      );
 
     NTL__EXTERNAPI
       ntstatus __stdcall
-        DbgPrintEx(
-          dpfltr::type  ComponentId,
-          dpfltr::level Level,
-          const char    Format[],
-          ...
-          );
+      DbgPrintEx(
+      dpfltr::type  ComponentId,
+      dpfltr::level Level,
+      const char    Format[],
+      ...
+      );
+
+
 
     //warning C4100: 'XXX' : unreferenced formal parameter
 #pragma warning(push)
@@ -66,10 +69,10 @@ namespace ntl {
 #else
 #	define KdBreakPoint()
 # ifndef KdPrint
-# 	define KdPrint(X)
+# 	define KdPrint(X) __noop
 # endif
 # ifndef KdPrintEx
-# 	define KdPrintEx(X)
+# 	define KdPrintEx(X) __noop
 # endif
 #endif
 

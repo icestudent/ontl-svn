@@ -17,7 +17,7 @@
 namespace ntl {
 namespace nt {
 
-struct rtl_critacal_section;
+struct rtl_critical_section;
 struct rtl_heap;
 
 
@@ -108,7 +108,7 @@ struct peb
     }
   };
 
-  typedef void __stdcall lock_routine_t(rtl_critacal_section * PebLock);  
+  typedef void __stdcall lock_routine_t(rtl_critical_section * PebLock);  
   typedef void __stdcall kernel_callback_t(void *);
 
   struct free_block
@@ -127,7 +127,7 @@ struct peb
   /* 0x10 */  rtl_user_process_parameters * ProcessParameters;
   /* 0x14 */  void *                  SubSystemData;
   /* 0x18 */  rtl_heap *              ProcessHeap;
-  /* 0x1c */  rtl_critacal_section *  FastPebLock;
+  /* 0x1c */  rtl_critical_section *  FastPebLock;
   /* 0x20 */  lock_routine_t *        FastPebLockRoutine;
   /* 0x24 */  lock_routine_t *        FastPebUnlockRoutine;
   /* 0x28 */  uint32_t                EnvironmentUpdateCount;

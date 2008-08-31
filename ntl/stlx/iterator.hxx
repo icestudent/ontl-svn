@@ -457,7 +457,7 @@ class istream_iterator
     void read()
     {
       // The result of operator* on an end of stream is not defined.
-      if ( ! (*in_stream >> value).operator void*() ) in_stream = 0;
+      if ( ! (*in_stream >> value) ) in_stream = 0;
     }
 };
 

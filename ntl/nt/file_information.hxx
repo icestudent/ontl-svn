@@ -120,7 +120,7 @@ struct file_information_base
 
     info_class * data() { return nt::success(status_) ? &info : 0; }
     const info_class * data() const { return nt::success(status_) ? &info : 0; }
-
+    
     operator bool() const { return nt::success(status_); }
 
     operator ntstatus() const { return status_; }
@@ -157,7 +157,7 @@ struct file_information_base
     ntstatus    status_;
     info_class  info;
 
-};//class file_information
+};//struct file_information_base
 
 
 template<class InformationClass>
@@ -166,7 +166,7 @@ struct file_information
                                 NtQueryInformationFile,
                                 NtSetInformationFile>
 {
-  file_information(legacy_handle file_handle) __ntl_nothrow
+  explicit file_information(legacy_handle file_handle) __ntl_nothrow
   : file_information_base<InformationClass, NtQueryInformationFile, NtSetInformationFile>(file_handle)
   {/**/}
 

@@ -46,6 +46,11 @@ class basic_file : public traits
       f.create(object, cd, desired_access, share_access, co, attr);
     }
 
+
+    bool close();
+    bool open(const char* filename, const char* mode);
+    bool flush();
+
     template<typename objectT>
     bool
       create(

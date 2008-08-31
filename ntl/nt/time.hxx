@@ -9,6 +9,7 @@
 #define NTL__NT_TIME
 
 #include "../stdint.h"
+#include "basedef.hxx"
 #include "shared_data.hxx"
 
 namespace ntl {
@@ -36,28 +37,17 @@ systime_t inline query_system_time()
   return user_shared_data::instance().SystemTime.get();
 }
 
-
-
-#ifdef NTL__SUPPRESS_IMPORTS
-__forceinline
-ntstatus NtQuerySystemTime(int64_t* SystemTime)
-{
-  *SystemTime = query_system_time();
-  return status::success;
-}
-#else
 NTL__EXTERNAPI 
 ntstatus __stdcall 
-  NtQuerySystemTime(int64_t* SystemTime);
-#endif
+  NtQuerySystemTime(systime_t* SystemTime);
 
 NTL__EXTERNAPI
 void __stdcall
-  RtlTimeToTimeFields(int64_t* Time, time_fields* TimeFields);
+  RtlTimeToTimeFields(systime_t* Time, time_fields* TimeFields);
 
 NTL__EXTERNAPI
 ntstatus __stdcall
-  RtlSystemTimeToLocalTime(int64_t* SystemTime, int64_t* LocalTime);
+  RtlSystemTimeToLocalTime(systime_t* SystemTime, int64_t* LocalTime);
 
 
 }//namespace nt

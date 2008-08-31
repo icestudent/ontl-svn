@@ -20,22 +20,67 @@
   #endif
 #endif
 
+#include "cstring.hxx" // for std::strcmp
+#include "exception.hxx"
 
 #pragma warning(push)
 #pragma warning(disable:4820) // '3' bytes padding added after data member 'type_info::mname'
 
+/// 18.6.1 Class type_info [type.info]
 class type_info
 {
   public:
+    /** type_info destructor */
     virtual ~type_info() { }
-    bool operator==(const type_info& rhs) const;
-    bool operator!=(const type_info& rhs) const;
-    bool before(const type_info& rhs) const;
-    const char* name() const { return mname; }
+
+    /**
+     *	@brief Compares the current object with \c rhs.
+     *	@return true if the two values describe the same type.
+     **/
+    bool operator==(const type_info& rhs) const
+    {
+      return std::strcmp(mname+1, rhs.mname+1) == 0;
+    }
+
+    /**
+     *	@brief Compares the current object with \c rhs.
+     *	@return true if the two values describe the different types.
+     **/
+    bool operator!=(const type_info& rhs) const
+    {
+      return std::strcmp(mname+1, rhs.mname+1) != 0;
+    }
+
+    /**
+     *	@brief Compares the current object with \c rhs.
+     *	@return true if \c *this precedes \c rhs in the implementation's collation order.
+     **/
+    bool before(const type_info& rhs) const
+    {
+      return std::strcmp(mname+1, rhs.mname+1) <= 0;
+    }
+
+    /**
+     *	@brief Returns an implementation-defined NTBS.
+     *	@return a null-terminated string representing the human-readable name of the type.
+     **/
+    const char* name() const
+    {
+#ifdef NTL__UNDNAME
+      // ST: do our best to inline this stuff
+      if(!data)
+        data = const_cast<char*>(ntl::undname(mname));
+      return reinterpret_cast<const char*>(data);
+#else
+      // ST: return mangled name as implementation-defined :-)
+      return mname; 
+#endif
+    }
+
   private:
     type_info(const type_info& rhs);
     type_info& operator=(const type_info& rhs);
-    void *  data;
+    mutable void* data;
     char    mname[1];
 };
 
@@ -49,6 +94,40 @@ namespace std {
 using ::type_info;
 
 #endif//if STLX__USE_RTTI
+
+
+/// 18.6.2 Class bad_cast [bad.cast]
+class bad_cast: public exception
+{
+public:
+  bad_cast() __ntl_nothrow
+  {}
+  bad_cast(const bad_cast&) __ntl_nothrow
+  {}
+  bad_cast& operator=(const bad_cast&) __ntl_nothrow
+  {}
+
+  virtual const char* what() const __ntl_nothrow
+  {
+    return "bad_cast";
+  }
+};
+
+/// 18.6.3 Class bad_typeid [bad.typeid]
+class bad_typeid: public exception {
+public:
+  bad_typeid() __ntl_nothrow
+  {}
+  bad_typeid(const bad_typeid&) __ntl_nothrow
+  {}
+  bad_typeid& operator=(const bad_typeid&) __ntl_nothrow
+  {}
+
+  virtual const char* what() const __ntl_nothrow 
+  {
+    return "bad_typeid";
+  }
+};
 
 }//namespace std
 

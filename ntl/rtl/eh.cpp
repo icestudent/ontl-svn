@@ -5,6 +5,8 @@
 ///\note  The file contains compiler predefined library helpers
 ///       and must be compiled without /GL to avoid C2268.
 ///       So it is the separate compilation unit to support /GL for other ones.
+///       To really benefit from /GL, this compilation unit should not include
+///       complex functions (todo for #include <nt/exception.hxx>).
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
