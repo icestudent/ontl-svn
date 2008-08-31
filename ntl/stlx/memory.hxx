@@ -324,7 +324,7 @@ void
   uninitialized_fill_n(ForwardIterator first, Size n, const T& x)
 {
   detail::guarded_range_constructor<ForwardIterator> guarded_ctor(first);
-  for ( ; n; --n, ++first )
+  for ( ; n; --n)
   {
     guarded_ctor(x);
   }
