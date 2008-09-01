@@ -22,18 +22,18 @@
 using namespace ntl;
 
 long __stdcall
-  entry( 
-    void/*driver_object*/ * /*pdo*/, 
-    void/*const_unicode_string*/ * /*registry_path*/ 
+  entry(
+    void/*driver_object*/ * /*pdo*/,
+    void/*const_unicode_string*/ * /*registry_path*/
     )
 {
   using namespace ntl::km;
   using namespace ntl::pe;
 
   const system_information<system_modules_information> system_modules;
-  if ( system_modules ) 
+  if ( system_modules )
   {
-    const rtl_process_module_information * tcpip_sys = 
+    const rtl_process_module_information * tcpip_sys =
                                 system_modules.data()->find_module("tcpip.sys");
     if ( tcpip_sys )
     {
@@ -44,7 +44,7 @@ long __stdcall
       const uintptr_t code = pe->va(oh->BaseOfCode);
       const uintptr_t code_end = code + oh->SizeOfCode;
 
-      /* EventID 4226 
+      /* EventID 4226
             mov     eax, _ActiveOpenProgressCount
             cmp     eax, _ActiveOpenProgressThreshold
             //jge     [short] XX
