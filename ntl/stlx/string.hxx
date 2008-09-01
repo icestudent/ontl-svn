@@ -170,8 +170,8 @@ class basic_string
     /// - data() a non-null pointer that is copyable and can have 0 added to it;
     /// - size() == 0;
     /// - capacity() an unspecified value.
-    explicit basic_string(const Allocator& a = Allocator()) : str(a) {/**/}
-
+    explicit basic_string(const Allocator& a = Allocator()) : str(a)
+    {/**/}
 
     /// 2 Effects: Constructs an object of class basic_string as indicated below.
     ///   The stored Allocator value is copied from str.get_allocator(). 
@@ -181,7 +181,8 @@ class basic_string
     /// - size() == str.size();
     /// - capacity() is at least as large as size().
     __forceinline
-    basic_string(const basic_string& str) : str(str.str) {/**/}
+    basic_string(const basic_string& str) : str(str.str)
+    {/**/}
 
     /// 4 Requires: pos <= str.size()
     /// 5 \todo Throws: out_of_range if pos > str.size().
@@ -198,7 +199,8 @@ class basic_string
                  size_type            pos,
                  size_type            n     = npos,
                  const Allocator &    a     = Allocator())//throw(out_of_range)
-    : str(&str[pos], str.max__it(pos, n), a) {/**/}
+    : str(&str[pos], str.max__it(pos, n), a) 
+    {/**/}
 
     /// 7 Requires: s shall not be a null pointer and n < npos.
     /// 8 Effects: Constructs an object of class basic_string and determines
@@ -210,7 +212,8 @@ class basic_string
     /// - size() == n;
     /// - capacity() is at least as large as size().
     basic_string(const_pointer s, size_type n, const Allocator& a = Allocator())
-    : str(assert_ptr(s), &s[n], a) {}
+    : str(assert_ptr(s), &s[n], a)
+    {/**/}
 
     /// 9 Requires: s shall not be a null pointer.
     /// 10 Effects: Constructs an object of class basic_string and determines
@@ -221,9 +224,11 @@ class basic_string
     ///   array whose first element is pointed at by s;
     /// - size() == traits::length(s);
     /// - capacity() is at least as large as size().
-    basic_string(const_pointer& s, const Allocator& a = Allocator())
+    template<typename CT>
+    basic_string(const CT* const& s, const Allocator& a = Allocator())
     : str(a)
-    { 
+    {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       assert_ptr(s);
       // small hack: copy terminating 0 to avoid case when n == 0
       size_type n = traits_type::length(s) + 1; // include '\0'
@@ -294,7 +299,12 @@ class basic_string
 
     /// 25 Returns: *this = basic_string<charT,traits,Allocator>(s).
     /// 26 Remarks: Uses traits::length().
-    basic_string& operator=(const_pointer&s) { return assign(s);     }
+    template<typename CT>
+    basic_string& operator=(const CT* const& s)
+    {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
+      return assign(s);     
+    }
 
     template<size_t Size>
     basic_string& operator=(const charT(&s)[Size]) { return assign(s, Size-1);     }
@@ -408,17 +418,30 @@ class basic_string
     /// 21.3.6 basic_string modifiers [string.modifiers]
 
     ///\name  basic_string::operator+= [21.3.6.1 lib.string::op+=]
-    basic_string& operator+=(const basic_string& str) { return append(str);   }
-    basic_string& operator+=(const_pointer& s)        { return append(s);     }
+    basic_string& operator+=(const basic_string& str) { return append(str); }
+
+    template<typename CT>
+    basic_string& operator+=(const CT* const& s)   
+    { 
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
+      return append(s, traits_type::length(s));
+    }
+    
     template<size_t Size>
     basic_string& operator+=(const charT(&s)[Size])   { return append(s, Size-1); }
     basic_string& operator+=(charT c) { push_back(c); return *this; }
 
-#ifndef NTL__STRICT_STRING
+#ifdef NTL__RELAXED_STRING
 
     template<size_t Size>
     basic_string& operator+=(charT(&s)[Size])         { return append(s, Size-1); }
-    basic_string& operator+=(pointer& s)              { return append(s, traits_type::length(s));     }
+
+    template<typename CT>
+    basic_string& operator+=(const CT* const& s)   
+    { 
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
+      return append(s, traits_type::length(s));     
+    }
 
   template<class String>
     basic_string& operator+=(const String& str)
@@ -448,10 +471,13 @@ class basic_string
       return *this;
     }
 
-    basic_string& append(const_pointer &s)
+    template<typename CT>
+    basic_string& append(const CT* const& s)
     {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       // trade off the traits_type::length(s) call for possible reallocs
-      while ( !traits_type::eq(*s, charT()) ) push_back(*s++);
+      const_pointer ls = s;
+      while ( !traits_type::eq(*ls, charT()) ) push_back(*ls++);
       return *this;
     }
 
@@ -497,10 +523,12 @@ class basic_string
       return insert(0, s, n);
     }
 
-    basic_string& assign(const_pointer& s)
+    template<typename CT>
+    basic_string& assign(const CT* const& s)
     {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       clear();
-      return insert(0, s);
+      return insert(0, s, traits_type::length(s));
     }
 
     template<size_t Size>
@@ -546,15 +574,17 @@ class basic_string
       return *this;
     }
 
-    basic_string& insert(size_type pos, const_pointer& s)
+    template<typename CT>
+    basic_string& insert(size_type pos, const CT* const& s)
     {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       const size_t n = traits_type::length(s);
       insert(&str[pos], s, &s[n]);
       return *this;
     }
 
     template<size_t Size>
-    basic_string& insert(size_type pos, const_pointer& s)
+    basic_string& insert(size_type pos, const charT (&s)[Size])
     {
       return insert(pos, s, Size-1);
     }
@@ -607,7 +637,8 @@ class basic_string
                           size_type     n2)
     ;
 
-    basic_string& replace(size_type pos, size_type n1, const_pointer& s);
+    template<typename CT>
+    basic_string& replace(size_type pos, size_type n1, const CT* const& s);
 
     template<size_t Size>
     basic_string& replace(size_type pos, size_type n1, const charT(&s)[Size])
@@ -619,7 +650,8 @@ class basic_string
     
     basic_string& replace(iterator i1, iterator i2, const basic_string& str);
     basic_string& replace(iterator i1, iterator i2, const_pointer s, size_type n);
-    basic_string& replace(iterator i1, iterator i2, const_pointer& s);
+    template<typename CT>
+    basic_string& replace(iterator i1, iterator i2, const CT* const& s);
     template<size_t Size>
     basic_string& replace(iterator i1, iterator i2, const charT(&s)[Size])
     {
@@ -696,8 +728,10 @@ class basic_string
 
     /// 5 Returns: find(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
-    size_type find(const_pointer& s, size_type pos = 0) const
+    template<typename CT>
+    size_type find(const CT* const& s, size_type pos = 0) const
     {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       return find(s, pos, traits_type::length(s));
     }
 
@@ -751,8 +785,10 @@ class basic_string
   
     /// 5 Returns: rfind(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
-    size_type rfind(const_pointer& s, size_type pos = npos) const
+    template<typename CT>
+    size_type rfind(const CT* const& s, size_type pos = npos) const
     {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       return rfind(s, pos, traits_type::length(s));
     }
 
@@ -810,8 +846,10 @@ class basic_string
 
     /// 5 Returns: find_first_of(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
-    size_type find_first_of(const_pointer& s, size_type pos = 0) const
+    template<typename CT>
+    size_type find_first_of(const CT* const& s, size_type pos = 0) const
     {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       return find_first_of(s, pos, traits_type::length(s));
     }
 
@@ -862,8 +900,10 @@ class basic_string
 
     /// 5 Returns: find_last_of(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
-    size_type find_last_of(const_pointer& s, size_type pos = npos) const
+    template<typename CT>
+    size_type find_last_of(const CT* const& s, size_type pos = npos) const
     {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       return find_last_of(s, pos, traits_type::length(s));
     }
 
@@ -910,8 +950,10 @@ class basic_string
 
     /// 5 Returns: find_first_not_of(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
-    size_type find_first_not_of(const_pointer& s, size_type pos = 0) const
+    template<typename CT>
+    size_type find_first_not_of(const CT* const& s, size_type pos = 0) const
     {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       return find_first_not_of(s, pos, traits_type::length(s));
     }
 
@@ -962,8 +1004,10 @@ class basic_string
 
     /// 5 Returns: find_last_not_of(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
-    size_type find_last_not_of(const_pointer& s, size_type pos = npos) const
+    template<typename CT>
+    size_type find_last_not_of(const CT* const& s, size_type pos = npos) const
     {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       return find_last_not_of(s, pos, traits_type::length(s));
     }
 
@@ -1005,8 +1049,10 @@ class basic_string
     int compare(size_type pos1, size_type n1, const basic_string& str) const;
     int compare(size_type pos1, size_type n1, const basic_string& str, size_type pos2, size_type n2) const;
 
-    int compare(const_pointer& s) const
+    template<typename CT>
+    int compare(const CT* const& s) const
     {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       const int r = traits_type::compare(begin(), s, size());
       // s may be longer than *this
       return r != 0 ? r : traits_type::eq(s[size()], charT()) ? r : r - 1; // r == 0 here
@@ -1024,7 +1070,8 @@ class basic_string
     {
       return compare(pos1, n1, s, Size-1);
     }
-    int compare(size_type pos1, size_type n1, const_pointer& s) const;
+    template<typename CT>
+    int compare(size_type pos1, size_type n1, const CT* const& s) const;
     int compare(size_type pos1, size_type n1, const_pointer s, size_type n2) const;
 
     ///\name  operator+ [21.3.7.1 lib.string::op+]
@@ -1040,9 +1087,11 @@ class basic_string
       return sum;
     }
 
+  template<typename CT>
   friend
-    basic_string operator+(const_pointer& lhs, const basic_string& rhs)
+    basic_string operator+(const CT* const& lhs, const basic_string& rhs)
     {
+      static_assert((is_same<CT, value_type>::value), "incompatible char type");
       basic_string<charT, traits, Allocator> sum;
       sum.alloc__new(traits_type::length(lhs) + rhs.size());
       sum.append_to__reserved(lhs);
@@ -1071,8 +1120,9 @@ class basic_string
       return sum;
     }
 
+  template<typename CT>
   friend
-    basic_string operator+(const basic_string& lhs, const_pointer& rhs)
+    basic_string operator+(const basic_string& lhs, const CT* const& rhs)
     {
       basic_string<charT, traits, Allocator> sum;
       sum.alloc__new(lhs.size() + traits_type::length(rhs));
