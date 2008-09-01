@@ -1,10 +1,12 @@
+#include <ratio>
+
 template<typename T>
 struct xshow_type
 {
   char _[0];
 };
 
-template<ratio_t N, ratio_t D>
+template<std::ratio_t N, std::ratio_t D>
 struct xshow_type<std::ratio<N,D>>
 {
   char _[0];
