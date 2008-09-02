@@ -248,6 +248,7 @@ class basic_string
     /// - size() == Size;
     /// - capacity() is at least as large as size().
     template<size_t Size>
+    __forceinline
     basic_string(const charT (&s)[Size], const Allocator& a = Allocator())
     : str(&s[0], &s[Size]-1, a) {}
 
@@ -713,7 +714,8 @@ class basic_string
     }
     
     /// 4 Returns: find(basic_string<charT,traits,Allocator>(s,n),pos).
-    size_type find(const_pointer s, size_type pos, size_type n) const
+    __forceinline
+    size_type find__c_str(const_pointer s, size_type pos, size_type n) const
     {
       for ( size_type xpos = pos; xpos + n <= size(); ++xpos )
       {
@@ -729,16 +731,18 @@ class basic_string
     /// 5 Returns: find(basic_string<charT,traits,Allocator>(s),pos).
     /// 6 Remarks: Uses traits::length().
     template<typename CT>
+    __forceinline
     size_type find(const CT* const& s, size_type pos = 0) const
     {
       static_assert((is_same<CT, value_type>::value), "incompatible char type");
-      return find(s, pos, traits_type::length(s));
+      return find__c_str(s, pos, traits_type::length(s));
     }
 
     template<size_t Size>
+    __forceinline
     size_type find(const charT(&s)[Size], size_type pos = 0) const
     {
-      return find(s, pos, Size-1);
+      return find__c_str(s, pos, Size-1);
     }
 
     /// 7 Returns: find(basic_string<charT,traits,Allocator>(1,c),pos).

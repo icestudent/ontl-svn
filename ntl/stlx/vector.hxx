@@ -75,6 +75,7 @@ class vector
     }
 
     template <class ForwardIterator>
+    __forceinline
     void vector__disp(ForwardIterator first, ForwardIterator last,
                       const false_type&)
     {
@@ -86,6 +87,7 @@ class vector
     }
 
     template <class IntegralType>
+    __forceinline
     void vector__disp(IntegralType n, IntegralType x, const true_type&)
     {
       capacity_ = static_cast<size_type>(n);
@@ -111,6 +113,7 @@ class vector
     }
 
     template <class InputIterator>
+    __forceinline
     vector(InputIterator first,
            InputIterator last,
            const Allocator& a = Allocator())
