@@ -144,7 +144,7 @@ thread::thread(F& f, const Arg1& arg1)
   //_Assert(!this->joinable());
 
   {
-    ntl::system_tread t(thread_thunk::thread_start_routine, &param);
+    ntl::system_thread t(thread_thunk::thread_start_routine, &param);
         __asm int 3
     if ( !t.get() ) __ntl_throw (std::bad_alloc());
         __asm int 3

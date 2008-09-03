@@ -288,13 +288,13 @@ void __stdcall
     );
 
 
-class system_tread;
+class system_thread;
 
 }//namspace km
 
 
 template<>
-struct device_traits<km::system_tread> : private device_traits<>
+struct device_traits<km::system_thread> : private device_traits<>
 {
   enum access_mask
   {
@@ -336,7 +336,7 @@ ntstatus __stdcall
     );
 
 
-class system_tread : public handle, public device_traits<system_tread>
+class system_thread : public handle, public device_traits<system_thread>
 {
   ////////////////////////////////////////////////////////////////////////////
   public:
@@ -344,7 +344,7 @@ class system_tread : public handle, public device_traits<system_tread>
     typedef kstart_routine_t start_routine_t;
 
     explicit
-    system_tread(
+    system_thread(
         start_routine_t *   start_routine,
         void *              start_context   = 0,
         object_attributes * oa              = 0,
@@ -391,7 +391,7 @@ ntstatus yield_execution()
 
 namespace this_thread {
 
-using km::system_tread;
+using km::system_thread;
   
 void yield() { km::yield_execution(); }
 
