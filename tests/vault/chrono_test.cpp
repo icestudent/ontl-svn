@@ -35,7 +35,6 @@ struct xshow_value64
 typedef std::common_type<std::time_t, int64_t>::type ct;
 typedef std::common_type<std::time_t, std::int64_t, std::intmax_t>::type ctt;
 
-#include <consoleapp.hxx>
 #include <cassert>
 
 
@@ -52,7 +51,8 @@ void test2()
   assert(program_time > 0);
 }
 
-int consoleapp::main()
+namespace chrono_test {
+void main()
 {
   test2();
   systime_t sysnow = query_system_time();
@@ -79,6 +79,6 @@ int consoleapp::main()
   int $ = 1, $$ = 2;
   int $$$ = $ + $$;
 
-  return 0;
 }
 
+}

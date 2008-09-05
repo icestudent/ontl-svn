@@ -21,7 +21,7 @@ void string_test()
   char* psz = "hi";
   const char* pcsz = "ih";
   char anyhi[] = {"anyhi"};
-  char hello[12] = {"0123456789."};
+  char hello[22] = {"0123456789\0garbage.."};
 
   //string zz(1);           // here: cannot convert parameter 1 from 'int' to 'const std::allocator<T> &'
   //string zzz(L"1");       // here: cannot convert parameter 1 from 'const wchar_t [2]' to 'const std::allocator<T> &'

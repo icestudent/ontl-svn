@@ -6,11 +6,10 @@
  *	@version 0.3
  **/
 
-#include <nt/basedef.hxx>
+#include <consoleapp.hxx>
 #include <nt/file.hxx>
 #include <nt/debug.hxx>
 #include <cstdio>
-#include <winapp.hxx>
 
 /* assume that we do not work with large files */
 #pragma warning(disable:4267) // 'argument' : conversion from 'size_t' to 'std::uint32_t', possible loss of data. 
@@ -19,7 +18,7 @@ using namespace ntl;
 using namespace ntl::nt;
 using namespace std;
 
-class app: winapp
+class app: consoleapp
 {
   wstring infile, outfile;
   bool decompress;
@@ -125,7 +124,7 @@ int app::proceed()
   return 0;
 }
 
-int winapp::main()
+int consoleapp::main()
 {
   app app_;
   return app_.proceed();
