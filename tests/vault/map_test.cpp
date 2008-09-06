@@ -16,6 +16,7 @@ template class std::map<int, int>;
 template class std::map<int, double>;
 //template class std::map<int, double, std::less<int>, std::allocator<char> >;
 
+
 struct user_type {};
 
 namespace std 
@@ -23,6 +24,8 @@ namespace std
   template<typename Data, typename Allocator>
   class map<user_type, Data, Allocator> {};
 }
+
+namespace map_test {
 
 void test01()
 {
@@ -474,16 +477,20 @@ void test11()
 // { dg-error "candidates are" "" { target *-*-* } 210 }
 // { dg-error "candidates are" "" { target *-*-* } 214 }
 
-namespace map_test {
 void main()
 {
   test01();
   test02(); // fail
-  //test03();
+ #ifdef _CPPUNWIND
+  test03();
+#endif
   test04();
   test05();
-  //test06();
-  //test07();
+#if 0
+  // class members specialization
+  test06();
+  test07();
+#endif
   test08();
   test09(); // fail
   test10();
