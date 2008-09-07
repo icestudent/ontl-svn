@@ -131,19 +131,19 @@ class vector
   ///////////////////////////////////////////////////////////////////////////
   public:
 
-    typedef           T                           value_type;
-    typedef           Allocator                   allocator_type;
-    typedef typename  Allocator::pointer          pointer;
-    typedef typename  Allocator::const_pointer    const_pointer;
-    typedef typename  Allocator::reference        reference;
-    typedef typename  Allocator::const_reference  const_reference;
-    typedef typename  Allocator::size_type        size_type;
-    typedef typename  Allocator::difference_type  difference_type;
+    typedef          T                                    value_type;
+    typedef typename Allocator::template rebind<T>::other allocator_type;
+    typedef typename allocator_type::pointer              pointer;
+    typedef typename allocator_type::const_pointer        const_pointer;
+    typedef typename allocator_type::reference            reference;
+    typedef typename allocator_type::const_reference      const_reference;
+    typedef typename allocator_type::size_type            size_type;
+    typedef typename allocator_type::difference_type      difference_type;
 
-    typedef pointer                               iterator;
-    typedef const_pointer                         const_iterator;
-    typedef std::reverse_iterator<iterator>       reverse_iterator;
-    typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef pointer                                       iterator;
+    typedef const_pointer                                 const_iterator;
+    typedef std::reverse_iterator<iterator>               reverse_iterator;
+    typedef std::reverse_iterator<const_iterator>         const_reverse_iterator;
 
   private:
     typedef ext::guarded_allocation<allocator_type> guarded_allocation;
@@ -153,12 +153,12 @@ class vector
 
     ///\name construct/copy/destroy [23.2.6.1]
 
-    explicit vector(const Allocator& a = Allocator())
+    explicit vector(const allocator_type& a = allocator_type())
     : array_allocator_(a), capacity_(0), begin_(nullptr), end_(nullptr) {}
 
     explicit vector(size_type n,
                     const T& value      = T(),
-                    const Allocator& a  = Allocator())
+                    const allocator_type& a  = allocator_type())
     : array_allocator_(a),
       capacity_(ext::vector_allocation_policy::get(n)),
       begin_(array_allocator_.allocate(capacity_)),
@@ -171,7 +171,7 @@ class vector
     template <class InputIterator>
     vector(InputIterator first,
            InputIterator last,
-           const Allocator& a = Allocator())
+           const allocator_type& a = allocator_type())
     : array_allocator_(a),
       begin_(nullptr),
       end_(nullptr),
@@ -190,7 +190,7 @@ class vector
     }
 
     __forceinline
-    vector(const vector<T, Allocator>& x)
+    vector(const vector& x)
     : array_allocator_(x.array_allocator_),
       capacity_(ext::vector_allocation_policy::get(x.size())),
       begin_(nullptr),
@@ -222,7 +222,7 @@ class vector
       array_allocator_.deallocate(begin_, capacity_);
     }
 
-    vector<T, Allocator>& operator=(const vector<T, Allocator>& x)
+    vector& operator=(const vector& x)
     {
       assign(x.begin(), x.end());
       return *this;
@@ -777,7 +777,7 @@ class vector
       return this->erase__impl(f, l);
     }
 
-    void swap(vector<T, Allocator>& x) __ntl_nothrow
+    void swap(vector& x) __ntl_nothrow
     {
       NTL__NOTHROW_GUARD_ENGAGE();
       std::swap(array_allocator_, x.array_allocator_);
@@ -800,29 +800,6 @@ class vector
 
   ///////////////////////////////////////////////////////////////////////////
   private:
-
-  #if 0
-  // non-standard extension
-  friend
-    const vector<T, Allocator>
-      make_vector(pointer first, pointer last, const Allocator& a = Allocator())
-    {
-      return const vector(first, last, true, a);
-    }
-
-  friend
-    const vector<T, Allocator>
-      make_vector(const_pointer first, const_pointer last,
-                  const Allocator& a = Allocator())
-    {
-      return const vector(first, last, true, a);
-    }
-
-    vector(pointer first, size_type n, bool, const Allocator& a = Allocator())
-    : array_allocator_(a), begin_(first), end_(last), capacity(last - first) {}
-  //end extension
-  #endif
-
     allocator_type  array_allocator_;
 
     // 0 ~ 3: managed elements
