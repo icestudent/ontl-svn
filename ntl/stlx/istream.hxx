@@ -241,7 +241,7 @@ class basic_istream : virtual public basic_ios<charT, traits>
     
     basic_istream<charT,traits>& getline(char_type* s, streamsize n)
     {
-      return getline(s, this_base::widen('\n'));
+      return getline(s, n, this_base::widen('\n'));
     }
 
     basic_istream<charT,traits>& getline(char_type* s, streamsize n, char_type delim)

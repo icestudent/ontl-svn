@@ -116,7 +116,7 @@ class ios_base
     static const openmode binary  = 1 << 5;
  
     /// 27.4.2.1.5 Type ios_base::seekdir [ios::seekdir]
-    enum seekdir { beg, end, cur };
+    enum seekdir { beg = SEEK_SET, end = SEEK_END, cur = SEEK_CUR };
 
     /// 27.4.2.1.6 Class ios_base::Init [ios::Init]
     class Init

@@ -165,6 +165,7 @@ char* tmpnam(char* /*s*/)
 /// 7.19.4.3 The tmpfile function
 FILE* tmpfile();// { return new (nothrow) FILE(tmpnam()); }
 
+
 ///\name 7.19.5 File access functions
 
 /// 7.19.5.1 The fclose function
@@ -215,6 +216,7 @@ inline int setvbuf(FILE* __restrict /*stream*/, char * __restrict /*buf*/, int /
   return -1;
 }
 
+
 ///\name 7.19.6 Formatted input/output functions
 
 /// 7.19.6.1 The fprintf function
@@ -236,7 +238,6 @@ int printf(const char * __restrict format, ...);
 NTL__EXTERNAPI int __cdecl
   sscanf(const char * __restrict s, const char * __restrict format, ...);
 
-///\}
 
 ///\name 7.19.7 Character input/output functions
 
@@ -282,7 +283,6 @@ inline int puts(const char *s)
 /// 7.19.7.11 The ungetc function
 inline int ungetc(int c, FILE *stream);
 
-///\}
 
 ///\name 7.19.8 Direct input/output functions
 
@@ -304,7 +304,6 @@ inline size_t
   return bytes / size;
 }
 
-///\}
 
 ///\name 7.19.9 File positioning functions
 
@@ -349,7 +348,6 @@ inline void rewind(FILE *stream)
   fseek(stream, 0L, SEEK_SET);
 }
 
-///\}
 
 ///\name 7.19.10 Error-handling functions
 
