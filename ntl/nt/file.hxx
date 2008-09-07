@@ -12,6 +12,9 @@
 #include "basedef.hxx"
 #include "object.hxx"
 #include "file_information.hxx"
+#include "teb.hxx"
+#include "string.hxx"
+#include <array>
 
 namespace ntl {
 namespace nt {
@@ -113,9 +116,20 @@ class file_handler;
 template<>
 struct device_traits<nt::file_handler> : public device_traits<>
 {
-  bool success(ntstatus s) { return nt::success(s); }
+  static bool success(ntstatus s) { return nt::success(s); }
   
   typedef int64_t size_type;
+
+  typedef wchar_t filename_char_type;
+
+  static
+  nt::const_unicode_string convert_filename(const char * src,
+              std::array<filename_char_type, 260> dst = std::array<filename_char_type, 260>())
+  {
+    nt::const_unicode_string cus( dst.begin(),
+                                  std::mbstowcs(dst.begin(), src, dst.size()) );
+    return cus;
+  }
 
   enum access_mask
   {
@@ -133,8 +147,12 @@ struct device_traits<nt::file_handler> : public device_traits<>
       detete_child          = 0x0040,
       read_attributes       = 0x0080,
       write_attributes      = 0x0100,
+
       all_access            = standard_rights_required | synchronize | 0x1FF,
-      append                = append_data | synchronize
+
+      append                = append_data | synchronize,
+      read_access           = read_data | read_attributes | synchronize,
+      write_access          = write_data | write_attributes | synchronize,
   };
   static const access_mask access_mask_default = 
                         access_mask(read_attributes | read_data | synchronize);
@@ -303,9 +321,9 @@ class file_handler : public handle, public device_traits<file_handler>
     ntstatus
       open(
         const object_attributes &   oa, 
-        const access_mask           desired_access,
-        const share_mode            share,
-        const creation_options      co
+        const access_mask           desired_access  = access_mask_default,
+        const share_mode            share           = share_mode_default,
+        const creation_options      co              = creation_options_default
         ) __ntl_nothrow
     {
       reset();
@@ -316,7 +334,7 @@ class file_handler : public handle, public device_traits<file_handler>
 
     void close() { reset(); }
 
-    ntstatus erase()
+    ntstatus remove()
     {
       file_disposition_information<> del;
       file_information<file_disposition_information<> > file_info(get(), del);
@@ -368,6 +386,20 @@ class file_handler : public handle, public device_traits<file_handler>
       return file_info;
     }
 
+    ntstatus getpos(long long & pos)
+    {
+      const file_information<file_position_information> pi(get());
+      pos = pi.data()->position();
+      return pi;
+    }
+
+    ntstatus setpos(const long long & pos)
+    {
+      const file_information<file_position_information> pi(get(), 
+                                                file_position_information(pos));
+      return pi;
+    }
+
     ntstatus rename(
       const const_unicode_string &  new_name,
       bool                          replace_if_exists)
@@ -379,7 +411,9 @@ class file_handler : public handle, public device_traits<file_handler>
       return file_info;
     }
 
-    const io_status_block & get_io_status_block() { return iosb; }
+    const io_status_block & get_io_status_block() const  { return iosb; }
+
+    const uintptr_t & read_write_count() const { return iosb.Information; }
   
   ////////////////////////////////////////////////////////////////////////////
   private:

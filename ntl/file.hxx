@@ -48,7 +48,20 @@ class basic_file : public traits
 
 
     bool close();
-    bool open(const char* filename, const char* mode);
+
+    //bool open(const char* filename, const char* mode);
+    template<typename objectT>
+    bool
+      open(
+        const objectT &             object, 
+        const access_mask           desired_access  = traits::access_mask_default,
+        const share_mode            share           = traits::share_mode_default,
+        const creation_options      co              = traits::creation_options_default
+        )
+    {
+      return FileDevice::success(f.open(object, desired_access, share, co));
+    }
+
     bool flush();
 
     template<typename objectT>
@@ -62,7 +75,7 @@ class basic_file : public traits
         const attributes            attr            = traits::attribute_default
         ) __ntl_nothrow
     {
-      return success(f.create(object, cd, desired_access, share_access, co, attr));
+      return FileDevice::success(f.create(object, cd, desired_access, share_access, co, attr));
     }
 
     /*
@@ -73,14 +86,28 @@ class basic_file : public traits
     }
     */
 
-    bool read(void * out, const uint32_t out_size) __ntl_nothrow
+    bool read(void * out, const size_t & out_size) __ntl_nothrow
     {
-      return success(f.read(out, out_size));
+      return FileDevice::success(f.read(out, out_size));
     }
 
-    bool write(const void * in, const uint32_t in_size) __ntl_nothrow
+    bool read(void * out, size_t & out_size) __ntl_nothrow
     {
-      return success(f.write(in, in_size));
+      bool const r = FileDevice::success(f.read(out, out_size));
+      out_size = f.read_write_count();
+      return r;
+    }
+
+    bool write(const void * in, const size_t in_size) __ntl_nothrow
+    {
+      return FileDevice::success(f.write(in, in_size));
+    }
+
+    bool write(void * out, size_t & out_size) __ntl_nothrow
+    {
+      bool const r = FileDevice::success(f.write(out, out_size));
+      out_size = f.read_write_count();
+      return r;
     }
 
     size_type size() const __ntl_nothrow
@@ -90,20 +117,30 @@ class basic_file : public traits
 
     bool size(const size_type & new_size) __ntl_nothrow
     {
-      return success(f.size(new_size));
+      return FileDevice::success(f.size(new_size));
     }
 
-    bool erase()
+    bool remove()
     {
-      return success(f.erase());
+      return FileDevice::success(f.remove());
     }
 
     template<class NameType>
     bool rename(
       const NameType &  new_name,
-      bool              replace_if_exists)
+      bool              replace_if_exists = true)
     {
-      return success(f.rename(new_name, replace_if_exists));
+      return FileDevice::success(f.rename(new_name, replace_if_exists));
+    }
+
+    bool getpos(long long & pos)
+    {
+      return FileDevice::success(f.getpos(pos));
+    }
+
+    bool setpos(const long long & pos)
+    {
+      return FileDevice::success(f.setpos(pos));
     }
 
     __forceinline

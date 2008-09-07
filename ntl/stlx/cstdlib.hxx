@@ -182,13 +182,15 @@ NTL__CRTCALL
 ///\name  7.20.8 Multibyte/wide string conversion functions
 
 /// 7.20.8.1 The mbstowcs function
+NTL__EXTERNAPI
 size_t
-NTL__CRTCALL
+__cdecl
   mbstowcs(wchar_t * __restrict pwcs, const char * __restrict s, size_t n);
 
 /// 7.20.8.2 The wcstombs function
+NTL__EXTERNAPI
 size_t
-NTL__CRTCALL
+__cdecl
   wcstombs(char * __restrict s, const wchar_t * __restrict pwcs, size_t n);
 
 #endif// #ifndef _INC_STDLIB
