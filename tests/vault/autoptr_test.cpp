@@ -2,7 +2,7 @@
 #include <cassert>
 
 #define __attribute__(x)
-#pragma warning(disable:4101)
+#pragma warning(disable:4101 4189)
 #define VERIFY(e) assert(e)
 
 

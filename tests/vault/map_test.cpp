@@ -2,7 +2,7 @@
 #include <cassert>
 
 #define __attribute__(x)
-#pragma warning(disable:4101)
+#pragma warning(disable:4101 4189)
 #define VERIFY(e) assert(e)
 
 #include <nt/debug.hxx>
@@ -14,7 +14,7 @@ namespace dbg = ntl::nt::dbg;
 
 template class std::map<int, int>;
 template class std::map<int, double>;
-//template class std::map<int, double, std::less<int>, std::allocator<char> >;
+template class std::map<int, double, std::less<int>, std::allocator<char> >;
 
 
 struct user_type {};
@@ -421,7 +421,7 @@ private:
 
 struct MemoTable::dagNodeLt
 {
-  bool operator()(const DagNode*, const DagNode*)
+  bool operator()(const DagNode*, const DagNode*) const
   {
     return false;
   }

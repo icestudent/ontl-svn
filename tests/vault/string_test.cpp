@@ -1,6 +1,6 @@
 #include <string>
 #include <nt/new.hxx>
-#pragma warning(disable:4101) // unreferenced local variable
+#pragma warning(disable:4101 4189)
 
 char* cptr()
 {

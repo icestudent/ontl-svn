@@ -1,5 +1,5 @@
 #include <nt/process_information.hxx>
-#pragma warning(disable:4101)
+#pragma warning(disable:4101 4189)
 
 namespace process_info_test{
   void test1()

@@ -6,7 +6,7 @@ namespace {
 
 using namespace std;
 
-#pragma warning(disable:4101) // unreferenced local variable
+#pragma warning(disable:4101 4189)
 #define __attribute__(x)
 
 
@@ -59,7 +59,7 @@ typedef ratio<25, 15> also_five_thirds;  // also_five_thirds::num == 5, also_fiv
 typedef ratio_divide<five_thirds, also_five_thirds>::type one;  // one::num == 1, one::den == 1
 
 typedef std::ratio<1920,1200> hd;
-SHOWR(hd);
+//SHOWR(hd);
 
 std::ratio<1,3> r0;
 std::ratio<2,6> r1;  

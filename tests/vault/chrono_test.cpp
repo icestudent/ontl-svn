@@ -2,7 +2,7 @@
 #include <cassert>
 
 #define __attribute__(x)
-#pragma warning(disable:4101)
+#pragma warning(disable:4101 4189)
 #define VERIFY(e) assert(e)
 
 #include <ratio>
@@ -35,7 +35,6 @@ struct xshow_value64
 #define SHOWV(V) xshow_value<V> _Join(__x_show_value, __COUNTER__);
 #define SHOWLV(V) xshow_value64<V> _Join(__x_show_value64, __COUNTER__);
 
-#pragma warning(disable:4101)
 
 // chrono
 #include <chrono>
@@ -309,6 +308,39 @@ struct type_emulator
 
   operator T ()
   { return i; }
+
+  type_emulator operator-() const
+  {
+    return type_emulator(-i);
+  }
+  type_emulator& operator++()
+  {
+    i++; return *this;
+  }
+  type_emulator operator++(int)
+  {
+    return type_emulator(i++);
+  }
+  type_emulator& operator--()
+  {
+    i--; return *this;
+  }
+  type_emulator operator--(int)
+  {
+    return type_emulator(i--);
+  }
+  type_emulator&
+    operator-=(type_emulator a)
+  {
+    i -= a.i;
+    return *this;
+  }
+  type_emulator&
+    operator/=(type_emulator a)
+  {
+    i /= a.i;
+    return *this;
+  }
 
   T i;
 };

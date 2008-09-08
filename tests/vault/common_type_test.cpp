@@ -5,7 +5,7 @@ struct xshow_type
 };
 
 #define SHOWT(T) xshow_type<T, __COUNTER__> _Join(__x_show_type, __COUNTER__);
-#pragma warning(disable:4101)
+#pragma warning(disable:4101 4189)
 
 #include <type_traits>
 using namespace std;

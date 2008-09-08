@@ -2,7 +2,7 @@
 #include <cassert>
 
 #define __attribute__(x)
-#pragma warning(disable:4101)
+#pragma warning(disable:4101 4189)
 #define VERIFY(e) assert(e)
 
 
@@ -612,6 +612,7 @@ void deleter(A* p) { delete p; }
 #ifdef _CPPUNWIND
     test26();
 #endif
+    // TODO: "libstdc++-v3\testsuite\20_util\shared_ptr\creation" и далее
 
   }
 }
