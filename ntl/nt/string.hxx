@@ -65,9 +65,9 @@ class native_string
       buffer_(str.begin())
     {/**/}
 
+#if 0 // issue 13 fix
  friend class native_string;
 
-#if 0 // issue 13 fix
     native_string(const native_string<value_type>& str)
     : length_(str.length_),
       maximum_length_(str.maximum_length_),
