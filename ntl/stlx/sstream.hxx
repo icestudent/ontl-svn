@@ -184,7 +184,8 @@ class basic_stringbuf : public basic_streambuf<charT, traits>
 };// template class basic_stringbuf
 
 template <class charT, class traits, class Allocator>
-void swap(basic_stringbuf<charT, traits, Allocator>& x, basic_stringbuf<charT, traits, Allocator>& y)
+void swap(basic_stringbuf<charT, traits, Allocator>& x,
+          basic_stringbuf<charT, traits, Allocator>& y)
 {
   x.swap(y);
 }
@@ -193,11 +194,11 @@ void swap(basic_stringbuf<charT, traits, Allocator>& x, basic_stringbuf<charT, t
 
 template <class charT, class traits, class Allocator>
 void swap(basic_stringbuf<charT, traits, Allocator>&& x,
-  basic_stringbuf<charT, traits, Allocator>& y);
+          basic_stringbuf<charT, traits, Allocator>& y);
 
 template <class charT, class traits, class Allocator>
 void swap(basic_stringbuf<charT, traits, Allocator>& x,
-  basic_stringbuf<charT, traits, Allocator>&& y);
+          basic_stringbuf<charT, traits, Allocator>&& y);
 
 #endif
 
@@ -432,7 +433,8 @@ class basic_stringstream : public basic_iostream<charT, traits>
 
 
 template <class charT, class traits, class Allocator>
-void swap(basic_stringstream<charT, traits, Allocator>& x, basic_stringstream<charT, traits, Allocator>& y)
+void swap(basic_stringstream<charT, traits, Allocator>& x,
+          basic_stringstream<charT, traits, Allocator>& y)
 {
   x.swap(y);
 }
@@ -441,11 +443,11 @@ void swap(basic_stringstream<charT, traits, Allocator>& x, basic_stringstream<ch
 
 template <class charT, class traits, class Allocator>
 void swap(basic_stringstream<charT, traits, Allocator>&& x,
-  basic_stringstream<charT, traits, Allocator>& y);
+          basic_stringstream<charT, traits, Allocator>& y);
 
 template <class charT, class traits, class Allocator>
 void swap(basic_stringstream<charT, traits, Allocator>& x,
-  basic_stringstream<charT, traits, Allocator>&& y);
+          basic_stringstream<charT, traits, Allocator>&& y);
 
 #endif
 
