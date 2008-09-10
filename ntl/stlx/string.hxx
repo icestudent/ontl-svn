@@ -1435,14 +1435,42 @@ basic_ostream<charT, traits>&
              const basic_string<charT,traits,Allocator>& str);
 
 template<class charT, class traits, class Allocator>
+inline
 basic_istream<charT,traits>&
   getline(basic_istream<charT,traits>& is,
-          basic_string<charT,traits,Allocator>& str, charT delim);
+          basic_string<charT,traits,Allocator>& str, charT delim)
+{
+  typedef traits traits_type;
+  basic_istream<charT,traits>::sentry const ok(is, true);
+  if ( ok )
+  {
+    str.clear();
+    ios_base::iostate state = ios_base::goodbit;
+    while ( state == ios_base::goodbit )
+    {
+      const traits_type::int_type c = is.rdbuf()->sbumpc();
+      if ( traits_type::eq_int_type(traits_type::eof(), c) )
+        state = ios_base::eofbit;
+      else if ( traits_type::eq_int_type(delim, c) )
+        break;
+//      else if ( str.size() == str.max_size() - 1 )
+//        state = ios_base::failbit;
+      else
+        str += traits_type::to_char_type(c); 
+    }
+    is.setstate(state);
+  }
+  return is;
+}
 
 template<class charT, class traits, class Allocator>
+inline
 basic_istream<charT,traits>&
   getline(basic_istream<charT,traits>& is, 
-          basic_string<charT,traits,Allocator>& str);
+          basic_string<charT,traits,Allocator>& str)
+{
+  return getline(is,str,is.widen('\n'));
+}
 
 typedef basic_string<char>    string;
 typedef basic_string<wchar_t> wstring;

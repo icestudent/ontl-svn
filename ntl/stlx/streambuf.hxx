@@ -202,9 +202,9 @@ class basic_streambuf
     ///\name  27.5.2.4.2 Buffer management and positioning [streambuf.virt.buffer]
 
     virtual basic_streambuf<char_type,traits>*
-      setbuf(char_type*, streamsize)
+      setbuf(char_type* s, streamsize n)
     { 
-      // Default behavior: Does nothing.
+      this->setp(s, s + n);
       return this;
     }
 
@@ -227,7 +227,8 @@ class basic_streambuf
 
     virtual int sync()
     { 
-      return 0;
+      return pptr() > pbase() || 
+              traits_type::eq_int_type(traits_type::eof(), overflow()) ? -1 : 0;
     }
 
     ///\name  27.5.2.4.3 Get area [streambuf.virt.get]

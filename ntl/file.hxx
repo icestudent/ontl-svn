@@ -30,7 +30,8 @@ class basic_file : public traits
 
     inline basic_file() : f() {}
 
-    operator const void*() { return f.operator const void*(); }
+    typedef typename traits::unspecified_bool_type unspecified_bool_type; 
+    operator unspecified_bool_type() const { return f.operator unspecified_bool_type(); }
 
     template<typename objectT>
     explicit __forceinline
@@ -41,13 +42,10 @@ class basic_file : public traits
         const share_mode            share_access    = traits::share_mode_default, 
         const creation_options      co              = traits::creation_options_default,
         const attributes            attr            = traits::attribute_default
-        ) __ntl_nothrow
+        ) /* nothrow */
     {
       f.create(object, cd, desired_access, share_access, co, attr);
     }
-
-
-    bool close();
 
     //bool open(const char* filename, const char* mode);
     template<typename objectT>
@@ -57,12 +55,10 @@ class basic_file : public traits
         const access_mask           desired_access  = traits::access_mask_default,
         const share_mode            share           = traits::share_mode_default,
         const creation_options      co              = traits::creation_options_default
-        )
+        ) /* nothrow */
     {
       return FileDevice::success(f.open(object, desired_access, share, co));
     }
-
-    bool flush();
 
     template<typename objectT>
     bool
@@ -73,7 +69,7 @@ class basic_file : public traits
         const share_mode            share_access    = traits::share_mode_default, 
         const creation_options      co              = traits::creation_options_default,
         const attributes            attr            = traits::attribute_default
-        ) __ntl_nothrow
+        ) /* nothrow */
     {
       return FileDevice::success(f.create(object, cd, desired_access, share_access, co, attr));
     }
@@ -86,41 +82,44 @@ class basic_file : public traits
     }
     */
 
-    bool read(void * out, const size_t & out_size) __ntl_nothrow
+    void close() /* nothrow */ { f.close(); }
+    bool flush() /* nothrow */ { return FileDevice::success(f.flush()); }
+
+    bool read(void * out, const size_t & out_size) /* nothrow */
     {
       return FileDevice::success(f.read(out, out_size));
     }
 
-    bool read(void * out, size_t & out_size) __ntl_nothrow
+    bool read(void * out, size_t & out_size) /* nothrow */
     {
       bool const r = FileDevice::success(f.read(out, out_size));
       out_size = f.read_write_count();
       return r;
     }
 
-    bool write(const void * in, const size_t in_size) __ntl_nothrow
+    bool write(const void * in, const size_t in_size) /* nothrow */
     {
       return FileDevice::success(f.write(in, in_size));
     }
 
-    bool write(void * out, size_t & out_size) __ntl_nothrow
+    bool write(void * out, size_t & out_size) /* nothrow */
     {
       bool const r = FileDevice::success(f.write(out, out_size));
       out_size = f.read_write_count();
       return r;
     }
 
-    size_type size() const __ntl_nothrow
+    size_type size() const /* nothrow */
     {
       return f.size();
     }
 
-    bool size(const size_type & new_size) __ntl_nothrow
+    bool size(const size_type & new_size) /* nothrow */
     {
       return FileDevice::success(f.size(new_size));
     }
 
-    bool remove()
+    bool remove() /* nothrow */
     {
       return FileDevice::success(f.remove());
     }
@@ -128,17 +127,17 @@ class basic_file : public traits
     template<class NameType>
     bool rename(
       const NameType &  new_name,
-      bool              replace_if_exists = true)
+      bool              replace_if_exists = true) /* nothrow */
     {
       return FileDevice::success(f.rename(new_name, replace_if_exists));
     }
 
-    bool getpos(long long & pos)
+    bool getpos(long long & pos) /* nothrow */
     {
       return FileDevice::success(f.getpos(pos));
     }
 
-    bool setpos(const long long & pos)
+    bool setpos(const long long & pos) /* nothrow */
     {
       return FileDevice::success(f.setpos(pos));
     }
@@ -158,7 +157,7 @@ class basic_file : public traits
       return file_content;
     }
 
-    const FileDevice & handler() const
+    const FileDevice & handler() const /* nothrow */
     { 
       return f;
     }

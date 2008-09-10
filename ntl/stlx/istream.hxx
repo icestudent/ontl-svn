@@ -62,7 +62,25 @@ class basic_istream : virtual public basic_ios<charT, traits>
       public:
 
         // constructor for formated input
-        explicit sentry(basic_istream& is);// bool noskipws = false
+        explicit sentry(basic_istream& is)// bool noskipws = false
+        {
+          for ( ; ; )
+          {
+            int_type const c = is.rdbuf()->sbumpc();
+            if ( traits_type::eq_int_type(traits_type::eof(), c) )
+            {
+              is.setstate(ios_base::failbit | ios_base::eofbit);
+              break;
+            }
+            const ctype<charT>& ctype = use_facet<ctype<charT> >(is.getloc());
+            if ( !ctype.is(ctype.space, c) )
+            {
+              is.rdbuf()->sungetc(c);
+              break;
+            }
+          }
+          ok_ = is.good();
+        }
 
         // constructor for unformated input
         explicit sentry(basic_istream& is, bool noskipws)
@@ -258,7 +276,7 @@ class basic_istream : virtual public basic_ios<charT, traits>
       if ( ok )
         __ntl_try
         {
-          c = this->rdbuf()->sbumpc();
+          c = this->rdbuf()->sgetc();
           if ( traits_type::eq_int_type(traits_type::eof(), c) )
             state |= ios_base::eofbit;
         }
@@ -271,7 +289,11 @@ class basic_istream : virtual public basic_ios<charT, traits>
     }
     
     basic_istream<charT,traits>& read(char_type* s, streamsize n);
+    //    streamsize sgetn(char_type* s, streamsize n)
+
     streamsize readsome(char_type* s, streamsize n);
+
+    
     basic_istream<charT,traits>& putback(char_type c);
     basic_istream<charT,traits>& unget();
     int sync();
@@ -303,7 +325,11 @@ class basic_istream : virtual public basic_ios<charT, traits>
 /// 2 Returns: is.
 template <class charT, class traits>
 basic_istream<charT, traits>&
-  ws(basic_istream<charT, traits>& is);
+  ws(basic_istream<charT, traits>& is)
+{
+  basic_istream::sentry ok(is);
+  return is;
+}
 
 
 /// 27.6.1.5 Class template basic_iostream [iostreamclass].

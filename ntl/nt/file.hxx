@@ -84,6 +84,13 @@ ntstatus __stdcall
     const uint32_t *  Key           __optional
     );
 
+NTL__EXTERNAPI
+ntstatus __stdcall
+  NtFlushBuffersFile(
+    legacy_handle     FileHandle,
+    io_status_block * IoStatusBlock
+    ); 
+
 typedef 
 ntstatus __stdcall
   control_file_t(
@@ -122,13 +129,13 @@ struct device_traits<nt::file_handler> : public device_traits<>
 
   typedef wchar_t filename_char_type;
 
+  typedef void(device_traits::*unspecified_bool_type)(); 
+
   static
   nt::const_unicode_string convert_filename(const char * src,
-              std::array<filename_char_type, 260> dst = std::array<filename_char_type, 260>())
+              filename_char_type * dst = std::array<filename_char_type, 260>().begin())
   {
-    nt::const_unicode_string cus( dst.begin(),
-                                  std::mbstowcs(dst.begin(), src, dst.size()) );
-    return cus;
+    return nt::const_unicode_string(dst, std::mbstowcs(dst, src, 260) );
   }
 
   enum access_mask
@@ -330,9 +337,17 @@ class file_handler : public handle, public device_traits<file_handler>
       return NtOpenFile(this, desired_access, &oa, &iosb, share, co);
     }
 
-    operator const void*() { return get(); } 
+    operator unspecified_bool_type() const
+    { 
+      return ntl::brute_cast<unspecified_bool_type>(get());
+    } 
 
     void close() { reset(); }
+
+    ntstatus flush()
+    {
+      return NtFlushBuffersFile(get(), &iosb);
+    }
 
     ntstatus remove()
     {
@@ -386,7 +401,7 @@ class file_handler : public handle, public device_traits<file_handler>
       return file_info;
     }
 
-    ntstatus getpos(long long & pos)
+    ntstatus getpos(long long & pos) const
     {
       const file_information<file_position_information> pi(get());
       pos = pi.data()->position();

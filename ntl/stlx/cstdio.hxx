@@ -65,8 +65,17 @@ struct file_api : private F
   typedef file_api<F> this_type;
   typedef F file_type;
 
+  typedef typename F::unspecified_bool_type unspecified_bool_type;
+  operator unspecified_bool_type() const { return *reinterpret_cast<const file_type*>(this); };
+
   using F::access_mask;
+  using F::read_access;
+  using F::write_access;
+  using F::append;
+
   using F::creation_disposition;
+  using F::supersede;
+  using F::open_if;
 
   /// mode: "rb" open binary file for reading
   ///       "wb" truncate to zero length or create binary file for writing
@@ -137,7 +146,10 @@ inline
   return f.remove() ? 0 : -1;;
 }
 
-int remove(const char* filename) { remove(FILE::convert_filename(filename)); }
+int remove(const char* filename)
+{ 
+  return remove(FILE::convert_filename(filename));
+}
 
 /// 7.19.4.2 The rename function
 template<typename StringT>
