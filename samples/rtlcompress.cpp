@@ -7,7 +7,9 @@
  **/
 
 #include <consoleapp.hxx>
+
 #include <nt/file.hxx>
+
 #include <nt/debug.hxx>
 #include <cstdio>
 
@@ -25,10 +27,6 @@ class app: consoleapp
 public:
   int proceed();
 protected:
-  bool acquire_console()
-  {
-    return 1;//console::attach() || console::alloc();
-  }
   void header()
   {
     console::write(" rtlcompress v0.1\n");
@@ -58,7 +56,6 @@ protected:
 
 int app::proceed()
 {
-  acquire_console();
   header();
 
   if(!parse_args()){
@@ -66,34 +63,19 @@ int app::proceed()
     return 2;
   }
 
-  unicode_string fus1, fus2;
-  rtl_relative_name relative1, relative2;
-  if(!RtlDosPathNameToNtPathName_U(infile.c_str(), &fus1, NULL, &relative1)){
-    console::write("wrong infile path\n");
-    return 3;
-  }
-  if(!RtlDosPathNameToNtPathName_U(outfile.c_str(), &fus2, NULL, &relative2)){
-    console::write("wrong outfile path\n");
-    return 4;
-  }
-  const_unicode_string cus1(relative1.RelativeName), cusf(fus1);
-  object_attributes oa_in1(relative1.ContainingDirectory, cus1), oa_in2(cusf);
-  object_attributes& oa_in = !relative2.ContainingDirectory ? oa_in2 : oa_in1;
-  file in(oa_in);
+  rtl::relative_name rel(infile);
+  //object_attributes oa(rel);
+  //console::write<wchar_t>(oa.ObjectName->data(), oa.ObjectName->length());
+  file in((rel));
   if(!in){
     console::write("can't open infile\n");
     return 3;
   }
-  const_unicode_string cus3(relative2.RelativeName), cus2(fus2);
-  object_attributes oa_out1(relative2.ContainingDirectory, cus3), oa_out2(cus2);
-  object_attributes& oa_out = !relative2.ContainingDirectory ? oa_out2 : oa_out1;
-  file out(oa_out, file::supersede, file::generic_write);
+  file out(rtl::relative_name(outfile), file::supersede, file::generic_write);
   if(!out){
     console::write("can't open outfile\n");
     return 4;
   }
-  RtlFreeUnicodeString(&fus1),
-  RtlFreeUnicodeString(&fus2);
 
   raw_data indata = in.get_data(), outdata;
   outdata.resize(indata.size()*(decompress ? 5 : 1));
