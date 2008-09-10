@@ -1469,7 +1469,7 @@ basic_istream<charT,traits>&
   getline(basic_istream<charT,traits>& is, 
           basic_string<charT,traits,Allocator>& str)
 {
-  return getline(is,str,is.widen('\n'));
+  return getline(is, str, is.widen('\n'));
 }
 
 typedef basic_string<char>    string;
