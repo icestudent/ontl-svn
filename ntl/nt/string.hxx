@@ -67,11 +67,13 @@ class native_string
 
  friend class native_string;
 
+#if 0 // issue 13 fix
     native_string(const native_string<value_type>& str)
     : length_(str.length_),
       maximum_length_(str.maximum_length_),
       buffer_(str.buffer_)
     {/**/}
+#endif
 
     native_string(charT* s, size_t n)
     : length_(size_type(n) * sizeof(value_type)),
@@ -108,14 +110,15 @@ class native_string
       return std::basic_string<value_type>(begin(), size());
     }
 
+    ///\note Uncommenting Allocator gives C2440
     operator 
       const native_string<typename std::add_const<charT>::type,
-                          traits,
-                          Allocator>&() const
+                          traits/*,
+                          Allocator*/>&() const
     {
       return *reinterpret_cast<const native_string<std::add_const<charT>::type,
-                               traits,
-                               Allocator>*>(this);
+                               traits/*,
+                               Allocator*/>*>(this);
     }
 
     ///\name  native_string iterator support
