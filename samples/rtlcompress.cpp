@@ -29,7 +29,7 @@ public:
 protected:
   void header()
   {
-    console::write(" rtlcompress v0.1\n");
+    console::write(" rtlcompress v0.1a\n");
   }
   void usage()
   {

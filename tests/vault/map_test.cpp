@@ -33,7 +33,7 @@ void test01()
 
   std::map<int, int> m;
   m[1] = 1;
-#if 0
+#if 1
   VERIFY( m.cbegin() == m.begin() );
   VERIFY( m.cend() == m.end() );
   VERIFY( m.crbegin() == m.rbegin() );
