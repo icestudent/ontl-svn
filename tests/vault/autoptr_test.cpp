@@ -267,7 +267,7 @@ namespace autoptr_test
     test05();
     test06();
     test07();
-    //test08(); // stack overflow
+    test08();
     test09();
   }
 }
