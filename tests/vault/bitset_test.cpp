@@ -207,14 +207,19 @@ namespace bitset_test
         shifted <<= shift_step;
         //correct = std::string(left_shifted);
         correct = std::bitset<size> (std::string(left_shifted));
+
+        std::string shifted_str = shifted.to_string(); shifted_str.c_str();
+        std::string correct_str(left_shifted);
+        bool ok = shifted_str == correct_str;
         VERIFY( shifted == correct );
 
         shifted = original;
         shifted >>= shift_step;
         correct = std::bitset<size> (std::string(right_shifted));
+        shifted_str = shifted.to_string(); shifted_str.c_str();
+        correct_str = right_shifted;
+        ok = shifted_str == correct_str;
 
-        std::string shifted_str = shifted.to_string(); shifted_str.c_str();
-        const std::string correct_str(right_shifted);
 
         VERIFY( shifted == correct );
       }
