@@ -591,24 +591,24 @@ void deleter(A* p) { delete p; }
     test05();
     #endif
     //test06(); // shared_ptr<void>
-    //test07(); // compile fail
+    test07();
     test08();
     test09();
     test10();
     test11();
-    //test12(); // link fail
+    test12();
     test14();
     test15();
     test16();
     //test17(); // access violation
-    //test18(); // compile fail
-    //test19(); // compile fail
+    test18();
+    test19();
     test20();
     test21(); // fail
     test22();
     test23();
     test24();
-    //test25(); // link fail
+    test25();
 #ifdef _CPPUNWIND
     test26();
 #endif

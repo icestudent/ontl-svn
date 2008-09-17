@@ -326,7 +326,8 @@ inline int fgetpos(FILE * __restrict stream, fpos_t * __restrict pos)
 {
   return stream->getpos(*pos) ? 0 : EOF;
 }
-
+
+
 /// 7.19.9.2 The fseek function
 inline int fseek(FILE *stream, long long offset, int whence)
 {

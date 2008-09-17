@@ -479,6 +479,11 @@ void test11()
 
 void main()
 {
+  std::map<int,int> x1, x2;
+  x1[0] = 1;
+  x1[1] = 2;
+  x2 = x1;
+  bool ok = x1.size() == x2.size();
   test01();
   test02(); // fail
  #ifdef _CPPUNWIND
