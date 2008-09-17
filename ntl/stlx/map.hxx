@@ -139,8 +139,7 @@ class map:
     {
       if(this != &x){
         val_comp_ = x.val_comp_;
-        clear();
-        insert_range(x.cbegin(), x.cend());
+        tree_type::operator=(x);
       }
       return *this;
     }
