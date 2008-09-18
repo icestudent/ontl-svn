@@ -65,16 +65,6 @@ class native_string
       buffer_(str.begin())
     {/**/}
 
-#if 0 // issue 13 fix
- friend class native_string;
-
-    native_string(const native_string<value_type>& str)
-    : length_(str.length_),
-      maximum_length_(str.maximum_length_),
-      buffer_(str.buffer_)
-    {/**/}
-#endif
-
     native_string(charT* s, size_t n)
     : length_(size_type(n) * sizeof(value_type)),
       maximum_length_(size_type(n) * sizeof(value_type)), 
