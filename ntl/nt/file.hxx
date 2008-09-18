@@ -182,8 +182,11 @@ struct device_traits<nt::file_handler> : public device_traits<>
   enum creation_disposition
   {
     supersede,
-    open,
+    ///\note the name is hidden by file_handler::open() and left here in FILE_OPEN memories
+    open, 
+    open_existing = open,
     create,
+    create_new = create,
     open_if,
     overwrite,
     overwrite_if,
@@ -441,7 +444,9 @@ typedef basic_file<file_handler> file;
 
 }//namespace nt
 
+#ifndef NTL__KM_FILE
 using nt::file;
+#endif
 
 }//namespace ntl
 

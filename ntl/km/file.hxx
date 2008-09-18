@@ -158,7 +158,10 @@ class file_handler : public handle, public device_traits<file_handler>
       return ZwOpenFile(this, desired_access, &oa, &iosb, share, co);
     }
 
-    operator const void*() { return get(); } 
+    operator unspecified_bool_type() const
+    { 
+      return ntl::brute_cast<unspecified_bool_type>(get());
+    } 
 
     void close() { reset(); }
 
@@ -239,6 +242,9 @@ class file_handler : public handle, public device_traits<file_handler>
 typedef basic_file<file_handler> file;
 
 }//namespace km
+
+using km::file;
+
 }//namespace ntl
 
 #endif//#ifndef NTL__KM_FILE

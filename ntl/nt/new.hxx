@@ -8,6 +8,8 @@
 #ifndef NTL__NT_NEW
 #define NTL__NT_NEW
 
+#define NTL_NT
+
 #ifndef NTL_NO_NEW 
 
 #ifdef NTL__KM_NEW

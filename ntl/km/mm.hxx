@@ -10,12 +10,14 @@
 #define NTL__NT_MM
 
 #include "basedef.hxx"
+#include "string.hxx"
 //#include "../nt/virtualmem.hxx"
 
 namespace ntl {
   namespace km {
 
     struct eresource;
+    struct file_object;
 
     typedef uint32_t wsle_number_t;
     typedef uintptr_t pfn_number_t;

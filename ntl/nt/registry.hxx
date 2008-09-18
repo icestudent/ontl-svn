@@ -466,11 +466,32 @@ class key : public handle, public device_traits<key>
                         value.size() * sizeof(const_unicode_string::value_type)));
     }
 
+    ///\note
+    /// There is potential `ambiguous call to overloaded function` 
+    /// when 2nd arg is const wchar_t[].
+    /// We may enable the overload below to resolve the issue.
+    /// However older versions have no such problem because 3rd arg `type`
+    /// had no defaul value.
+    /// And, there is no need to to specify reg_sz since std::wstring is
+    /// implicitly convertable to const_unicode_string (as const wchar_t[] does).
+
+#if 0
+    template<size_t Size>
+    bool
+      set(
+        const const_unicode_string &  value_name,
+        const wchar_t (&value)[Size])
+    {
+      STATIC_ASSERT(Size > 0);
+      return nt::success(set(value_name, reg_sz, value, (Size-1) * sizeof(wchar_t)));
+    }
+#endif
+
     bool
       set(
         const const_unicode_string &  value_name,
         const std::wstring &          value,
-        value_type                    type        = reg_sz)
+        value_type                    type        /*= reg_sz*/)
     {
       return nt::success(set(value_name, type, value.begin(),
                               value.size() * sizeof(std::wstring::value_type)));
