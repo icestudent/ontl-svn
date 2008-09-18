@@ -20,8 +20,8 @@ class basic_filebuf
 : public basic_streambuf<charT, traits>
 {
     FILE filebuf;
-    static const size_t buf_size = 512; 
-    array<charT, buf_size/sizeof(charT)> buf;
+    static const size_t hdd_sector_size = 512; 
+    array<charT, hdd_sector_size/sizeof(charT)> buf;
   
   ///////////////////////////////////////////////////////////////////////////
   public:
@@ -34,7 +34,7 @@ class basic_filebuf
 
     ///\name 27.8.1.2 basic_filebuf constructors [lib.filebuf.cons]
 
-    basic_filebuf() { this->setp(buf.begin(), buf.begin() + buf_size); }
+    basic_filebuf() { this->setp(buf.begin(), buf.end()); }
 
     virtual ~basic_filebuf() { close(); }
 

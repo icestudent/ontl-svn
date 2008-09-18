@@ -247,7 +247,7 @@ class ios_base
   ///////////////////////////////////////////////////////////////////////////
   private:
 
-    // members are sorted by size
+    // members are sorted by their size
     
     streamsize  prec;
     streamsize  wide;

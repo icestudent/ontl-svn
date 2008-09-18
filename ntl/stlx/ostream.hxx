@@ -287,7 +287,7 @@ class basic_ostream
     { 
       if ( this->rdbuf() )
       {
-        ///\note no sentry as it'll result in recursive call
+        ///\note no sentry as it'll result in a recursive call
         if ( this->good() )
         {
           ///\note STLPort doesn't have this line (as one above, but that doesn't matter)

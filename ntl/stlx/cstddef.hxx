@@ -97,6 +97,10 @@
     #define __align(X) __declspec(align(X))
   #endif
 
+  #ifndef nullptr
+    #define nullptr std::__nullptr
+  #endif
+
   #define constexpr
 
 #endif//__cplusplus <= 199711L
@@ -119,6 +123,8 @@ typedef struct
 {
     template<typename any> operator any * () const { return 0; }
     template<class any, typename T> operator T any:: * () const { return 0; }
+    struct pad {};
+    pad __[sizeof(void*)/sizeof(pad)];
   private:
   //  nullptr_t();// {}
   //  nullptr_t(const nullptr_t&);
@@ -126,10 +132,10 @@ typedef struct
     void operator &() const;
     template<typename any> void operator +(any) const { I Love MSVC 2005! }
     template<typename any> void operator -(any) const { I Love MSVC 2005! }
-//    void * _;
+
 } nullptr_t;
-//STATIC_ASSERT(sizeof(nullptr_t)==sizeof(void*));
-static const nullptr_t nullptr = {};
+static const nullptr_t __nullptr = {};
+STATIC_ASSERT(sizeof(nullptr)==sizeof(void*));
 
 #ifndef NULL
 #define NULL 0

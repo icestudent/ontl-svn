@@ -207,9 +207,10 @@ inline
 FILE*
   freopen(const char * __restrict filename, const char * __restrict mode, FILE* __restrict stream)
 {
-  stream->close();
   ///\note filename == 0  It is implementation-defined which changes of mode are
   ///                     permitted (if any), and under what circumstances.
+  if ( !filename ) return stream;
+  stream->close();
   return stream->create( FILE::convert_filename(filename),
                          FILE::translate_creation_disposition(mode),
                          FILE::translate_access_mask(mode) )
@@ -326,8 +327,7 @@ inline int fgetpos(FILE * __restrict stream, fpos_t * __restrict pos)
 {
   return stream->getpos(*pos) ? 0 : EOF;
 }
-
-
+
 /// 7.19.9.2 The fseek function
 inline int fseek(FILE *stream, long long offset, int whence)
 {
