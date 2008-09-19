@@ -49,6 +49,25 @@ ntstatus __stdcall
     const object_attributes * ObjectAttributes
     );
 
+NTL__EXTERNAPI
+ntstatus __stdcall
+  ZwDeleteKey(
+    legacy_handle KeyHandle
+    );
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  ZwFlushKey(
+    legacy_handle KeyHandle
+    );
+
+enum key_information_class
+{
+  KeyBasicInformation,
+  KeyNodeInformation,
+  KeyFullInformation
+};
+
 enum key_value_information_class
 {
   KeyValueBasicInformation,
@@ -69,17 +88,6 @@ ntstatus __stdcall
 
 NTL__EXTERNAPI
 ntstatus __stdcall
-  ZwEnumerateValueKey(
-    legacy_handle                 KeyHandle,
-    uint32_t                      Index,
-    key_value_information_class   KeyValueInformationClass,
-    void *                        KeyValueInformation,
-    uint32_t                      Length,
-    uint32_t *                    ResultLength
-    );
-
-NTL__EXTERNAPI
-ntstatus __stdcall
   ZwSetValueKey(
     legacy_handle                 KeyHandle,
     const const_unicode_string *  ValueName,
@@ -91,22 +99,10 @@ ntstatus __stdcall
 
 NTL__EXTERNAPI
 ntstatus __stdcall
-  ZwDeleteKey(
-    legacy_handle KeyHandle
+  ZwDeleteValueKey(
+    legacy_handle                 KeyHandle,
+    const const_unicode_string*   ValueName
     );
-
-NTL__EXTERNAPI
-ntstatus __stdcall
-  ZwFlushKey(
-    legacy_handle KeyHandle
-    );
-
-enum key_information_class
-{
-  KeyBasicInformation,
-  KeyNodeInformation,
-  KeyFullInformation 
-};
 
 NTL__EXTERNAPI
 ntstatus __stdcall
@@ -115,6 +111,17 @@ ntstatus __stdcall
     uint32_t              Index,
     key_information_class KeyInformationClass,
     void *                KeyInformation,
+    uint32_t              Length,
+    uint32_t *            ResultLength
+    );
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  ZwEnumerateValueKey(
+    legacy_handle         KeyHandle,
+    uint32_t              Index,
+    key_value_information_class   KeyValueInformationClass,
+    void *                        KeyValueInformation,
     uint32_t              Length,
     uint32_t *            ResultLength
     );
@@ -290,6 +297,11 @@ class key : public handle, public device_traits<key>
       const ntstatus res = ZwDeleteKey(this->get());
       this->handle::release();
       return nt::success(res);
+    }
+
+    bool erase(const const_unicode_string& value_name) __ntl_nothrow
+    {
+      return nt::success(ZwDeleteValueKey(this->get(), &value_name));
     }
 
     bool flush()
@@ -642,6 +654,99 @@ class key : public handle, public device_traits<key>
     const subkey_iterator subkey_end_;
 
 }; // class key
+
+
+namespace rtl_registry {
+  enum Relative {
+    absolute,
+    services,
+    control,
+    windows_nt,
+    devicemap,
+    user,
+    maximum,
+    handle    = 0x40000000,
+    optional  = 0x80000000
+  };
+
+  enum Flags {
+    query_subkey   = 0x00000001,
+    query_topkey   = 0x00000002,
+    query_required = 0x00000004,
+    query_novalue  = 0x00000008,
+    query_noexpand = 0x00000010,
+    query_direct   = 0x00000020,
+    query_delete   = 0x00000040
+  };
+}
+
+typedef ntstatus __stdcall QueryRoutine_t(
+    wchar_t* ValueName,
+    uint32_t ValueType,
+    void*    ValueData,
+    uint32_t ValueLength,
+    void*    Context,
+    void*    EntryContext
+    );
+
+struct rtl_query_registry_table {
+  QueryRoutine_t* QueryRoutine;
+  rtl_registry::Flags Flags;
+  wchar_t* Name;
+  void*    EntryContext;
+  uint32_t DefaultType;
+  void*    DefaultData;
+  uint32_t DefaultLength;
+};
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  RtlCreateRegistryKey(
+    rtl_registry::Relative RelativeTo,
+    const wchar_t* Path
+    );
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  RtlCheckRegistryKey(
+    rtl_registry::Relative RelativeTo,
+    const wchar_t* Path
+    );
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  RtlQueryRegistryValues(
+    rtl_registry::Relative    RelativeTo,
+    const wchar_t*            Path,
+    rtl_query_registry_table* QueryTable,
+    void*                     Context,
+    void*                     Environment
+    );
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  RtlWriteRegistryValue(
+    rtl_registry::Relative RelativeTo,
+    const wchar_t*  Path,
+    const wchar_t*  ValueName,
+    key::value_type ValueType,
+    const void*     ValueData,
+    uint32_t        ValueLength
+    );
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  RtlDeleteRegistryValue(
+    rtl_registry::Relative RelativeTo,
+    const wchar_t* Path,
+    const wchar_t* ValueName
+    );
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  RtlFormatCurrentUserKeyPath(
+    unicode_string* CurrentUserKeyPath
+    );
 
 
 }//namespace nt

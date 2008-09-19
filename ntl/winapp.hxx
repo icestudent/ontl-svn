@@ -10,7 +10,7 @@
 
 #include "win/application.hxx"
 #include "win/console.hxx"
-//#include "win/new.hxx"
+#include "nt/new.hxx"
 
 #pragma comment(linker, "/subsystem:windows")
 #pragma comment(linker, "/entry:ntl::_Winapp_entry")

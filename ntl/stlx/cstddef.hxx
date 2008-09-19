@@ -118,8 +118,12 @@ typedef alignas(8192) struct {} max_align_t;
 /**\defgroup  lib_support_types ******** Types [18.1] ***********************
  *@{*/
 
-//based on SC22/WG21/N1601 J16/04-0041
-typedef struct 
+#ifdef NTL__CXX
+  typedef decltype(nullptr) nullptr_t;
+#else
+
+//based on SC22/WG21/N2431 = J16/07-0301
+struct nullptr_t
 {
     template<typename any> operator any * () const { return 0; }
     template<class any, typename T> operator T any:: * () const { return 0; }
@@ -133,8 +137,13 @@ typedef struct
     template<typename any> void operator +(any) const { I Love MSVC 2005! }
     template<typename any> void operator -(any) const { I Love MSVC 2005! }
 
-} nullptr_t;
+};
 static const nullptr_t __nullptr = {};
+
+  #ifndef nullptr
+    #define nullptr std::__nullptr
+  #endif
+#endif // NTL__CXX
 STATIC_ASSERT(sizeof(nullptr)==sizeof(void*));
 
 #ifndef NULL
@@ -164,10 +173,10 @@ STATIC_ASSERT(sizeof(nullptr)==sizeof(void*));
 #endif
 
 #define __ntl_bitmask_type(bitmask, _friend)\
-  _friend bitmask operator&(bitmask x, bitmask y) { return static_cast<bitmask>(static_cast<int>(x)&static_cast<int>(y)); }\
-  _friend bitmask operator|(bitmask x, bitmask y) { return static_cast<bitmask>(static_cast<int>(x)|static_cast<int>(y)); }\
-  _friend bitmask operator^(bitmask x, bitmask y) { return static_cast<bitmask>(static_cast<int>(x)^static_cast<int>(y)); }\
-  _friend bitmask operator~(bitmask x) { return static_cast<bitmask>(~static_cast<int>(x)); }\
+  _friend bitmask operator&(bitmask x, bitmask y) { return bitwise_and(x, y); }\
+  _friend bitmask operator|(bitmask x, bitmask y) { return bitwise_or (x, y); }\
+  _friend bitmask operator^(bitmask x, bitmask y) { return bitwise_xor(x, y); }\
+  _friend bitmask operator~(bitmask x) { return static_cast<bitmask>(~static_cast<unsigned>(x)); }\
   _friend bitmask& operator&=(bitmask& x, bitmask y) { x = x&y ; return x ; }\
   _friend bitmask& operator|=(bitmask& x, bitmask y) { x = x|y ; return x ; }\
   _friend bitmask& operator^=(bitmask& x, bitmask y) { x = x^y ; return x ; }
