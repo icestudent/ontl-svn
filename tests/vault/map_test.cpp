@@ -477,12 +477,27 @@ void test11()
 // { dg-error "candidates are" "" { target *-*-* } 210 }
 // { dg-error "candidates are" "" { target *-*-* } 214 }
 
+template<typename T>
+struct less_than: std::unary_function<std::map<int, int>::value_type, bool>
+{
+  less_than(T then)
+    :value(then)
+  {}
+
+  result_type operator()(const argument_type& arg)
+  {
+    return arg.second < value;
+  }
+private:
+  T value;
+};
+
 void main()
 {
   std::map<int,int> x1, x2;
   x1[0] = 1;
   x1[1] = 2;
-  x2 = x1;
+  std::remove_copy_if(x1.begin(), x1.end(), x2.begin(), less_than<int>(2));
   bool ok = x1.size() == x2.size();
   test01();
   test02(); // fail
