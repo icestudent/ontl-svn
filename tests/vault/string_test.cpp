@@ -5,6 +5,12 @@
 //template class std::basic_string<char>;
 
 
+#include <vector>
+#include <list>
+template class std::vector<int>;
+template class std::list<int>;
+
+
 char* cptr()
 {
   static char s[] = "cptr";
