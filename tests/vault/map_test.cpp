@@ -465,7 +465,7 @@ void test11()
   std::map<unsigned int, int> mapByIndex;
   std::map<std::string, unsigned> mapByName;
 
-  mapByIndex.insert(std::pair<unsigned, int>(0, 1));
+  mapByIndex.insert(mapByIndex.begin(), std::pair<unsigned, int>(0, 1));
   mapByIndex.insert(std::pair<unsigned, int>(6, 5));
 
   std::map<unsigned, int>::iterator itr(mapByIndex.begin());
