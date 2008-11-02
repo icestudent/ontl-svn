@@ -2,6 +2,9 @@
 #include <nt/new.hxx>
 #pragma warning(disable:4101 4189)
 
+//template class std::basic_string<char>;
+
+
 char* cptr()
 {
   static char s[] = "cptr";
