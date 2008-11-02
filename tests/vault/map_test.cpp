@@ -497,7 +497,7 @@ void main()
   std::map<int,int> x1, x2;
   x1[0] = 1;
   x1[1] = 2;
-  std::remove_copy_if(x1.begin(), x1.end(), x2.begin(), less_than<int>(2));
+  //std::remove_copy_if(x1.begin(), x1.end(), x2.begin(), less_than<int>(2));
   bool ok = x1.size() == x2.size();
   test01();
   test02(); // fail

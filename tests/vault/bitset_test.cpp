@@ -323,6 +323,7 @@ namespace bitset_test
 
   void main()
   {
+    typedef std::uint64_t uint64_t;
     std::bitset<32> x(0x0F);
     {
       static const size_t bits = 63;

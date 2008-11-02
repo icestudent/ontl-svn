@@ -43,6 +43,17 @@ bool operator>=(const T & x, const T & y) { return !(x < y); }
 
 }//namespace rel_ops
 
+template <class T> struct identity { typedef T type; };
+
+template <class T>
+inline T& forward(typename identity<T>::type& t) { return t; }
+
+template <class T>
+inline T& move(T& t) { return t; }
+
+template <class T>
+inline const T& move(const T& t) { return t; }
+
 
 /// Pairs [20.2.2 lib.pairs]
 #pragma warning(push)

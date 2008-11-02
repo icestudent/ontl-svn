@@ -197,7 +197,7 @@ std::vector<*>{
             #array
             (
 				expr : 	($c.begin_)[$i],  
-				size : 	$c._Mylast-$c.begin_
+				size : 	$c.end_-$c.begin_
 			), 
 			")"
 		)
