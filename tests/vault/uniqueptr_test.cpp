@@ -16,13 +16,13 @@ namespace uniqueptr_test {
   struct base { virtual ~base() {} };
   struct derived : base {};
 
-#ifdef NTL__CXX
+#ifdef NTL__CXX_RV
   void
     test01()
   {
     std::unique_ptr<derived> p1(new derived);
     std::unique_ptr<derived> p2(new derived);
-      p2 = p1;  // should not compile
+      //p2 = p1;  // should not compile
     p2 = std::move(p1);
     std::unique_ptr<base> p3(new base);
     //  p3 = p2;  // should not compile
@@ -34,21 +34,21 @@ namespace uniqueptr_test {
     test02()
   {
     std::unique_ptr<int[]> p1(new int(420));
-    std::unique_ptr<int[]> p2 = p1; // { dg-error "within this context" }
+    //std::unique_ptr<int[]> p2 = p1; // { dg-error "within this context" }
   }
 
   void
     test03()
   {
     std::unique_ptr<int[2]> p1(new int[3]);
-    std::unique_ptr<int[2]> p2 = p1; // { dg-error "within this context" }
+    //std::unique_ptr<int[2]> p2 = p1; // { dg-error "within this context" }
   }
   // { dg-excess-errors "is private" }
 
   struct B0 { virtual ~B0() {} };
   struct D : public B0 {};
 
-#ifdef NTL__CXX
+#ifdef NTL__CXX_RV
   void
     test04()
   {
@@ -301,12 +301,12 @@ namespace uniqueptr_test {
 
   void main()
   {
-#ifdef NTL__CXX
+#ifdef NTL__CXX_RV
     test01();
 #endif
     test02();
     test03();
-#ifdef NTL__CXX
+#ifdef NTL__CXX_RV
     test04();
     test05();
 #endif

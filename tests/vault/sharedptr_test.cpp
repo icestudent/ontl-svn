@@ -160,11 +160,12 @@ void deleter(A* p) { delete p; }
   }
 
   
-  #ifdef NTL__CXX
+  #ifdef NTL__CXX_RV
   int
     test05()
   {
     bool test __attribute__((unused)) = true;
+    using namespace a3;
 
     std::shared_ptr<A> a;
     std::auto_ptr<A> au;
@@ -587,7 +588,7 @@ void deleter(A* p) { delete p; }
     test03();
     test04();
     
-    #ifdef NTL__CXX
+    #ifdef NTL__CXX_RV
     test05();
     #endif
     //test06(); // shared_ptr<void>
