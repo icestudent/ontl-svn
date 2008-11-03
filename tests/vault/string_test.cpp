@@ -14,6 +14,7 @@ template class std::list<int>;
 char* cptr()
 {
   static char s[] = "cptr";
+
   return s;
 }
 
