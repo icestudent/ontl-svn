@@ -5,11 +5,16 @@
 #pragma warning(disable:4101 4189)
 #define VERIFY(e) assert(e)
 
+#define SMARTPTR_WITH_N
+
 #include <memory>
 #include <nt/new.hxx>
+#include <nt/debug.hxx>
+namespace dbg = ntl::nt::dbg;
 
 template class std::unique_ptr<int>;
 template class std::unique_ptr<int[]>;
+template class std::unique_ptr<int[2]>;
 
 namespace uniqueptr_test {
 
@@ -40,7 +45,11 @@ namespace uniqueptr_test {
   void
     test03()
   {
-    std::unique_ptr<int[2]> p1(new int[3]);
+    typedef int bint[2];
+    int* b(new int[3]);
+    std::unique_ptr<int[1]> p1(b);
+    std::unique_ptr<int[]>  p2(new int[3]);
+    std::unique_ptr<bint>   p3(new int[2]);
     //std::unique_ptr<int[2]> p2 = p1; // { dg-error "within this context" }
   }
   // { dg-excess-errors "is private" }
@@ -299,17 +308,107 @@ namespace uniqueptr_test {
     VERIFY( p1 == p2 );
   }
 
+#undef __func__
+#define __func__ __FUNCSIG__ 
+
+  template <class T>
+  struct my_delete
+  {
+    my_delete() 
+    {
+      dbg::trace(__func__"\n");
+    }
+    ~my_delete()
+    {
+      dbg::trace(__func__"\n");
+    }
+
+    my_delete(const my_delete&)
+    {
+      dbg::trace(__func__"\n");
+    }
+#ifdef NTL__CXX_RV
+    my_delete(my_delete&&)
+    {
+      dbg::trace(__func__"\n");
+    }
+#endif
+    template <class U> my_delete(const my_delete<U>&) 
+    {
+      dbg::trace(__func__"\n");
+    }
+    void operator()(T* ptr) const { ::delete ptr; }
+  };
+
+  template <class T>
+  struct my_delete<T[]>
+  {
+    my_delete() 
+    {
+      dbg::trace(__func__"\n");
+    }
+    ~my_delete()
+    {
+      dbg::trace(__func__"\n");
+    }
+
+    my_delete(const my_delete&)
+    {
+      dbg::trace(__func__"\n");
+    }
+#ifdef NTL__CXX_RV
+    my_delete(my_delete&&)
+    {
+      dbg::trace(__func__"\n");
+    }
+#endif
+    void operator()(T* ptr) const { ::delete[] ptr; }
+  };
+
+  void test15()
+  {
+    using namespace std;
+
+    typedef my_delete<int> D;
+    D d;
+    unique_ptr<int, D> p1(new int, D()); // D must be MoveConstructible
+    unique_ptr<int, D> p2(new int, d); // D must be CopyConstructible
+    unique_ptr<int, D&> p3(new int, d); // p3 holds a reference to d
+
+    //unique_ptr<int, const D&> p4(new int, D()); // error: rvalue deleter object combined with reference deleter type
+    unique_ptr<int, const D&> p5(new int, d); // p5 holds a const reference to d
+    unique_ptr<int, const D> p6(new int, d); // p6 holds a const copy of d
+  }
+
+  void test16()
+  {
+    using namespace std;
+
+    typedef my_delete<int[]> D;
+    D d;
+    unique_ptr<int[], D> p1(new int[1], D()); // D must be MoveConstructible
+    unique_ptr<int[], D> p2(new int[1], d); // D must be CopyConstructible
+    unique_ptr<int[], D&> p3(new int[1], d); // p3 holds a reference to d
+
+#if !defined(NTL__CXX_RV) || 0
+    unique_ptr<int[], const D&> p4(new int[1], D()); // error: rvalue deleter object combined with reference deleter type
+#endif
+    unique_ptr<int[], const D&> p5(new int[1], d); // p5 holds a const reference to d
+    unique_ptr<int[], const D> p6(new int[1], d); // p6 holds a const copy of d
+
+    unique_ptr<int[], D> p7(new int[1], D()); // D must be MoveConstructible
+    unique_ptr<int[1]> p8(new int[1]); // D must be MoveConstructible
+  }
+
   void main()
   {
 #ifdef NTL__CXX_RV
     test01();
-#endif
-    test02();
-    test03();
-#ifdef NTL__CXX_RV
     test04();
     test05();
 #endif
+    test02();
+    test03();
     test06();
     test07();
     test08();
@@ -319,5 +418,7 @@ namespace uniqueptr_test {
     test12();
     test13();
     test14();
+    test15();
+    test16();
   }
 }
