@@ -5,7 +5,7 @@
 #pragma warning(disable:4101 4189)
 #define VERIFY(e) assert(e)
 
-//#define SMARTPTR_WITH_N
+//#define STLX__SMARTPTR_WITH_N
 
 #include <memory>
 #include <nt/new.hxx>
@@ -14,7 +14,7 @@ namespace dbg = ntl::nt::dbg;
 
 template class std::unique_ptr<int>;
 template class std::unique_ptr<int[]>;
-#ifdef SMARTPTR_WITH_N
+#ifdef STLX__SMARTPTR_WITH_N
 template class std::unique_ptr<int[2]>;
 #endif
 namespace uniqueptr_test {
@@ -43,7 +43,7 @@ namespace uniqueptr_test {
     //std::unique_ptr<int[]> p2 = p1; // { dg-error "within this context" }
   }
 
-#ifdef SMARTPTR_WITH_N
+#ifdef STLX__SMARTPTR_WITH_N
   void
     test03()
   {
@@ -395,7 +395,7 @@ namespace uniqueptr_test {
     unique_ptr<int[], const D> p6(new int[1], d); // p6 holds a const copy of d
 
     unique_ptr<int[], D> p7(new int[1], D()); // D must be MoveConstructible
-#ifdef SMARTPTR_WITH_N
+#ifdef STLX__SMARTPTR_WITH_N
     unique_ptr<int[1]> p8(new int[1]); // D must be MoveConstructible
 #endif
   }
@@ -427,7 +427,7 @@ namespace uniqueptr_test {
     test05();
 #endif
     test02();
-#ifdef SMARTPTR_WITH_N
+#ifdef STLX__SMARTPTR_WITH_N
     test03();
 #endif
     test06();
