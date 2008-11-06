@@ -5,7 +5,7 @@
 #pragma warning(disable:4101 4189)
 #define VERIFY(e) assert(e)
 
-#define SMARTPTR_WITH_N
+//#define SMARTPTR_WITH_N
 
 #include <memory>
 #include <nt/new.hxx>
@@ -14,8 +14,9 @@ namespace dbg = ntl::nt::dbg;
 
 template class std::unique_ptr<int>;
 template class std::unique_ptr<int[]>;
+#ifdef SMARTPTR_WITH_N
 template class std::unique_ptr<int[2]>;
-
+#endif
 namespace uniqueptr_test {
 
   struct base { virtual ~base() {} };
@@ -42,17 +43,14 @@ namespace uniqueptr_test {
     //std::unique_ptr<int[]> p2 = p1; // { dg-error "within this context" }
   }
 
+#ifdef SMARTPTR_WITH_N
   void
     test03()
   {
-    typedef int bint[2];
-    int* b(new int[3]);
-    std::unique_ptr<int[1]> p1(b);
-    std::unique_ptr<int[]>  p2(new int[3]);
-    std::unique_ptr<bint>   p3(new int[2]);
-    //std::unique_ptr<int[2]> p2 = p1; // { dg-error "within this context" }
-  }
-  // { dg-excess-errors "is private" }
+    std::unique_ptr<int[2]> p1(new int[3]);
+    std::unique_ptr<int[2]> p2 = p1;
+}
+#endif
 
   struct B0 { virtual ~B0() {} };
   struct D : public B0 {};
@@ -397,7 +395,28 @@ namespace uniqueptr_test {
     unique_ptr<int[], const D> p6(new int[1], d); // p6 holds a const copy of d
 
     unique_ptr<int[], D> p7(new int[1], D()); // D must be MoveConstructible
+#ifdef SMARTPTR_WITH_N
     unique_ptr<int[1]> p8(new int[1]); // D must be MoveConstructible
+#endif
+  }
+
+  class XX;
+  void test17()
+  {
+    //std::unique_ptr<XX> ux; // incomplete type of T is not allowed
+  }
+
+  void test18()
+  {
+    using namespace std;
+    unique_ptr<int[]> upa;
+    //unique_ptr<int> up = move(upa); // conversion among array and non-array forms are disallowed
+  }
+
+  void test19()
+  {
+    using namespace std;
+    //unique_ptr<base[]> upa(new derived[2]); // should not compile
   }
 
   void main()
@@ -408,7 +427,9 @@ namespace uniqueptr_test {
     test05();
 #endif
     test02();
+#ifdef SMARTPTR_WITH_N
     test03();
+#endif
     test06();
     test07();
     test08();
@@ -420,5 +441,7 @@ namespace uniqueptr_test {
     test14();
     test15();
     test16();
+    test17();
+    test18();
   }
 }
