@@ -113,7 +113,7 @@ namespace
   {
     std::forward_list<double> fld;
     fld.push_front(1.0);
-    auto ci1 = fld.cbefore_begin(), ci2 = fld.cbegin();
+    std::forward_list<double>::const_iterator ci1 = fld.cbefore_begin(), ci2 = fld.cbegin();
     VERIFY(fld.empty() == false);
     fld.clear();
     VERIFY(fld.empty() == true);
@@ -124,7 +124,7 @@ namespace
     double tmpp = fld.front();
     fld.push_front(2.0);
     ci1 = fld.cbegin();
-    auto i1 = fld.erase_after(ci1);
+    std::forward_list<double>::iterator i1 = fld.erase_after(ci1);
     VERIFY(fld.empty() == false);
     tmpp = fld.front();
     if(i1 != fld.end())
@@ -763,7 +763,9 @@ namespace forwardlist_test {
 #ifdef NTL__CXX_IL
     test02();
 #endif
+#ifdef NTL__CXX_RV
     test03();
+#endif
     test04();
     test05();
     test06();
