@@ -9,6 +9,15 @@
 
 #include <stlx/mutex.hxx>
 
+#include <memory>
+#include <vector>
+
+#include <atomic.hxx>
+#include <nt/thread.hxx>
+#include <nt/debug.hxx>
+
+namespace dbg = ntl::nt::dbg;
+
 namespace std
 {
   template class lock_guard<mutex>;
@@ -886,7 +895,238 @@ namespace
     return 0;
   }
 
+  struct once_flag
+  {
+    constexpr once_flag()
+      :inited(false), locked(false)
+    {}
 
+  private:
+#if 1
+    void enter() 
+    {
+      dbg::trace.printf("[%04d] -> " __func__ "\n", ntl::nt::teb::instance().ClientId.UniqueThread);
+      
+      // compare_exchange:
+      // tmp = *dest
+      // if(*dest == comperand)
+      //  *dest = exchange
+      // return tmp
+      while(ntl::atomic::compare_exchange(locked, true, false) == 1){
+        //ntl::cpu::pause();
+        ntl::nt::NtDelayExecution(false, -1); // 870-986M
+        //ntl::nt::sleep(1); // 1077M
+        // CS lock: 14M
+      }
+
+      dbg::trace.printf("[%04d] <- " __func__ "\n", ntl::nt::teb::instance().ClientId.UniqueThread);
+    }
+
+    void exit()
+    {
+      ntl::atomic::exchange(locked, false);
+      dbg::trace.printf("[%04d] <- " __func__ "\n", ntl::nt::teb::instance().ClientId.UniqueThread);
+    }
+#else
+    void enter()
+    {
+      dbg::trace.printf("[%04d] -> " __func__ "\n", ntl::nt::teb::instance().ClientId.UniqueThread);
+      m_lock.lock();
+    }
+
+    void exit()
+    {
+      dbg::trace.printf("[%04d] -> " __func__ "\n", ntl::nt::teb::instance().ClientId.UniqueThread);
+      m_lock.unlock();
+    }
+  private:
+    std::mutex m_lock;
+
+#endif
+  private:
+    volatile bool inited;
+    volatile long locked;
+
+    once_flag(const once_flag&);
+    once_flag& operator=(const once_flag&);
+
+    template<class Callable>
+    friend void call_once(once_flag& flag, Callable func);
+    template<class Callable, class Arg1>
+    friend void call_once(once_flag& flag, Callable func, Arg1 arg1);
+  };
+
+  namespace __
+  {
+    template<bool member_function>
+    struct call_once_impl
+    {
+      template<class Callable, class Arg1>
+      static inline void call_once(Callable func, Arg1 arg1)
+      {
+        func(arg1);
+      }
+    };
+    template<>
+    struct call_once_impl<true>
+    {
+      template<class Callable, class T>
+      static inline void call_once(Callable mem_fun, T* obj)
+      {
+        (obj->*mem_fun)();
+      }
+      template<class Callable, class T>
+      static inline void call_once(Callable mem_fun, T obj)
+      {
+        (obj.*mem_fun)();
+      }
+    };
+  }
+
+  template<class Callable>
+  void call_once(once_flag& flag, Callable func)
+  {
+    static_assert(std::is_member_function_pointer<Callable>::value == false, "must not be a member pointer function");
+    if(flag.inited)
+      return;
+
+    flag.enter();
+    if(!flag.inited){
+      func();
+      flag.inited = true;
+    }
+    flag.exit();
+  }
+
+  template<class Callable, class Arg1>
+  void call_once(once_flag& flag, Callable func, Arg1 arg1)
+  {
+    if(flag.inited)
+      return;
+
+    flag.enter();
+    if(!flag.inited){
+      __::call_once_impl<std::is_member_function_pointer<Callable>::value>::call_once(func, arg1);
+      flag.inited = true;
+    }
+    flag.exit();
+  }
+
+  class information
+  {
+    std::once_flag flag;
+
+    void verifier()
+    {
+      ok = true;
+    }
+    bool ok;
+
+  public:
+    void verify()
+    {
+      std::call_once(flag, &information::verifier, this);
+    }
+  };
+
+  struct inform
+  {
+    inform()
+    {
+
+    }
+    ~inform()
+    {
+
+    }
+
+    void info()
+    {
+
+    }
+
+    void call_dtor()
+    {
+      this->inform::~inform();
+    }
+  };
+
+  std::once_flag g_flag;
+  void test37_init()
+  {
+
+  }
+
+  void test37()
+  {
+    std::call_once(g_flag, test37_init);
+  }
+
+  struct initializer
+  {
+    void operator()()
+    {
+
+    }
+  };
+
+  void test38()
+  {
+    static std::once_flag flag;
+    std::call_once(flag, initializer());
+  }
+
+  void test39()
+  {
+    information info;
+    info.verify();
+  }
+
+  void test40()
+  {
+    inform info;
+    std::once_flag flag;
+    std::call_once(flag, &inform::info, info);
+  }
+
+
+  void test41_functor()
+  {
+    dbg::trace.printf("[%04d] -> " __func__ "\n", ntl::nt::teb::instance().ClientId.UniqueThread);
+    ntl::nt::sleep(1000*30);
+    dbg::trace.printf("[%04d] <- " __func__ "\n", ntl::nt::teb::instance().ClientId.UniqueThread);
+  }
+
+  std::once_flag g_flag41;
+  static uint32_t __stdcall test41_thread_proc(void* arg)
+  {
+    dbg::trace.printf("[%04d] -> " __func__ "\n", ntl::nt::teb::instance().ClientId.UniqueThread);
+
+    std::call_once(g_flag41, test41_functor);
+
+    dbg::trace.printf("[%04d] <- " __func__ "\n", ntl::nt::teb::instance().ClientId.UniqueThread);
+    return 0;
+  }
+
+  void test41()
+  {
+    using namespace ntl::nt;
+
+    const peb51* p51 = static_cast<const peb51*>(&peb::instance());
+    const uint32_t hardware_concurrency = p51->NumberOfProcessors;
+
+    std::vector<user_thread> threads;//(hardware_concurrency, empty_thread);
+    threads.reserve(hardware_concurrency);
+
+    for(uint32_t i = 0; i < hardware_concurrency; i++)
+      threads.push_back(user_thread(test41_thread_proc, (void*)i, true));
+
+    legacy_handle handles[64];
+    std::transform(threads.cbegin(), threads.cend(), handles, [](const user_thread& thread) { return thread.get(); } );
+    std::for_each(threads.cbegin(), threads.cend(), [](const user_thread& thread){ thread.resume(); } );
+    ntstatus wait = NtWaitForMultipleObjects(hardware_concurrency, handles, wait_type::WaitAll, false, system_time::infinite());
+    bool ok = success(wait);
+  }
 }
 
 namespace mutex_test
@@ -929,5 +1169,9 @@ namespace mutex_test
     test34();
     test35();
     test36();
+    test37();
+    test38();
+    test39();
+    test40();
   }
 }
