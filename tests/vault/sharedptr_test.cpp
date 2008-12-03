@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <nt/new.hxx>
+#include <nt/exception.hxx>
 
 class ClassType { };
 class IncompleteClass;
@@ -17,7 +18,7 @@ template class std::shared_ptr<int>;
 template class std::shared_ptr<ClassType>;
 template class std::shared_ptr<IncompleteClass>;  // warning C4150 at std.shared_ptr.free(): deletion of pointer to incomplete type 'IncompleteClass'; no destructor called
 
-namespace sharedptr_test
+namespace 
 {
   namespace a1 {
   struct A
@@ -203,14 +204,14 @@ void deleter(A* p) { delete p; }
     VERIFY( B::ctor_count == 0 );
     VERIFY( B::dtor_count == 0 );
 
-    //a = std::shared_ptr<A>(new A);
-    //VERIFY( a.get() != 0 );
-    //VERIFY( A::ctor_count == 1 );
-    //VERIFY( A::dtor_count == 0 );
-    //VERIFY( B::ctor_count == 0 );
-    //VERIFY( B::dtor_count == 0 );
+    a = std::shared_ptr<A>(new A);
+    VERIFY( a.get() != 0 );
+    VERIFY( A::ctor_count == 1 );
+    VERIFY( A::dtor_count == 0 );
+    VERIFY( B::ctor_count == 0 );
+    VERIFY( B::dtor_count == 0 );
 
-    //a = std::shared_ptr<B>(new B);
+    //a = std::shared_ptr<B>(new B); // BUG: error
     //VERIFY( a.get() != 0 );
     //VERIFY( A::ctor_count == 2 );
     //VERIFY( A::dtor_count == 1 );
@@ -242,7 +243,7 @@ void deleter(A* p) { delete p; }
 
     std::shared_ptr<A> a;
     std::unique_ptr<A> u;
-    a = u; // { dg-error "used here" }
+    //a = u; // BUG: must be error here
 
     return 0;
   }
@@ -423,7 +424,7 @@ void deleter(A* p) { delete p; }
     bool test __attribute__((unused)) = true;
 
     std::shared_ptr<B> b(new B);
-    //std::shared_ptr<A> a(b);
+    //std::shared_ptr<A> a(b); // BUG: can't mixing base and derived classes
     //VERIFY( a.use_count() == 2 );
     //VERIFY( A::ctor_count == 1 );
     //VERIFY( A::dtor_count == 0 );
@@ -440,6 +441,7 @@ void deleter(A* p) { delete p; }
     reset_count_struct __attribute__((unused)) reset;
     bool test __attribute__((unused)) = true;
 
+    // TODO: implement unresolved symbols
     //std::shared_ptr<B> b(new B, &deleter);
     //std::shared_ptr<A> a(b);
     //VERIFY( a.use_count() == 2 );
@@ -522,7 +524,8 @@ void deleter(A* p) { delete p; }
     bool test __attribute__((unused)) = true;
 
     std::unique_ptr<A> a;
-    std::shared_ptr<A> p(a); // { dg-error "used here" }
+    //std::shared_ptr<A> p0(a); // do not write this
+    std::shared_ptr<A> p(move(a));
 
     return 0;
   }
@@ -536,6 +539,7 @@ void deleter(A* p) { delete p; }
     using namespace a3;
     bool test __attribute__((unused)) = true;
 
+    // TODO: implement unresolved symbols
 #if 0
     A * const a = new A;
     std::shared_ptr<A> a1(a);
@@ -578,8 +582,9 @@ void deleter(A* p) { delete p; }
     return 0;
   }
 #endif
+}
 
-
+namespace sharedptr_test {
 
   void main()
   {
@@ -601,7 +606,12 @@ void deleter(A* p) { delete p; }
     test14();
     test15();
     test16();
-    //test17(); // access violation
+    __try {
+      test17(); // access violation
+    }
+    __except(ntl::exception_execute_handler){
+      assert(false && "bug here");
+    }
     test18();
     test19();
     test20();
@@ -614,6 +624,6 @@ void deleter(A* p) { delete p; }
     test26();
 #endif
     // TODO: "libstdc++-v3\testsuite\20_util\shared_ptr\creation" и далее
-
   }
+
 }
