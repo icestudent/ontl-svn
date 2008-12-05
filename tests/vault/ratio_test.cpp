@@ -47,6 +47,8 @@ struct xshow_value64
 #define SHOWV(V) xshow_value<V> _Join(__x_show_value, __COUNTER__);
 #define SHOWLV(V) xshow_value64<V> _Join(__x_show_value64, __COUNTER__);
 
+//SHOWV(_INTEGRAL_MAX_BITS);
+
 typedef ratio<5,- 3>   five_thirds;       // five_thirds::num == 5, five_thirds::den == 3
 typedef ratio<25, 15> also_five_thirds;  // also_five_thirds::num == 5, also_five_thirds::den == 3
 
