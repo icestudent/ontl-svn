@@ -115,7 +115,11 @@
 #endif
 
 
-
 // language support headers
+#if !defined(STLX_EXTERNAL_RUNTIME) && !defined(STLX_INTERNAL_RUNTIME)
+# define STLX_EXTERNAL_RUNTIME
+#elif defined(STLX_INTERNAL_RUNTIME)
+# undef  STLX_EXTERNAL_RUNTIME
+#endif
 
 #endif // STLX__STLXDEF
