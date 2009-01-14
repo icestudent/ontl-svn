@@ -13,7 +13,7 @@
 #include "iterator.hxx"
 #include "type_traits.hxx"
 
-#include "initializer_list.hxx"
+#include "../initializer_list.hxx" // common header for all containers
 
 namespace stlx {
 

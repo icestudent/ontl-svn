@@ -31,7 +31,7 @@
   #endif
 #endif
 
-#include "cstring.hxx" // for stlx::strcmp
+#include "../cstring.hxx" // for stlx::strcmp
 #include "exception.hxx"
 
 #pragma warning(push)

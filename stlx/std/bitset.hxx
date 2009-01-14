@@ -8,7 +8,7 @@
 #ifndef STLX_BITSET
 #define STLX_BITSET
 
-#include "cstddef.hxx"
+#include "../cstddef.hxx"
 #include "string.hxx"
 #include "stdexcept.hxx"
 #include "iosfwd.hxx"

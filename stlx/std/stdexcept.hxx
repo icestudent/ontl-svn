@@ -9,7 +9,7 @@
 #ifndef STLX_STDEXCEPT
 #define STLX_STDEXCEPT
 
-#include "typeinfo.hxx"
+#include "../typeinfo.hxx"
 #include "exception.hxx"
 #include "string.hxx"
 
