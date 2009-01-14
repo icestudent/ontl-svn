@@ -277,7 +277,7 @@ class reference_wrapper:
       return *ptr;
     }
 
-#if NTL__CXX_VT
+#ifdef NTL__CXX_VT
     // invocation
     template <class T1, class T2, ..., class TN>
     typename result_of<T(T1, T2, ..., TN)>::type
