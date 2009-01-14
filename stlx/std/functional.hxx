@@ -8,7 +8,9 @@
 #ifndef STLX_FUNCTIONAL
 #define STLX_FUNCTIONAL
 
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
+#endif
 #include "result_of.hxx"
 #include "../cuchar.hxx"
 

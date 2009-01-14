@@ -9,10 +9,13 @@
 #define STLX_LIST
 
 #include "algorithm.hxx"
-#include "iterator.hxx"
 #include "memory.hxx"
-//#include "stdexcept.hxx"
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
+#endif
+#ifndef STLX_ITERATOR
+#include "iterator.hxx"
+#endif
 
 
 #ifdef _MSC_VER

@@ -8,9 +8,14 @@
 #ifndef STLX_DEQUE
 #define STLX_DEQUE
 
+#ifndef STLX_ITERATOR
 #include "iterator.hxx"
+#endif
+
 #include "memory.hxx"
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
+#endif
 
 namespace stlx {
 

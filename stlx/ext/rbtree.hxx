@@ -1,8 +1,11 @@
 #pragma once
 
-#include "iterator.hxx"
-#include "memory.hxx"
-#include "functional.hxx"
+#ifndef STLX_ITERATOR
+#include "../iterator.hxx"
+#endif
+
+#include "../memory.hxx"
+#include "../functional.hxx"
 
 namespace tree
 {

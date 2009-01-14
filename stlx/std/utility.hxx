@@ -8,7 +8,9 @@
 #ifndef STLX_UTILITY
 #define STLX_UTILITY
 
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
+#endif
 #include "functional.hxx"
 
 /// Standard Template Library

@@ -14,11 +14,17 @@
 /* */
 #include "../cstring.hxx"
 #include "algorithm.hxx"
-#include "iterator.hxx"
+#ifndef STLX_MEMORY
 #include "memory.hxx"
+#endif
+#ifndef STLX_VECTOR
 #include "vector.hxx"
+#endif
 
 #include "new.hxx"
+#ifndef STLX_ITERATOR
+#include "iterator.hxx"
+#endif
 
 #ifndef EOF // should be moved to "stdio.hxx" ?
 # define EOF -1

@@ -10,7 +10,9 @@
 
 #include "exception.hxx"
 #include "iosfwd.hxx"
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
+#endif
 
 namespace stlx {
 

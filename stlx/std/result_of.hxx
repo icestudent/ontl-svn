@@ -33,7 +33,9 @@
 #ifndef STLX_RESULT_OF_HXX
 #define STLX_RESULT_OF_HXX
 
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
+#endif
 #include "../../spp/args.hxx"
 
 namespace stlx

@@ -8,10 +8,18 @@
 #ifndef STLX_VECTOR
 #define STLX_VECTOR
 
+#ifndef STLX_ALGORITHM
 #include "algorithm.hxx"
-#include "iterator.hxx"
+#endif
+#ifndef STLX_MEMORY
 #include "memory.hxx"
+#endif
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
+#endif
+#ifndef STLX_ITERATOR
+#include "iterator.hxx"
+#endif
 
 #ifdef _MSC_VER
 # pragma warning(push)

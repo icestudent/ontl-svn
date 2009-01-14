@@ -9,7 +9,9 @@
 #define STLX_CHRONO
 
 #include "../ctime.hxx"
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
+#endif
 #include "limits.hxx"
 #include "ratio.hxx"
 

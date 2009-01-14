@@ -7,7 +7,9 @@
 #ifndef STLX_SYSTEM_ERROR
 #define STLX_SYSTEM_ERROR
 
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
+#endif
 #include "stdexcept.hxx"
 #include "string.hxx"
 

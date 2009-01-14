@@ -8,7 +8,9 @@
 #ifndef STLX_RATIO
 #define STLX_RATIO
 
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
+#endif
 #include "../climits.hxx" // for RATIO_MAX, RATIO_MIN
 
 namespace stlx

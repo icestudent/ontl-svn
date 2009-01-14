@@ -8,7 +8,10 @@
 #ifndef STLX_ALGORITHM
 #define STLX_ALGORITHM
 
+#ifndef STLX_ITERATOR
 #include "iterator.hxx"
+#endif
+
 #include "utility.hxx"
 
 namespace stlx {

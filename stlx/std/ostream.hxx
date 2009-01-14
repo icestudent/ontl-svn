@@ -9,9 +9,11 @@
 #define STLX_OSTREAM
 
 #include "ios.hxx"
-#include "iterator.hxx"
 #include "locale.hxx"
 #include "string.hxx"
+#ifndef STLX_ITERATOR
+#include "iterator.hxx"
+#endif
 
 namespace stlx {
 

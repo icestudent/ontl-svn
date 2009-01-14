@@ -120,6 +120,11 @@
 # define STLX_EXTERNAL_RUNTIME
 #elif defined(STLX_INTERNAL_RUNTIME)
 # undef  STLX_EXTERNAL_RUNTIME
+
+  // stlx forward declaration
+  namespace stlx {}
+  // declare std namespace
+  namespace std = stlx;
 #endif
 
 #endif // STLX__STLXDEF

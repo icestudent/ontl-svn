@@ -10,10 +10,14 @@
 
 #include "../cstddef.hxx"
 #include "exception.hxx"
-#include "iterator.hxx"
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
-
+#endif
 #include "../initializer_list.hxx" // common header for all containers
+
+#ifndef STLX_ITERATOR
+#include "iterator.hxx"
+#endif
 
 namespace stlx {
 

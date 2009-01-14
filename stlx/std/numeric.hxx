@@ -8,7 +8,10 @@
 #ifndef STLX_NUMERICS
 #define STLX_NUMERICS
 
+#ifndef STLX_ITERATOR
 #include "iterator.hxx"
+#endif
+
 
 
 namespace stlx {

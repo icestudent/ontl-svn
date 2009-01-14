@@ -9,8 +9,10 @@
 #define STLX_SET
 
 #include "algorithm.hxx"
-#include "iterator.hxx"
 #include "memory.hxx"
+#ifndef STLX_ITERATOR
+#include "iterator.hxx"
+#endif
 
 #include "rbtree.hxx"
 

@@ -5,7 +5,9 @@
  ****************************************************************************
  */
 
+#ifndef STLX_CSTDDEF
 #include "../cstddef.hxx"
+#endif
 #include "limits.hxx"
 #include "type_traits_fwd.hxx"
 

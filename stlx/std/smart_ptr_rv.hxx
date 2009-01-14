@@ -9,7 +9,9 @@
 
 #include "memory.hxx"
 #include "utility.hxx"
+#ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
+#endif
 
 #include "../basedef.hxx"
 #include "../linked_ptr.hxx"

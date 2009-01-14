@@ -8,7 +8,10 @@
 #ifndef STLX_ARRAY
 #define STLX_ARRAY
 
+#ifndef STLX_ITERATOR
 #include "iterator.hxx"
+#endif
+
 #include "stdexcept.hxx"
 
 namespace stlx {

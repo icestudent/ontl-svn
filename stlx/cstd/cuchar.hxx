@@ -7,8 +7,8 @@
 #ifndef STLX_CSTD_CUCHAR
 #define STLX_CSTD_CUCHAR
 
-#include "cstdint.hxx"
-#include "cwchar.hxx"
+#include "../cstdint.hxx"
+#include "../cwchar.hxx"
 
 #ifndef NTL__CXX_CHARS
 # define __STDC_UTF_16__ 1
