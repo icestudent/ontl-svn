@@ -36,7 +36,7 @@
 # else
   #define STATIC_ASSERT(e) typedef char _Join(_STATIC_ASSERT_, __LINE__) [(e)?1:-1]
 # endif
-#endif 
+#endif
 
 
 #ifdef __GXX_EXPERIMENTAL_CXX0X__
@@ -90,7 +90,7 @@
 // explicit delete/default function definition
 #define NTL__CXX_EF
 
-
 #endif // gcc > 4.3
+#endif // C++0x
 
 #endif // STLX_CONFIG_GCC

@@ -15,6 +15,16 @@
 
 #include "excptdef.hxx"
 
+#ifdef __GNUC__
+
+#include <limits>
+namespace stlx
+{
+  using std::numeric_limits;
+}
+
+#else
+
 namespace stlx {
 
   /**\addtogroup  lib_language_support *** 18 Language support library [language.support] ******
@@ -793,5 +803,6 @@ template<> class numeric_limits<long double>
 /**@} lib_language_support */
 
 }//namespace stlx
+#endif //gcc
 
 #endif//#ifndef STLX_LIMITS
