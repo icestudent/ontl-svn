@@ -2,7 +2,7 @@
 #include "cstddef.hxx"
 #endif
 #ifdef STLX_EXTERNAL_RUNTIME
-#include <new.h>
+#include <new>
 #else
 #include "std/new.hxx"
 #endif
