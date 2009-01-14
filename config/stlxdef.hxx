@@ -122,9 +122,57 @@
 # undef  STLX_EXTERNAL_RUNTIME
 
   // stlx forward declaration
+  /// STLx: Standard Template Library
   namespace stlx {}
   // declare std namespace
   namespace std = stlx;
 #endif
+
+  /// some ntl utilities
+  namespace ntl
+  {
+    // TODO: move out this to other header
+
+    template<typename T, typename T2>
+    static __forceinline
+      T brute_cast(T2 pf)
+    {
+      STATIC_ASSERT(sizeof(T) == sizeof(T2));
+      return *reinterpret_cast<const T*>(&pf);
+    }
+
+    namespace __
+    {
+      struct noncopyable
+      {
+      protected:
+        noncopyable(){}
+        ~noncopyable(){}
+      private:
+        noncopyable(const noncopyable&);
+        const noncopyable& operator=(const noncopyable&);
+      };
+    }
+
+    /// Base class to deny copying of derived classes.
+    typedef __::noncopyable noncopyable;
+
+    /// class_enum by remark
+    template<typename def, typename inner = def::type>
+    struct class_enum: def
+    {
+      typedef typename def::type type;
+      typedef typename inner inner;
+
+      inline class_enum(type v)
+        :v(static_cast<type>(value))
+      {}
+      inline operator inner() const { return value; }
+
+      inner value;
+    };
+
+    #define __class_enum(name) struct name ## _def; typedef class_enum<name ## _def> name; struct name ## _def { enum type
+  } // ntl
 
 #endif // STLX__STLXDEF
