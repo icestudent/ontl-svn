@@ -1,3 +1,6 @@
+#ifndef STLX_CSTDDEF
+#include "cstddef.hxx"
+#endif
 #include "std/memory.hxx"
 #ifdef NTL__CXX_RV
 #  include "std/smart_ptr_rv.hxx"
