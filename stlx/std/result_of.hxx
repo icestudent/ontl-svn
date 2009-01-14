@@ -33,7 +33,7 @@
 #ifndef NTL_RESULT_OF_HXX
 #define NTL_RESULT_OF_HXX
 
-#include <type_traits>
+#include "type_traits.hxx"
 #include "spp/args.hxx"
 
 namespace stlx
