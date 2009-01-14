@@ -21,7 +21,7 @@
 #include "vector.hxx"
 #endif
 
-#include "new.hxx"
+#include "../new.hxx"
 #ifndef STLX_ITERATOR
 #include "iterator.hxx"
 #endif

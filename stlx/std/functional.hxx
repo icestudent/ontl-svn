@@ -851,7 +851,6 @@ const_mem_fun1_ref_t<Result, T, A>
  */
 #pragma endregion
 
-
 #pragma region unord.hash
 // 20.6.16 Class template hash [unord.hash]
 /**\defgroup  lib_hash 20.6.16 Class template hash [unord.hash]

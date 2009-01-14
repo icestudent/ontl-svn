@@ -66,12 +66,6 @@ new_handler set_new_handler(new_handler new_p) __ntl_nothrow;
 
 }//namespace stlx
 
-#ifdef _MSC_VER
-#define operator  __cdecl operator
-#else
-//#define operator  operator
-#endif
-
 /**\addtogroup  lib_language_support
  *@{*/
 
@@ -79,37 +73,42 @@ new_handler set_new_handler(new_handler new_p) __ntl_nothrow;
  *@{*/
 
 // Storage allocation and deallocation [18.5.1 lib.new.delete]
+#ifdef _MSC_VER
+#define _newdecl __cdecl
+#else
+#define _newdecl 
+#endif
 
 ///\name  Single-object forms [18.5.1.1 lib.new.delete.single]
 
-void* operator new      (stlx::size_t size) __ntl_throws(stlx::bad_alloc);
-void  operator delete   (void* ptr) __ntl_nothrow;
+void* _newdecl operator new      (stlx::size_t size) __ntl_throws(stlx::bad_alloc);
+void  _newdecl operator delete   (void* ptr) __ntl_nothrow;
 
-void* operator new      (stlx::size_t size, const stlx::nothrow_t&) __ntl_nothrow;
-void  operator delete   (void* ptr, const stlx::nothrow_t&) __ntl_nothrow;
+void* _newdecl operator new      (stlx::size_t size, const stlx::nothrow_t&) __ntl_nothrow;
+void  _newdecl operator delete   (void* ptr, const stlx::nothrow_t&) __ntl_nothrow;
 
 ///\name  Array forms [18.5.1.2 lib.new.delete.array]
 
-void* operator new[]    (stlx::size_t size) __ntl_throws(stlx::bad_alloc);
-void  operator delete[] (void* ptr) __ntl_nothrow;
+void* _newdecl operator new[]    (stlx::size_t size) __ntl_throws(stlx::bad_alloc);
+void  _newdecl operator delete[] (void* ptr) __ntl_nothrow;
 
-void* operator new[]    (stlx::size_t size, const stlx::nothrow_t&) __ntl_nothrow;
-void  operator delete[] (void* ptr, const stlx::nothrow_t&) __ntl_nothrow;
+void* _newdecl operator new[]    (stlx::size_t size, const stlx::nothrow_t&) __ntl_nothrow;
+void  _newdecl operator delete[] (void* ptr, const stlx::nothrow_t&) __ntl_nothrow;
 
 ///\name  Placement forms [18.5.1.3 lib.new.delete.placement]
 ///\note  Standard says nothing about inline nor static, but we're avoiding LNK2005
 
 __forceinline
-void* operator new      (stlx::size_t, void* ptr) __ntl_nothrow  { return ptr; }
+void* _newdecl operator new      (stlx::size_t, void* ptr) __ntl_nothrow  { return ptr; }
 
 __forceinline
-void  operator delete   (void*, void*) __ntl_nothrow            {}
+void  _newdecl operator delete   (void*, void*) __ntl_nothrow            {}
 
 __forceinline
-void* operator new[]    (stlx::size_t, void* ptr) __ntl_nothrow  { return ptr; }
+void* _newdecl operator new[]    (stlx::size_t, void* ptr) __ntl_nothrow  { return ptr; }
 
 __forceinline
-void  operator delete[] (void*, void*) __ntl_nothrow            {}
+void  _newdecl operator delete[] (void*, void*) __ntl_nothrow            {}
 
 #undef operator
 
