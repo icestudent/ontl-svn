@@ -14,7 +14,7 @@
 #include "functional.hxx"
 
 /// Standard Template Library
-namespace stlx 
+namespace stlx
 {
 
 /**\defgroup  std_depr **************** C++ Standard Compatibility features [depr]
@@ -80,7 +80,7 @@ bool operator>=(const T & x, const T & y) { return !(x < y); }
     return t;
   }
 
-  template <class T> 
+  template <class T>
   inline
   typename remove_reference<T>::type&& move(T&& t)
   {
@@ -121,10 +121,10 @@ struct pair
     T2  second;
 
 
-    pair() : first(T1()), second(T2()) 
+    pair() : first(T1()), second(T2())
     {}
 
-    pair(const T1 & x, const T2 & y) : first(x), second(y) 
+    pair(const T1 & x, const T2 & y) : first(x), second(y)
     {}
 
     template<class U, class V>
@@ -133,7 +133,7 @@ struct pair
     {}
 
 #ifdef NTL__CXX_RV
-    template<class U, class V> 
+    template<class U, class V>
     pair(U&& x, V&& y)
       :first(forward<U>(x)), second(forward<V>(y))
     {}
@@ -295,9 +295,9 @@ namespace __
   struct pair_type
   {
     typedef typename decay<T>::type U;
-    
-    typedef typename conditional<is_same<U, reference_wrapper<T> >::value, 
-                                 T&, 
+
+    typedef typename conditional<is_same<U, reference_wrapper<T> >::value,
+                                 T&,
                                  U
                                 >::type type;
   };
@@ -306,7 +306,7 @@ namespace __
   {
     typedef typename pair_type<T1>::type V1;
     typedef typename pair_type<T2>::type V2;
-    typedef typename pair<V1, V2> type;
+    typedef pair<V1, V2> type;
   };
 }
 

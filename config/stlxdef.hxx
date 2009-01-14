@@ -158,14 +158,13 @@
     typedef __::noncopyable noncopyable;
 
     /// class_enum by remark
-    template<typename def, typename inner = def::type>
+    template<typename def, typename inner = typename def::type>
     struct class_enum: def
     {
       typedef typename def::type type;
-      typedef typename inner inner;
 
       inline class_enum(type v)
-        :v(static_cast<type>(value))
+        :value(static_cast<type>(v))
       {}
       inline operator inner() const { return value; }
 

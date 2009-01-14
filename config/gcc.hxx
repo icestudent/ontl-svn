@@ -53,7 +53,7 @@
 // auto
 //#define NTL__CXX_AUTO
 // char16_t, char32_t
-//#define NTL__CXX_CHARS
+#define NTL__CXX_CHARS
 // concepts, concept_map, requires
 //#define NTL__CXX_CONCEPT
 // constexpr
@@ -79,7 +79,7 @@
 // template typedef
 //#define NTL__CXX_TT
 // variadic templates (implies rvalue references support)
-#define NTL__CXX_VT
+//#define NTL__CXX_VT
 
 #if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 3))
 
@@ -92,5 +92,7 @@
 
 #endif // gcc > 4.3
 #endif // C++0x
+
+#define STLX_CSTD_INT_EXISTS
 
 #endif // STLX_CONFIG_GCC

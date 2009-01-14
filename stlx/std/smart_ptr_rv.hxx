@@ -38,7 +38,7 @@ namespace stlx
     void operator()(T* ptr) const
     {
       static_assert(sizeof(T) > 0, "incomplete type of T is not allowed");
-      ::delete ptr; 
+      ::delete ptr;
     }
   private:
     // forbid incompatible ::delete[]
@@ -49,10 +49,10 @@ namespace stlx
   /// 20.7.11.1.2 default_delete<T[]> [unique.ptr.dltr.dflt1]
   template <class T> struct default_delete<T[]>
   {
-    void operator()(T* ptr) const 
+    void operator()(T* ptr) const
     {
       static_assert(sizeof(T) > 0, "incomplete type of T is not allowed");
-      ::delete[] ptr; 
+      ::delete[] ptr;
     }
   };
 
@@ -73,7 +73,7 @@ namespace stlx
   template <class T, class D>
   class unique_ptr
   {
-#ifndef __BCPLUSPLUS__
+#ifdef _MSC_VER
     typedef typename const unique_ptr::T** unspecified_pointer_type;
     typedef typename const unique_ptr::T*  unspecified_bool_type;
 #else
@@ -95,7 +95,7 @@ namespace stlx
       static_assert(!(is_reference<D>::value || is_pointer<D>::value), "D shall not be a reference type or pointer type");
     }
 
-    explicit unique_ptr(pointer p) __ntl_nothrow 
+    explicit unique_ptr(pointer p) __ntl_nothrow
       : ptr(p), deleter()
     {
       static_assert(!(is_reference<D>::value || is_pointer<D>::value), "D shall not be a reference type or pointer type");
@@ -105,11 +105,11 @@ namespace stlx
       :ptr(0), deleter()
     {}
 
-    unique_ptr(pointer p, typename conditional<is_reference<deleter_type>::value, deleter_type, const deleter_type&>::type d) __ntl_nothrow 
+    unique_ptr(pointer p, typename conditional<is_reference<deleter_type>::value, deleter_type, const deleter_type&>::type d) __ntl_nothrow
       : ptr(p), deleter(d)
     {}
 
-    unique_ptr(pointer p, typename remove_reference<deleter_type>::type&& d) __ntl_nothrow 
+    unique_ptr(pointer p, typename remove_reference<deleter_type>::type&& d) __ntl_nothrow
       : ptr(p), deleter(move(d))
     {
       static_assert(!is_reference<D>::value, "rvalue deleter object combined with reference deleter type");
@@ -131,10 +131,10 @@ namespace stlx
     }
 
     ///\name 20.7.11.2.2 unique_ptr destructor [unique.ptr.single.dtor]
-    ~unique_ptr() __ntl_nothrow 
+    ~unique_ptr() __ntl_nothrow
     {
       if ( get() )
-        get_deleter()(get()); 
+        get_deleter()(get());
     }
 
     ///\name 20.7.11.2.3 unique_ptr assignment [unique.ptr.single.asgn]
@@ -177,7 +177,7 @@ namespace stlx
     {
       pointer tmp = nullptr;
       stlx::swap(ptr, tmp);
-      return tmp; 
+      return tmp;
     }
 
     __forceinline
@@ -187,7 +187,7 @@ namespace stlx
       set(p);
     }
 
-    void swap(unique_ptr&& u) __ntl_nothrow 
+    void swap(unique_ptr&& u) __ntl_nothrow
     {
       stlx::swap(ptr, u.ptr);
       stlx::swap(deleter, u.deleter);
@@ -214,7 +214,7 @@ namespace stlx
   template <class T>
   class unique_ptr<T, default_delete<T> >
   {
-    #ifndef __BCPLUSPLUS__
+    #ifdef _MSC_VER
     typedef typename const unique_ptr::T** unspecified_pointer_type;
     typedef typename const unique_ptr::T*  unspecified_bool_type;
     #else
@@ -233,7 +233,7 @@ namespace stlx
     unique_ptr() __ntl_nothrow : ptr(0) {}
 
     explicit unique_ptr(pointer p) __ntl_nothrow : ptr(p) {}
-    
+
     unique_ptr(nullptr_t) __ntl_nothrow
       :ptr(0)
     {}
@@ -253,10 +253,10 @@ namespace stlx
     }
 
     ///\name 20.7.11.2.2 unique_ptr destructor [unique.ptr.single.dtor]
-    ~unique_ptr() __ntl_nothrow 
+    ~unique_ptr() __ntl_nothrow
     {
       if ( get() )
-        get_deleter()(get()); 
+        get_deleter()(get());
     }
 
     ///\name 20.7.11.2.3 unique_ptr assignment [unique.ptr.single.asgn]
@@ -298,7 +298,7 @@ namespace stlx
     {
       pointer tmp = nullptr;
       stlx::swap(ptr, tmp);
-      return tmp; 
+      return tmp;
     }
 
     __forceinline
@@ -308,9 +308,9 @@ namespace stlx
       set(p);
     }
 
-    void swap(unique_ptr&& u) __ntl_nothrow 
+    void swap(unique_ptr&& u) __ntl_nothrow
     {
-      stlx::swap(ptr, u.ptr); 
+      stlx::swap(ptr, u.ptr);
     }
     ///\}
 
@@ -331,13 +331,13 @@ namespace stlx
   template <class T, class D>
   class unique_ptr<T[], D>
   {
-#ifndef __BCPLUSPLUS__
+  #ifdef _MSC_VER
     typedef typename const unique_ptr::T** unspecified_pointer_type;
     typedef typename const unique_ptr::T*  unspecified_bool_type;
-#else
+  #else
     typedef const T** unspecified_pointer_type;
     typedef const T*  unspecified_bool_type;
-#endif
+  #endif
 
     ///////////////////////////////////////////////////////////////////////////
   public:
@@ -362,11 +362,11 @@ namespace stlx
       :ptr(0), deleter()
     {}
 
-    unique_ptr(pointer p, typename conditional<is_reference<deleter_type>::value, deleter_type, const deleter_type&>::type d) __ntl_nothrow 
+    unique_ptr(pointer p, typename conditional<is_reference<deleter_type>::value, deleter_type, const deleter_type&>::type d) __ntl_nothrow
       : ptr(p), deleter(d)
     {}
 
-    unique_ptr(pointer p, typename remove_reference<deleter_type>::type&& d) __ntl_nothrow 
+    unique_ptr(pointer p, typename remove_reference<deleter_type>::type&& d) __ntl_nothrow
       : ptr(p), deleter(move(d))
     {
       static_assert(!is_reference<D>::value, "rvalue deleter object combined with reference deleter type");
@@ -388,10 +388,10 @@ namespace stlx
     }
 
     ///\name 20.7.11.2.2 unique_ptr destructor [unique.ptr.single.dtor]
-    ~unique_ptr() __ntl_nothrow 
+    ~unique_ptr() __ntl_nothrow
     {
       if ( get() )
-        get_deleter()(get()); 
+        get_deleter()(get());
     }
 
     ///\name 20.7.11.2.3 unique_ptr assignment [unique.ptr.single.asgn]
@@ -435,7 +435,7 @@ namespace stlx
 
     void swap(unique_ptr&& u) __ntl_nothrow
     {
-      stlx::swap(ptr, u.ptr); 
+      stlx::swap(ptr, u.ptr);
       stlx::swap(deleter, u.deleter);
     }
 
@@ -461,7 +461,7 @@ namespace stlx
   template <class T>
   class unique_ptr<T[], default_delete<T[]> >
   {
-    #ifndef __BCPLUSPLUS__
+    #ifdef _MSC_VER
     typedef typename const unique_ptr::T** unspecified_pointer_type;
     typedef typename const unique_ptr::T*  unspecified_bool_type;
     #else
@@ -501,10 +501,10 @@ namespace stlx
     }
 
     ///\name 20.7.11.2.2 unique_ptr destructor [unique.ptr.single.dtor]
-    ~unique_ptr() __ntl_nothrow 
+    ~unique_ptr() __ntl_nothrow
     {
       if ( get() )
-        get_deleter()(get()); 
+        get_deleter()(get());
     }
 
     ///\name 20.7.11.2.3 unique_ptr assignment [unique.ptr.single.asgn]
@@ -556,7 +556,7 @@ namespace stlx
 
     void swap(unique_ptr&& u) __ntl_nothrow
     {
-      stlx::swap(ptr, u.ptr); 
+      stlx::swap(ptr, u.ptr);
     }
     ///\}
 
@@ -609,10 +609,10 @@ namespace stlx
     }
 
     ///\name 20.7.11.4.1 unique_ptr destructor [unique.ptr.compiletime.dtor]
-    ~unique_ptr() __ntl_nothrow 
+    ~unique_ptr() __ntl_nothrow
     {
       if ( get() )
-        get_deleter()(get(), N); 
+        get_deleter()(get(), N);
     }
 
     ///\name 20.7.11.2.3 unique_ptr assignment [unique.ptr.single.asgn]
@@ -652,7 +652,7 @@ namespace stlx
     {
       pointer tmp = nullptr;
       stlx::swap(ptr, tmp);
-      return tmp; 
+      return tmp;
     }
 
     __forceinline
@@ -662,9 +662,9 @@ namespace stlx
       set(p);
     }
 
-    void swap(unique_ptr&& u) __ntl_nothrow 
-    { 
-      stlx::swap(ptr, u.ptr); 
+    void swap(unique_ptr&& u) __ntl_nothrow
+    {
+      stlx::swap(ptr, u.ptr);
     }
     ///\}
 
@@ -888,13 +888,13 @@ namespace stlx
     ///\name  20.7.12.2.3 shared_ptr assignment [util.smartptr.shared.assign]
     shared_ptr& operator=(shared_ptr&& r)
     {
-      r.swap(*this); 
-      return *this; 
+      r.swap(*this);
+      return *this;
     }
 
     template<class Y>
     shared_ptr& operator=(shared_ptr<Y>&& r)
-    { 
+    {
       shared_ptr<T>(r).swap(*this);
       return *this;
     }
@@ -945,7 +945,16 @@ namespace stlx
     //{
     //  return base_type::operator base_type::unspecified_bool_type();
     //}
+      #ifdef __GNUC__
+    typedef const shared_ptr* unspecified_bool_type;
+    operator unspecified_bool_type() const
+    {
+      // ptr != 0 forces a few bloat instructions
+      return reinterpret_cast<unspecified_bool_type>(base_type::ptr);
+    }
+      #else
     using base_type::operator base_type::unspecified_bool_type;
+      #endif
     #else
     explicit operator bool() const;
     #endif
@@ -1133,7 +1142,7 @@ namespace stlx
   ///@}
 
   /// 20.7.12.4 Class template enable_shared_from_this [util.smartptr.enab]
-  template<class T> 
+  template<class T>
   class enable_shared_from_this
   {
   protected:
@@ -1154,16 +1163,16 @@ namespace stlx
   *	An enumeration value indicating the implementation’s treatment of pointers that are not safely derived.
   **/
   struct pointer_safety_class
-  { 
-    enum type 
-    { 
+  {
+    enum type
+    {
       /** pointers that are not safely derived will be treated the same as pointers that are safely derived for the duration of the program */
-      relaxed, 
-      /** pointers that are not safely derived will be treated the same as pointers that are safely derived for the duration of the program 
+      relaxed,
+      /** pointers that are not safely derived will be treated the same as pointers that are safely derived for the duration of the program
       but allows the implementation to hint that it could be desirable to avoid dereferencing pointers that are not safely derived as described. */
-      preferred, 
+      preferred,
       /** pointers that are not safely derived might be treated differently than pointers that are safely derived. */
-      strict 
+      strict
     };
   };
   typedef ntl::class_enum<pointer_safety_class> pointer_safety;
@@ -1181,7 +1190,7 @@ namespace stlx
   inline void * align(size_t alignment, size_t size, void* &ptr, size_t& space)
   {
     uintptr_t & uptr = reinterpret_cast<uintptr_t&>(ptr);
-    uintptr_t const aligned_ptr = ntl::align_up(uptr, alignment);
+    uintptr_t const aligned_ptr = ((uptr + alignment - 1) / alignment) * alignment;
     if ( aligned_ptr + size <= uptr + space )
     {
       space -= aligned_ptr - uptr;

@@ -94,13 +94,12 @@ class bad_exception : public exception
       :e(current_exception())
     {}
 
-  #ifdef NTL__CXX_EF
+    // default generated
+    #if 0
     nested_exception(const nested_exception&) throw() = default;
     nested_exception& operator=(const nested_exception&) throw() = default;
     virtual ~nested_exception() = default;
-  #else
-    // default generated
-  #endif
+    #endif
 
     // access functions
     void rethrow_nested() const; // [[noreturn]]

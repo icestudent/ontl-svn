@@ -277,14 +277,14 @@ class reference_wrapper:
       return *ptr;
     }
 
-#ifdef NTL__CXX_VT
+#if defined(NTL__CXX_VT) && 0
     // invocation
-    template <class T1, class T2, ..., class TN>
-    typename result_of<T(T1, T2, ..., TN)>::type
-      operator() (T1&, T2&, ..., TN&) const
+    template <class... Args>
+    typename result_of<T(Args...)>::type
+      operator() (Args&&... args) const
     {
     // Returns: INVOKE (get(), a1, a2, ..., aN). ([3.3])
-      return get()(t1);
+      return get()(forward<Args>(args));
     }
 #endif
 
