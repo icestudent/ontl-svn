@@ -14,7 +14,7 @@
 #include "utility.hxx"
 #endif
 
-#include "../linked_ptr.hxx"
+#include "../ext/linked_ptr.hxx"
 
 namespace stlx
 {

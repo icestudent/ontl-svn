@@ -393,7 +393,7 @@ public:
     /// 13 Remarks: shrink_to_fit is a non-binding request to reduce capacity()
     ///   to size(). \note The request is non-binding to allow latitude for
     ///   implementation-specific optimizations.
-    void shrink_to_fit() 
+    void shrink_to_fit()
     {
       str.shrink_to_fit();
     }
@@ -1379,6 +1379,8 @@ namespace __
   template <class charT, class traits, class Allocator>
   struct string_hash<basic_string<charT, traits, Allocator> >: unary_function<basic_string<charT, traits, Allocator>, size_t>
   {
+    typedef basic_string<charT, traits, Allocator> argument_type;
+
     /// string hash calculation
     inline size_t operator()(const argument_type& str) const __ntl_nothrow
     {

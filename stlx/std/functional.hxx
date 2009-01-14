@@ -19,7 +19,7 @@
 #pragma warning(disable:4820) // X bytes padding added...
 #endif
 
-namespace stlx 
+namespace stlx
 {
 
 /**\addtogroup  lib_utilities ********** 20 General utilities library [utilities]
@@ -57,9 +57,9 @@ namespace stlx
   - <tt>(*t1).*f</tt> when \p f is a pointer to member data of a class \c T and \p t1 is not one of the types described in
  the previous item;
   - <tt>f(t1, t2, ..., tN)</tt> in all other cases.
- 
+
  Define <tt>INVOKE(f, t1, t2, ..., tN, R)</tt> as <tt>INVOKE(f, t1, t2, ..., tN)</tt> implicitly converted to \c R.
- 
+
  If a call wrapper (20.6.1) has a <em>weak result type</em> the type of its member type \c result_type is based on the
  type \c T of the wrapper's target object (20.6.1):
   - if \c T is a function, reference to function, or pointer to function type, \c result_type shall be a synonym
@@ -68,7 +68,7 @@ namespace stlx
   - if \c T is a class type with a member type \c result_type, then result_type shall be a synonym for
  <tt>T::result_type</tt>;
   - otherwise \c result_type shall not be defined.
- 
+
  Every call wrapper (20.6.1) shall be CopyConstructible. A <em>simple call wrapper</em> is a call wrapper that is
  CopyAssignable and whose copy constructor and assignment operator do not throw exceptions. A <em>forwarding
  call wrapper</em> is a call wrapper that can be called with an argument %list.
@@ -156,7 +156,7 @@ namespace __
     static const bool binary = sizeof( probe_binary((T*)0) ) == sizeof(yes);
     static const bool has_result_type = sizeof( probe_result((T*)0) ) == sizeof(yes);
 
-    static const refwrap_from::type value = 
+    static const refwrap_from::type value =
       unary ? refwrap_from::unary :
       binary ? refwrap_from::binary :
       has_result_type ? refwrap_from::other :
@@ -171,12 +171,12 @@ namespace __
   {};
 
   template<class T>
-  struct refwrap_derived<T, refwrap_from::unary>: 
+  struct refwrap_derived<T, refwrap_from::unary>:
     unary_function<typename T::argument_type, typename T::result_type>
   {};
 
   template<class T>
-  struct refwrap_derived<T, refwrap_from::binary>: 
+  struct refwrap_derived<T, refwrap_from::binary>:
     binary_function<typename T::first_argument_type, typename T::second_argument_type, typename T::result_type>
   {};
 
@@ -903,7 +903,7 @@ struct hash: unary_function<T, size_t>
 template<class T>
 struct hash<T*>: unary_function<T*, size_t>
 {
-  size_t operator()(argument_type val) const __ntl_nothrow
+  size_t operator()(T* val) const __ntl_nothrow
   {
     return reinterpret_cast<size_t>(val);
   }
@@ -932,7 +932,7 @@ NTL_HASH_IMPL(unsigned int);
 NTL_HASH_IMPL(long);
 NTL_HASH_IMPL(unsigned long);
 
-// NOTE: if sizeof(int64_t) > sizeof(size_t) we must use some hashing algorithm (e.g. FNV) to calculate hash value of the 64-bit data, 
+// NOTE: if sizeof(int64_t) > sizeof(size_t) we must use some hashing algorithm (e.g. FNV) to calculate hash value of the 64-bit data,
 // but it can produce collision between hash algorithm result and "hash value" of the fundamental data.
 #if __SIZEOF_POINTER__ == 8
 NTL_HASH_IMPL(long long);

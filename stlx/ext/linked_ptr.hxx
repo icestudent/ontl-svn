@@ -67,7 +67,7 @@ struct linked_ptr
     operator unspecified_bool_type() const
     {
       // ptr != 0 forces a few bloat instructions
-      return brute_cast<unspecified_bool_type>(ptr);
+      return reinterpret_cast<unspecified_bool_type>(ptr);
     }
 
     void swap(this_type & r)
