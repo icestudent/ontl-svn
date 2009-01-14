@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="stlx" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="release">
+				<Option output="libstlx" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/release/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Unit filename="config/bcb.hxx" />
+		<Unit filename="config/gcc.hxx" />
+		<Unit filename="config/icc.hxx" />
+		<Unit filename="config/msvc.hxx" />
+		<Unit filename="config/stlxdef.hxx" />
+		<Unit filename="spp/args.hxx" />
+		<Unit filename="spp/control.hxx" />
+		<Unit filename="spp/loop.hxx" />
+		<Unit filename="spp/math.hxx" />
+		<Unit filename="spp/utility.hxx" />
+		<Unit filename="stlx/algorithm.hxx" />
+		<Unit filename="stlx/array.hxx" />
+		<Unit filename="stlx/bitset.hxx" />
+		<Unit filename="stlx/cassert.hxx" />
+		<Unit filename="stlx/cfloat.hxx" />
+		<Unit filename="stlx/chrono.hxx" />
+		<Unit filename="stlx/climits.hxx" />
+		<Unit filename="stlx/cstd/cassert.hxx" />
+		<Unit filename="stlx/cstd/cfloat.hxx" />
+		<Unit filename="stlx/cstd/climits.hxx" />
+		<Unit filename="stlx/cstd/cstdarg.hxx" />
+		<Unit filename="stlx/cstd/cstddef.hxx" />
+		<Unit filename="stlx/cstd/cstdint.hxx" />
+		<Unit filename="stlx/cstd/cstdio.hxx" />
+		<Unit filename="stlx/cstd/cstdlib.hxx" />
+		<Unit filename="stlx/cstd/cstring.hxx" />
+		<Unit filename="stlx/cstd/ctime.hxx" />
+		<Unit filename="stlx/cstd/cuchar.hxx" />
+		<Unit filename="stlx/cstd/cwchar.hxx" />
+		<Unit filename="stlx/cstdarg.hxx" />
+		<Unit filename="stlx/cstdbool.hxx" />
+		<Unit filename="stlx/cstddef.hxx" />
+		<Unit filename="stlx/cstdint.hxx" />
+		<Unit filename="stlx/cstdio.hxx" />
+		<Unit filename="stlx/cstdlib.hxx" />
+		<Unit filename="stlx/cstring.hxx" />
+		<Unit filename="stlx/ctime.hxx" />
+		<Unit filename="stlx/cuchar.hxx" />
+		<Unit filename="stlx/cwchar.hxx" />
+		<Unit filename="stlx/exception.hxx" />
+		<Unit filename="stlx/ext/fib.hxx" />
+		<Unit filename="stlx/ext/hashtable.hxx" />
+		<Unit filename="stlx/ext/linked_list.hxx" />
+		<Unit filename="stlx/ext/linked_ptr.hxx" />
+		<Unit filename="stlx/ext/pp/config.hxx" />
+		<Unit filename="stlx/ext/pp/macro_counter.hxx" />
+		<Unit filename="stlx/ext/pp/macro_misc.hxx" />
+		<Unit filename="stlx/ext/pp/macro_params.hxx" />
+		<Unit filename="stlx/ext/pp/macro_repeat.hxx" />
+		<Unit filename="stlx/ext/rbtree.hxx" />
+		<Unit filename="stlx/ext/ttl/data_holder.hxx" />
+		<Unit filename="stlx/ext/ttl/exception.hxx" />
+		<Unit filename="stlx/ext/ttl/typelist.hxx" />
+		<Unit filename="stlx/forward_list.hxx" />
+		<Unit filename="stlx/fstream.hxx" />
+		<Unit filename="stlx/functional.hxx" />
+		<Unit filename="stlx/initializer_list.hxx" />
+		<Unit filename="stlx/iomanip.hxx" />
+		<Unit filename="stlx/ios.hxx" />
+		<Unit filename="stlx/iosfwd.hxx" />
+		<Unit filename="stlx/iostream.hxx" />
+		<Unit filename="stlx/istream.hxx" />
+		<Unit filename="stlx/iterator.hxx" />
+		<Unit filename="stlx/limits.hxx" />
+		<Unit filename="stlx/list.hxx" />
+		<Unit filename="stlx/locale.hxx" />
+		<Unit filename="stlx/map.hxx" />
+		<Unit filename="stlx/memory.hxx" />
+		<Unit filename="stlx/mutex.hxx" />
+		<Unit filename="stlx/new.hxx" />
+		<Unit filename="stlx/numeric.hxx" />
+		<Unit filename="stlx/ostream.hxx" />
+		<Unit filename="stlx/ratio.hxx" />
+		<Unit filename="stlx/set.hxx" />
+		<Unit filename="stlx/sstream.hxx" />
+		<Unit filename="stlx/stack.hxx" />
+		<Unit filename="stlx/std/algorithm.hxx" />
+		<Unit filename="stlx/std/array.hxx" />
+		<Unit filename="stlx/std/bitset.hxx" />
+		<Unit filename="stlx/std/chrono.hxx" />
+		<Unit filename="stlx/std/condition_variable.hxx" />
+		<Unit filename="stlx/std/cstdatomic.hxx" />
+		<Unit filename="stlx/std/deque.hxx" />
+		<Unit filename="stlx/std/exception.hxx" />
+		<Unit filename="stlx/std/excptdef.hxx" />
+		<Unit filename="stlx/std/forward_list.hxx" />
+		<Unit filename="stlx/std/fstream.hxx" />
+		<Unit filename="stlx/std/function.hxx" />
+		<Unit filename="stlx/std/function_vt.hxx" />
+		<Unit filename="stlx/std/functional.hxx" />
+		<Unit filename="stlx/std/future.hxx" />
+		<Unit filename="stlx/std/initializer_list.hxx" />
+		<Unit filename="stlx/std/iomanip.hxx" />
+		<Unit filename="stlx/std/ios.hxx" />
+		<Unit filename="stlx/std/iosfwd.hxx" />
+		<Unit filename="stlx/std/iostream.hxx" />
+		<Unit filename="stlx/std/istream.hxx" />
+		<Unit filename="stlx/std/iterator.hxx" />
+		<Unit filename="stlx/std/limits.hxx" />
+		<Unit filename="stlx/std/list.hxx" />
+		<Unit filename="stlx/std/locale.hxx" />
+		<Unit filename="stlx/std/map.hxx" />
+		<Unit filename="stlx/std/memory.hxx" />
+		<Unit filename="stlx/std/mutex.hxx" />
+		<Unit filename="stlx/std/new.hxx" />
+		<Unit filename="stlx/std/numeric.hxx" />
+		<Unit filename="stlx/std/ostream.hxx" />
+		<Unit filename="stlx/std/placeholders.hxx" />
+		<Unit filename="stlx/std/posix_error.hxx" />
+		<Unit filename="stlx/std/priority_queue.hxx" />
+		<Unit filename="stlx/std/queue.hxx" />
+		<Unit filename="stlx/std/ratio.hxx" />
+		<Unit filename="stlx/std/regex.hxx" />
+		<Unit filename="stlx/std/result_of.hxx" />
+		<Unit filename="stlx/std/set.hxx" />
+		<Unit filename="stlx/std/smart_ptr.hxx" />
+		<Unit filename="stlx/std/smart_ptr_rv.hxx" />
+		<Unit filename="stlx/std/sstream.hxx" />
+		<Unit filename="stlx/std/stack.hxx" />
+		<Unit filename="stlx/std/stdexcept.hxx" />
+		<Unit filename="stlx/std/streambuf.hxx" />
+		<Unit filename="stlx/std/string.hxx" />
+		<Unit filename="stlx/std/strstream.hxx" />
+		<Unit filename="stlx/std/system_error.hxx" />
+		<Unit filename="stlx/std/thread.hxx" />
+		<Unit filename="stlx/std/tt_isfunc.inl" />
+		<Unit filename="stlx/std/tt_isfuncc.inl" />
+		<Unit filename="stlx/std/tt_ismemptr.inl" />
+		<Unit filename="stlx/std/tuple.hxx" />
+		<Unit filename="stlx/std/type_traits.hxx" />
+		<Unit filename="stlx/std/type_traits_bcb.hxx" />
+		<Unit filename="stlx/std/type_traits_fwd.hxx" />
+		<Unit filename="stlx/std/type_traits_gnuc.hxx" />
+		<Unit filename="stlx/std/type_traits_msvc.hxx" />
+		<Unit filename="stlx/std/typeinfo.hxx" />
+		<Unit filename="stlx/std/utility.hxx" />
+		<Unit filename="stlx/std/vector.hxx" />
+		<Unit filename="stlx/stdexcept.hxx" />
+		<Unit filename="stlx/streambuf.hxx" />
+		<Unit filename="stlx/string.hxx" />
+		<Unit filename="stlx/strstream.hxx" />
+		<Unit filename="stlx/system_error.hxx" />
+		<Unit filename="stlx/tuple.hxx" />
+		<Unit filename="stlx/type_traits.hxx" />
+		<Unit filename="stlx/typeinfo.hxx" />
+		<Unit filename="stlx/utility.hxx" />
+		<Unit filename="stlx/vector.hxx" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
