@@ -7,12 +7,14 @@
 #ifndef STLX_SMARTPTR
 #define STLX_SMARTPTR
 
+#ifndef STLX_MEMORY
 #include "memory.hxx"
+#endif
+#ifndef STLX_UTILITY
 #include "utility.hxx"
+#endif
 
-#include "../basedef.hxx"
 #include "../linked_ptr.hxx"
-#include "../stdlib.hxx"
 
 namespace stlx
 {

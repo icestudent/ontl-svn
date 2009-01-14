@@ -17,7 +17,7 @@
 #include "type_traits.hxx"
 #endif
 
-#include "../linked_list.hxx"
+#include "../ext/linked_list.hxx"
 
 namespace stlx {
 

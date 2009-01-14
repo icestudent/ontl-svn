@@ -366,6 +366,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\stlx\ext\linked_list.hxx"
+					>
+				</File>
+				<File
+					RelativePath=".\stlx\ext\linked_ptr.hxx"
+					>
+				</File>
+				<File
 					RelativePath=".\stlx\ext\rbtree.hxx"
 					>
 				</File>
