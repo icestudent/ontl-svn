@@ -1108,7 +1108,7 @@ namespace stlx
   inline void * align(size_t alignment, size_t size, void* &ptr, size_t& space)
   {
     uintptr_t & uptr = reinterpret_cast<uintptr_t&>(ptr);
-    uintptr_t const aligned_ptr = ntl::align_up(uptr, alignment);
+    uintptr_t const aligned_ptr = ((uptr + alignment - 1) / alignment) * alignment;
     if ( aligned_ptr + size <= uptr + space )
     {
       space -= aligned_ptr - uptr;
