@@ -19,6 +19,8 @@
 #include "iterator.hxx"
 #endif
 
+#include "../new.hxx"
+
 namespace stlx {
 
 /**\addtogroup  lib_utilities ********** 20 General utilities library [utilities] *****
