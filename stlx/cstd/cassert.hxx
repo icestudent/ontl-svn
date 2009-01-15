@@ -4,29 +4,27 @@
  *
  ****************************************************************************
  */
-
 #ifndef STLX_CSTD_CASSERT
 #define STLX_CSTD_CASSERT
-
-//namespace stlx {
 
 #ifdef _DEBUG
 #define NTL__DEBUG
 #endif
 
+#if defined(__BCPLUSPLUS__)
+  NTL__EXTERNAPI void _stdcall DbgBreakPoint();
+# define __debugbreak() DbgBreakPoint()
+#elif defined(__GNUC__)
+# define __debugbreak()
+#endif
 
 #if defined NTL__DEBUG || !defined NDEBUG
-#if defined(_MSC_VER)
+
 #define __ntl_assert(__msg, __line)\
   { const char * volatile __assertion_failure; __assertion_failure = (__msg);\
     unsigned volatile __assertion_failure_at_line; __assertion_failure_at_line = (__line);\
     __debugbreak(); }
-#elif defined(__BCPLUSPLUS__)
-  NTL__EXTERNAPI void _stdcall DbgBreakPoint();
-  #define __ntl_assert(__msg, __line) { DbgBreakPoint(); }
-#elif defined(__GNUC__)
-  #define __ntl_assert(__msg, __line) {  }
-#endif // _MSC_VER
+
 #endif
 
 
@@ -44,7 +42,7 @@
 #undef assert
 #ifdef NDEBUG
 # ifdef _MSC_VER
-  #define assert(expr)// (__assume(expr))
+  #define assert(expr)
 # else
   #define assert(expr) ((void)0)
 # endif
@@ -55,6 +53,4 @@
     ((void)0)
 #endif
 
-//}//namespace stlx
-
-#endif//#ifndef STLX_CSTD_CASSERT
+#endif // STLX_CSTD_CASSERT
