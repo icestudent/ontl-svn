@@ -35,7 +35,7 @@ namespace stlx
   * type inference and transformation at compile time.
   *
   * It includes type classification traits, type property inspection traits, and type transformations.\n
-  * The type classification traits describe a complete taxonomy of all possible C++ types, and state 
+  * The type classification traits describe a complete taxonomy of all possible C++ types, and state
   * where in that taxonomy a given type belongs.
   * The type property inspection traits allow important characteristics of types or of combinations of types to be inspected.
   * The type transformations allow certain properties of types to be manipulated.
@@ -68,7 +68,9 @@ namespace __
 #else
   #error Unspported compiler
 #endif
-
+#undef  STLX_HAVE_TRAITS
+#undef  STLX_DEF_TRAIT
+#undef  STLX_DEF_TRAIT2
 #undef  NTL__IN_STLX_TYPE_TRAITS
 
 namespace stlx {

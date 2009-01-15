@@ -34,9 +34,9 @@
 
 #elif defined(__GNUC__)
 // GCC
-  #if !(__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 3)
-  // compilers prior to 4.3 have no the type traits support
-  # error upgrade GCC at least to the GCC 4.3
+  #if !(__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 2)
+  // note that compilers prior to 4.3 have no type traits support
+  # error upgrade GCC at least to the GCC 4.2
   #endif
 
   #include "gcc.hxx"

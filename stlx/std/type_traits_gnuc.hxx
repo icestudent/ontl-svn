@@ -285,10 +285,16 @@ namespace __
 
 #endif // !fr3@K!
 // 20.5.4 Unary Type Traits [meta.unary]
+#if (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 3)
+#define STLX_HAVE_TRAITS
 #define STLX_DEF_TRAIT(trait)\
   template <class T> struct trait : public integral_constant<bool, __##trait(T)> {};
 #define STLX_DEF_TRAIT2(trait,builtin_trait)\
   template <class T> struct trait : public integral_constant<bool, __##builtin_trait(T)> {};
+#else
+#define STLX_DEF_TRAIT(trait)
+#define STLX_DEF_TRAIT2(trait,builtin_trait)
+#endif
 
 // 20.5.4.1 Primary Type Categories [meta.unary.cat]
 
@@ -511,6 +517,7 @@ namespace __ {
 template<class T> struct is_trivial;
 template<class T> struct is_standard_layout;
 
+#ifdef STLX_HAVE_TRAITS
 ///\warning what about stlx::pair<int, int> ?
 template <class T> struct is_pod
 : public integral_constant<
@@ -521,6 +528,7 @@ bool, is_scalar<typename remove_extent<T>::type>::value ||
 _CHECK_TRAIT(is_pod<int>::value);
 _CHECK_TRAIT(!is_pod<void>::value && !is_pod<const void>::value);
 _CHECK_TRAIT(is_pod<int[]>::value);
+#endif
 
 STLX_DEF_TRAIT(is_empty)
 
