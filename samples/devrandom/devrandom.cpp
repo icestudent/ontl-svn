@@ -13,7 +13,7 @@
 //
 //  uninstall:
 //      1. sc delete devrandom
-//      2. del evid4226.sys
+//
 #include <km/basedef.hxx>
 #include <km/file.hxx>
 #include <km/time.hxx>
