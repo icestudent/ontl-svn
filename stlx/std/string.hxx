@@ -10,7 +10,7 @@
 
 #include "../cwchar.hxx"
 #include "../cuchar.hxx"
-#include "iosfwd.hxx"
+#include "../iosfwd.hxx"
 /* */
 #include "../cstring.hxx"
 #include "algorithm.hxx"
@@ -26,8 +26,9 @@
 #include "iterator.hxx"
 #endif
 
-#ifndef EOF // should be moved to "stdio.hxx" ?
-# define EOF -1
+#include "../cstdio.hxx"
+#if(!STLX__USE_EXCEPTIONS)
+# include "../cassert.hxx"
 #endif
 
 namespace stlx {
@@ -52,8 +53,8 @@ struct char_traits<char>
 {
   typedef char      char_type;
   typedef int       int_type;
-  typedef streamoff off_type;
-  typedef streampos pos_type;
+  typedef std::streamoff off_type;
+  typedef std::streampos pos_type;
   typedef mbstate_t state_type;
 
   static void assign(char_type& c1, const char_type& c2) { c1 = c2; }
@@ -86,8 +87,8 @@ struct char_traits<wchar_t>
 {
   typedef wchar_t   char_type;
   typedef wint_t    int_type;
-  typedef streamoff off_type;
-  typedef wstreampos pos_type;
+  typedef std::streamoff off_type;
+  typedef std::wstreampos pos_type;
   typedef mbstate_t state_type;
 
   static void assign(char_type& c1, const char_type& c2) { c1 = c2; }
@@ -1096,7 +1097,12 @@ public:
 
     static const charT* assert_ptr(const charT* const p)
     {
-      _Assert(p);
+    #if STLX__USE_EXCEPTIONS
+      if(!p)
+        __ntl_throw(invalid_argument(__func__));
+    #else
+      assert(p);
+    #endif
       return p;
     }
 
@@ -1132,7 +1138,7 @@ public:
     /// @note allocates n + 1 bytes, possibly optimizing c_str()
     void alloc__new(size_type n)
     {
-      n = __ntl_grow_heap_block_size(n + sizeof('\0'));
+      n = ntl::grow_heap_block_size(n + sizeof('\0'));
       str.end_ = str.begin_ = str.array_allocator.allocate(n);
       str.capacity_ = n;
     }
@@ -1344,23 +1350,23 @@ struct constructible_with_allocator_suffix<
 ///\name  Inserters and extractors [21.3.7.9 string.io]
 
 template<class charT, class traits, class Allocator>
-basic_istream<charT,traits>&
-  operator>>(basic_istream<charT,traits>& is,
+std::basic_istream<charT,traits>&
+  operator>>(std::basic_istream<charT,traits>& is,
              basic_string<charT,traits,Allocator>& str);
 
 template<class charT, class traits, class Allocator>
-basic_ostream<charT, traits>&
-  operator<<(basic_ostream<charT, traits>& os,
+std::basic_ostream<charT, traits>&
+  operator<<(std::basic_ostream<charT, traits>& os,
              const basic_string<charT,traits,Allocator>& str);
 
 template<class charT, class traits, class Allocator>
-basic_istream<charT,traits>&
-  getline(basic_istream<charT,traits>& is,
+std::basic_istream<charT,traits>&
+  getline(std::basic_istream<charT,traits>& is,
           basic_string<charT,traits,Allocator>& str, charT delim);
 
 template<class charT, class traits, class Allocator>
-basic_istream<charT,traits>&
-  getline(basic_istream<charT,traits>& is,
+std::basic_istream<charT,traits>&
+  getline(std::basic_istream<charT,traits>& is,
           basic_string<charT,traits,Allocator>& str);
 
 typedef basic_string<char>    string;

@@ -11,7 +11,7 @@
 #include "../cstddef.hxx"
 #include "string.hxx"
 #include "stdexcept.hxx"
-#include "iosfwd.hxx"
+#include "../iosfwd.hxx"
 
 namespace stlx {
 
@@ -102,7 +102,7 @@ namespace stlx {
 
       // 23.3.5.1.4
       if(pos > str.size())
-        __ntl_throw(out_of_range);
+        __ntl_throw(out_of_range("out of range"));
 
       // 23.3.5.1.5
       const unsigned rlen = static_cast<unsigned>(min(n, str.size()-pos));
@@ -116,7 +116,7 @@ namespace stlx {
         const typename traits::char_type c = str[rpos];
         // 23.3.5.1.5.2
         if(!(c == '0' || c == '1'))
-          __ntl_throw(invalid_argument);
+          __ntl_throw(invalid_argument("invalid character in str"));
 
         storage_type xval = storage_[i/element_size_];
         const unsigned mod = i & element_mod_;
@@ -354,7 +354,7 @@ namespace stlx {
     void check_bounds(const size_t pos) const __ntl_throws (out_of_range)
     {
       if(pos >= N)
-        __ntl_throw(out_of_range(__FUNCTION__));
+        __ntl_throw(out_of_range(__func__));
     }
 
     template<typename T>
@@ -364,7 +364,7 @@ namespace stlx {
         // check that all upper bits are zero
         for(unsigned pos = elements_count_-1; pos >= sizeof(T) / sizeof(storage_type); --pos){
           if(storage_[pos] != 0)
-            __ntl_throw(overflow_error);
+            __ntl_throw(overflow_error("integral value cannot be represented as given type"));
         }
       }
       T val = 0;
@@ -492,12 +492,17 @@ namespace stlx {
   }
 
   template <class charT, class traits, size_t N>
-  basic_istream<charT, traits>&
-    operator>>(basic_istream<charT, traits>& is, bitset<N>& x);
+  std::basic_istream<charT, traits>&
+    operator>>(std::basic_istream<charT, traits>& is, bitset<N>& x);
 
   template <class charT, class traits, size_t N>
-  basic_ostream<charT, traits>&
-    operator<<(basic_ostream<charT, traits>& os, const bitset<N>& x);
+  std::basic_ostream<charT, traits>&
+    operator<<(std::basic_ostream<charT, traits>& os, const bitset<N>& x)
+  {
+    typedef basic_string<charT, char_traits<char> > string_type;
+    string_type out = x.to_string<string_type>();
+    return os /*<< out*/;
+  }
 
   ///@}
   /**@} lib_associative */

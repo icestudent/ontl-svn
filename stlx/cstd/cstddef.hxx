@@ -140,9 +140,10 @@ static_assert(sizeof(nullptr)==sizeof(void*), "3.9.1.10: sizeof(stlx::nullptr_t)
 #endif
 
 /// _countof macro to calculate array length in compile time
+#ifndef _countof
 template <typename T, size_t N>
 char (*__countof_helper(T(&array)[N]))[N];
 #define _countof(array) sizeof(*__countof_helper(array))
-
+#endif
 
 #endif //#ifndef STLX_CSTD_CSTDDEF

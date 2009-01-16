@@ -151,7 +151,7 @@ class strstreambuf : public basic_streambuf<char>
         && strmode & dynamic
         && !(strmode & frozen) )
       {
-        const streamsize newsize = __ntl_grow_heap_block_size(alsize);
+        const streamsize newsize = ntl::grow_heap_block_size(alsize);
         char * p = _alloc(newsize);
         if ( p )
         {

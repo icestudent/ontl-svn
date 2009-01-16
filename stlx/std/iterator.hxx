@@ -9,7 +9,7 @@
 #define STLX_ITERATOR
 
 #include "exception.hxx"
-#include "iosfwd.hxx"
+#include "../iosfwd.hxx"
 #ifndef STLX_TYPE_TRAITS
 #include "type_traits.hxx"
 #endif
@@ -468,7 +468,7 @@ class istream_iterator
   public:
     typedef charT                         char_type;
     typedef traits                        traits_type;
-    typedef basic_istream<charT, traits>  istream_type;
+    typedef std::basic_istream<charT, traits>  istream_type;
 
     istream_iterator()                : in_stream(0) {}
     istream_iterator(istream_type& s) : in_stream(&s) { read(); }
@@ -512,7 +512,7 @@ class ostream_iterator
   public:
     typedef charT                         char_type;
     typedef traits                        traits_type;
-    typedef basic_ostream<charT, traits>  ostream_type;
+    typedef std::basic_ostream<charT, traits>  ostream_type;
 
     ostream_iterator(ostream_type& s) : out_stream(s), delim(0) {}
     ostream_iterator(ostream_type& s, const charT* delimiter)
@@ -556,8 +556,8 @@ class istreambuf_iterator
     typedef charT                           char_type;
     typedef traits                          traits_type;
     typedef typename traits::int_type       int_type;
-    typedef basic_streambuf<charT, traits>  streambuf_type;
-    typedef basic_istream<charT, traits>    istream_type;
+    typedef std::basic_streambuf<charT, traits>  streambuf_type;
+    typedef std::basic_istream<charT, traits>    istream_type;
 
     struct proxy
     {
@@ -619,8 +619,8 @@ class ostreambuf_iterator
   public:
     typedef charT                           char_type;
     typedef traits                          traits_type;
-    typedef basic_streambuf<charT, traits>  streambuf_type;
-    typedef basic_ostream<charT, traits>    ostream_type;
+    typedef std::basic_streambuf<charT, traits>  streambuf_type;
+    typedef std::basic_ostream<charT, traits>    ostream_type;
 
     ostreambuf_iterator(ostream_type& s)    __ntl_nothrow : sbuf_(s.rdbuf()) {}
     ostreambuf_iterator(streambuf_type* s)  __ntl_nothrow : sbuf_(s) {}

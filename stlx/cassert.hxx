@@ -2,7 +2,7 @@
 #include "cstddef.hxx"
 #endif
 #ifdef STLX_EXTERNAL_RUNTIME
-#include <cuchar.h>
+#include <assert.h>
 #else
 #include "cstd/cassert.hxx"
 #endif

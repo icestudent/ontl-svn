@@ -9,7 +9,7 @@
 #define STLX_REGEX
 
 #include "string.hxx"
-#include "iosfwd.hxx"
+#include "../iosfwd.hxx"
 #include "stdexcept.hxx"
 #include "locale.hxx"
 #include "vector.hxx"

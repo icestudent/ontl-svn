@@ -173,6 +173,17 @@
     };
 
     #define __class_enum(name) struct name ## _def; typedef class_enum<name ## _def> name; struct name ## _def { enum type
+
+    /// calculates the new size of a reallocating heap block.
+    /// Win32 heaps have granularity of 8 and store 8 byte control structure
+    /// into allocated blocks. So the good sizes are: 8, 24, 56, ...
+    ///\todo find the apropriate place for this
+    template<typename SizeType>
+    __forceinline
+      SizeType grow_heap_block_size(const SizeType  size)
+    {
+      return (((size + 8) * 2) & ~(8-1)) - 8;
+    }
   } // ntl
 
 #endif // STLX__STLXDEF

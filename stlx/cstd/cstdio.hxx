@@ -12,6 +12,9 @@
 #include "cstdarg.hxx"
 using stlx::va_list;
 
+#ifndef EOF
+# define EOF -1
+#endif
 
 #ifndef _INC_STDLIB// MSVC compatibility
 

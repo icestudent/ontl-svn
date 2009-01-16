@@ -11,18 +11,8 @@
 #include "../cstddef.hxx"
 #include "exception.hxx"
 
-/// calculates the new size of a reallocating heap block.
-/// Win32 heaps have granularity of 8 and store 8 byte control structure
-/// into allocated blocks. So the good sizes are: 8, 24, 56, ...
-///\todo find the apropriate place for this
-template<typename SizeType>
-__forceinline
-SizeType __ntl_grow_heap_block_size(const SizeType  size)
+namespace stlx
 {
-  return (((size + 8) * 2) & ~(8-1)) - 8;
-}
-
-namespace stlx {
 
   /**\addtogroup  lib_language_support *** 18 Language support library [language.support] ******
  *@{*/
