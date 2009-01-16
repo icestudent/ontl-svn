@@ -2,7 +2,7 @@
 -- To build use premake tool (http://premake.sf.net)
 
 -- Configure paths to the dependent projects
--- Use the --tutdir=/path/to/tut or --tutdir="\"c:\program files\tut\"" to specify a custom TUT location
+-- Use the --tutdir /path/to/tut or --tutdir "c:\program files\tut" to specify a custom TUT location
 addoption('tutdir', "Provide directory to the TUT-framework")
 
 -- Run tests: premake --test
