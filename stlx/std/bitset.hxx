@@ -85,7 +85,7 @@ namespace stlx {
         reset();
 
       // split val to i elements
-      const size_t count = min(elements_count_, sizeof(unsigned long long) / sizeof(storage_type));
+      const size_t count = min((size_t)elements_count_, sizeof(unsigned long long) / sizeof(storage_type));
       for(size_t x = 0; x < count; ++x)
         storage_[x] = static_cast<storage_type>((val >> x * element_size_) & set_bits_);
     }
@@ -368,7 +368,7 @@ namespace stlx {
         }
       }
       T val = 0;
-      for(unsigned pos = 0; pos < min(sizeof(T) / sizeof(storage_type), elements_count_); ++pos)
+      for(unsigned pos = 0; pos < min(sizeof(T) / sizeof(storage_type), (size_t)elements_count_); ++pos)
         val |= (T)storage_[pos] << (pos*element_size_);
       return val;
     }
@@ -381,7 +381,7 @@ namespace stlx {
       for(unsigned word = 0; word < elements_count_; ++word){
         const unsigned rpos = N - word*element_size_ - 1;
         const storage_type xval = storage_[word];
-        const size_t count = min((size_t)rpos+1, celement_size_);
+        const size_t count = min(rpos+1, (unsigned)element_size_);
         for(unsigned bit = 0; bit < count; ++bit){
           str[rpos-bit] = static_cast<charT>('0' + ((xval & (native_one_ << bit)) != 0));
         }
@@ -448,19 +448,20 @@ namespace stlx {
     static const size_t element_mod_ = element_size_ - 1;
     static const size_t digits_mod_val_ = static_cast<size_t>(native_one_ << (N % element_size_)) - 1;//static_cast<size_t>(1 << (N & (element_size_-1))) - 1;
     static const size_t digits_mod_ = digits_mod_val_ ? digits_mod_val_ : set_bits_;
-    static const size_t elements_count_ = N / element_size_ + ((N & (element_size_-1)) ? 1 : 0);
+    //static const size_t elements_count_ = N / element_size_ + ((N & (element_size_-1)) ? 1 : 0);
     static const size_t celement_size_ = sizeof(storage_type) * 8;
+    enum { elements_count_ = N / element_size_ + ((N & (element_size_-1)) ? 1 : 0) };
 
     template<size_t size, bool large> struct tidy
     {
-      static const uint64_t make_tidy()
+      static /*const*/ uint64_t make_tidy()
       {
         return (1 << size) - 1;
       }
     };
     template<size_t size> struct tidy<size, true>
     {
-      static const uint64_t make_tidy()
+      static /*const*/ uint64_t make_tidy()
       {
         uint64_t value = 1;
         value <<= size;

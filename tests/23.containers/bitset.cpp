@@ -8,10 +8,8 @@ template class stlx::bitset<10>;
 // tests
 namespace tut
 {
-  struct empty_type{};
-  typedef test_group<empty_type> testgroup;
-  typedef testgroup::object to;
-
+  STLX_DEFAULT_TESTGROUP();
+  
   testgroup tg_bitset("stlx::bitset");
 
   // DR 693. stlx::bitset::all() missing.

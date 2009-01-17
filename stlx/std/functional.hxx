@@ -851,7 +851,7 @@ const_mem_fun1_ref_t<Result, T, A>
  */
 #pragma endregion
 
-#pragma region unord.hash
+#pragma region unord.hashval
 // 20.6.16 Class template hash [unord.hash]
 /**\defgroup  lib_hash 20.6.16 Class template hash [unord.hash]
  *
@@ -996,11 +996,11 @@ namespace __
       return hash;
     }
 
-    static inline hash_t hash_op(const void* data, size_t size, hash_t hash = seed)
+    static inline hash_t hash_op(const void* data, size_t size, hash_t hashval = seed)
     {
       for(const uint8_t* p = reinterpret_cast<const uint8_t*>(data); size--; p++)
-        hash = hash * prime ^ *p;
-      return hash;
+        hashval = hashval * prime ^ *p;
+      return hashval;
     }
 
     static inline hash_t hash_combine(hash_t hash1, hash_t hash2 = seed)
