@@ -8,6 +8,9 @@
 #ifndef STLX_ATOMIC
 #define STLX_ATOMIC
 
+#include "../cassert.hxx"
+#include "ext/atomic.hxx"
+
 namespace stlx
 {
 /**\defgroup  lib_atomic *** 29 Atomic operations library [atomics] *****
@@ -54,46 +57,87 @@ namespace stlx
   template <class T>
   T kill_dependency(T y);
 
-
-
-#pragma region atomic implementation
-
   namespace __
   {
     namespace atomic_v1
     {
-       template<typename T, bool fundamental>
-       struct atomic_base;
+      // memory barriers
+      inline void _memory_barrier()
+      {
+      #if defined(_MSC_VER)
+        _ReadWriteBarrier();
+      #elif defined __GNUC__
+        __sync_synchronize()
+      #endif
+      }
 
-       template<typename T>
-       struct atomic_base<T, true>
-       {
-         typedef T type;
-         static const bool lock_free = true;
+      inline void _memory_read_barrier()
+      {
+      #if defined(_MSC_VER)
+        _ReadBarrier();
+      #elif defined __GNUC__
+        __sync_synchronize()
+      #endif
+      }
 
-         void store(type value, memory_order mo = memory_order_seq_cst) volatile
-         {
+      inline void _memory_write_barrier()
+      {
+      #if defined(_MSC_VER)
+        _WriteBarrier();
+      #elif defined __GNUC__
+        __sync_synchronize()
+      #endif
+      }
 
-         }
+      template<typename T, bool fundamental>
+      struct atomic_base;
 
-         type load(memory_order mo = memory_order_seq_cst) const volatile
-         {
+      template<typename T>
+      struct atomic_base<T, true>
+      {
+        typedef T type;
+        static const bool lock_free = true;
 
-         }
-         type exchange(type value, memory_order mo = memory_order_seq_cst) volatile
-         {
+        void store(type value, memory_order mo = memory_order_seq_cst) volatile
+        {
+          // The order argument shall not be memory_order_consume, memory_order_acquire, nor memory_order_acq_rel.
+          assert(mo == memory_order_relaxed || mo == memory_order_consume || mo == memory_order_seq_cst);
+          
+          v = value;
+          if(mo == memory_order_seq_cst)
+            _memory_write_barrier();
+        }
 
-         }
+        type load(memory_order mo = memory_order_seq_cst) const volatile
+        {
+          // The order argument shall not be memory_order_release nor memory_order_acq_rel.
+          assert(!(mo == memory_order_release || mo == memory_order_acq_rel));
 
-         type compare_exchange(type&, type, memory_order, memory_order) volatile;
-         type compare_exchange(type&, type, memory_order = memory_order_seq_cst) volatile;
-         void fence(memory_order) const volatile;
-       };
-    }
-  }
+          // TODO: replace the full memory barrier with a corresponding barrier type
+          _memory_barrier();
+          type value = v;
+          _memory_barrier();
+          return value;
+        }
 
-#pragma endregion
+        type exchange(type value, memory_order = memory_order_seq_cst) volatile
+        {
+          return ntl::atomic::exchange(v, value);
+        }
 
+        bool compare_exchange_weak(type& expected, type desired, memory_order success, memory_order failure) volatile;
+        bool compare_exchange_strong(type& expected, type desired, memory_order success, memory_order failure) volatile;
+
+        bool compare_exchange_weak(type& expected, type desired, memory_order = memory_order_seq_cst) volatile;
+        bool compare_exchange_strong(type& expected, type desired, memory_order = memory_order_seq_cst) volatile;
+
+        void fence(memory_order) const volatile;
+
+      private:
+        volatile type v;
+      };
+    } // atomic_v1
+  } // detail
 
 
   // 29.2, lock-free property

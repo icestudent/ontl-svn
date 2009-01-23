@@ -358,6 +358,10 @@
 				Name=".ext"
 				>
 				<File
+					RelativePath=".\stlx\ext\atomic.hxx"
+					>
+				</File>
+				<File
 					RelativePath=".\stlx\ext\fib.hxx"
 					>
 				</File>

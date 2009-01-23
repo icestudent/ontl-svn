@@ -411,7 +411,7 @@ public:
     ///   if pos == size(), returns charT().
     const_reference operator[](size_type pos) const
     {
-      static const charT zero_char;// = charT();
+      static const charT zero_char = charT();
       return pos < str.size() ? *(begin() + pos) : zero_char;
     }
 
@@ -1097,10 +1097,7 @@ public:
 
     static const charT* assert_ptr(const charT* const p)
     {
-    #if STLX__USE_EXCEPTIONS
-      if(!p)
-        __ntl_throw(invalid_argument(__func__));
-    #else
+    #if !STLX__USE_EXCEPTIONS
       assert(p);
     #endif
       return p;

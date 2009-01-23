@@ -8,12 +8,16 @@
 # define __noalias
 # define __w64
 
-#define _cdecl    __attribute__((cdecl))
-#define _stdcall  __attribute__((stdcall))
-#define _fastcall __attribute__((fastcall))
-#define __cdecl    _cdecl
-#define __stdcall  _stdcall
-#define __fastcall _fastcall
+#ifndef _cdecl
+# define _cdecl    __attribute__((cdecl))
+# define _stdcall  __attribute__((stdcall))
+# define _fastcall __attribute__((fastcall))
+#endif
+#ifndef __cdecl
+# define __cdecl    _cdecl
+# define __stdcall  _stdcall
+# define __fastcall _fastcall
+#endif
 
 #ifndef NTL__CRTCALL
 # ifdef NTL__STLX_FORCE_CDECL
@@ -50,8 +54,6 @@
 //#define NTL__CXX_ALIGNAS
 // alignof
 //#define NTL__CXX_ALIGNOF
-// auto
-//#define NTL__CXX_AUTO
 // char16_t, char32_t
 #define NTL__CXX_CHARS
 // concepts, concept_map, requires
@@ -79,10 +81,12 @@
 // template typedef
 //#define NTL__CXX_TT
 // variadic templates (implies rvalue references support)
-//#define NTL__CXX_VT
+#define NTL__CXX_VT_NOT_IMPLEMENTED_YET
 
 #if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 3))
 
+// auto
+#define NTL__CXX_AUTO
 // initializer lists
 #define NTL__CXX_IL
 // class enum

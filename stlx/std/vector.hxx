@@ -440,7 +440,7 @@ class vector
                       const false_type&)
     {
       return insert__disp_it(position, first, last,
-                      iterator_traits<InputIterator>::iterator_category());
+                      typename iterator_traits<InputIterator>::iterator_category());
     }
 
     template <class IntegralType>
@@ -501,7 +501,7 @@ class vector
     template <class InputIterator>
     void insert(const_iterator position, InputIterator first, InputIterator last)
     {
-      insert__disp(&const_cast<value_type&>(*position), first, last, is_integral<InputIterator>::type());
+      insert__disp(&const_cast<value_type&>(*position), first, last, typename is_integral<InputIterator>::type());
     }
 
     void insert(const_iterator position, initializer_list<T> il)

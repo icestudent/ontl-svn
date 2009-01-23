@@ -80,7 +80,7 @@ namespace stlx {
     constexpr bitset(unsigned long long val)
     {
       // compiler cannot shift more than 32
-      val &= tidy<N, N >= 32>::make_tidy();
+      val &= tidy<N, (N >= 32)>::make_tidy();
       if(N > sizeof(unsigned long long)*8)
         reset();
 
@@ -452,19 +452,19 @@ namespace stlx {
     static const size_t celement_size_ = sizeof(storage_type) * 8;
     enum { elements_count_ = N / element_size_ + ((N & (element_size_-1)) ? 1 : 0) };
 
-    template<size_t size, bool large> struct tidy
+    template<size_t bits_size, bool large> struct tidy
     {
       static /*const*/ uint64_t make_tidy()
       {
-        return (1 << size) - 1;
+        return (1 << bits_size) - 1;
       }
     };
-    template<size_t size> struct tidy<size, true>
+    template<size_t bits_size> struct tidy<bits_size, true>
     {
       static /*const*/ uint64_t make_tidy()
       {
         uint64_t value = 1;
-        value <<= size;
+        value <<= bits_size;
         return --value;
       }
     };
@@ -501,7 +501,7 @@ namespace stlx {
     operator<<(std::basic_ostream<charT, traits>& os, const bitset<N>& x)
   {
     typedef basic_string<charT, char_traits<char> > string_type;
-    string_type out = x.to_string<string_type>();
+    string_type out ;//= x.to_string<string_type>();
     return os /*<< out*/;
   }
 

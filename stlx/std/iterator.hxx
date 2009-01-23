@@ -458,7 +458,7 @@ insert_iterator<Container>
 /// 24.5.1 Class template istream_iterator [lib.istream.iterator]
 template <class T,
           class charT = char,
-          class traits = char_traits<charT>,
+          class traits = std::char_traits<charT>,
           class Distance = ptrdiff_t>
 class istream_iterator
 : public iterator<input_iterator_tag, T, Distance, const T*, const T&>
@@ -503,7 +503,7 @@ class istream_iterator
 /// 24.5.2 Class template ostream_iterator [lib.ostream.iterator]
 template <class T,
           class charT = char,
-          class traits = char_traits<charT> >
+          class traits = std::char_traits<charT> >
 class ostream_iterator
 : public iterator<output_iterator_tag, void, void, void, void>
 {
@@ -540,7 +540,7 @@ class ostream_iterator
 /// 24.5.3 Class template istreambuf_iterator [lib.istreambuf.iterator]
 template<class charT, class traits
                                     #ifndef STLX_IOSFWD
-                                    = char_traits<charT>
+                                    = std::char_traits<charT>
                                     #endif
                                     >
 class istreambuf_iterator
@@ -608,7 +608,7 @@ class istreambuf_iterator
 /// 24.5.4 Class template ostreambuf_iterator [lib.ostreambuf.iterator]
 template <class charT, class traits
                                     #ifndef STLX_IOSFWD
-                                    = char_traits<charT>
+                                    = std::char_traits<charT>
                                     #endif
                                     >
 class ostreambuf_iterator
