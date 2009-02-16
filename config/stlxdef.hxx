@@ -159,21 +159,19 @@
     typedef __::noncopyable noncopyable;
 
     /// class_enum by remark
-    template<typename def, typename inner = typename def::type>
+    template<typename def>
     struct class_enum: def
     {
       typedef typename def::type type;
-
-      inline class_enum(type v)
-        :value(static_cast<type>(v))
-      {}
-      inline operator inner() const { return value; }
-
-      inner value;
+      __forceinline
+        class_enum(type v) : value(v) {}
+      __forceinline
+        operator type () const { return value; }
+      type value;
     };
+    #endif
 
     #define __class_enum(name) struct name ## _def; typedef class_enum<name ## _def> name; struct name ## _def { enum type
-
     /// calculates the new size of a reallocating heap block.
     /// Win32 heaps have granularity of 8 and store 8 byte control structure
     /// into allocated blocks. So the good sizes are: 8, 24, 56, ...
