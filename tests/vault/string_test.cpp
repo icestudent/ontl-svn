@@ -7,26 +7,39 @@
 
 #include <vector>
 #include <list>
-template class std::vector<int>;
-template class std::list<int>;
 
+#pragma warning(disable:4702)
 
-char* cptr()
+namespace 
 {
-  static char s[] = "cptr";
+  template class std::vector<int>;
+  template class std::list<int>;
 
-  return s;
-}
 
-const char* ccptr()
-{
-  return "ccptr";
+
+  char* cptr()
+  {
+    static char s[] = "cptr";
+
+    return s;
+  }
+
+  const char* ccptr()
+  {
+    return "ccptr";
+  }
+
 }
 
 
 void string_test()
 {
   using std::string;
+
+  std::vector<string> v1(1, string("22"));
+  std::vector<string> v2;
+  v2 = v1;
+  return;
 
   char* psz = "hi";
   const char* pcsz = "ih";

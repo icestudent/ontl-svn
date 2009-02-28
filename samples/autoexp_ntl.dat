@@ -7,6 +7,7 @@
 ; v 0.4 - array, rbtree, negators
 ; v 0.5 - unique_ptr, shared_ptr
 ; v 0.6 - forward_list
+; v 0.6a- some fixes
 ;---------------------------------------------------------------
 ;
 ; While debugging, Data Tips and items in the Watch and Variable
@@ -181,11 +182,14 @@ std::vector<bool,*>::iterator|std::vector<bool,*>::const_iterator|std::_Vb_itera
 std::vector<*>{
   children
   (
+	#(
     #array
     (
       expr :  ($c.begin_)[$i],
       size :  $c.end_-$c.begin_
-    )
+    ),
+	[actual members]: [$e,!]
+	)
   )
 
     preview
