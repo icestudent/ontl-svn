@@ -1,7 +1,7 @@
 #ifndef STLX_CONFIG_GCC
 #define STLX_CONFIG_GCC
 
-# define __forceinline inline
+# define __forceinline __attribute__((always_inline))
 # define __assume(X)
 # define __restrict
 # define __thiscall
