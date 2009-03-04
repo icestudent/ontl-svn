@@ -6,4 +6,5 @@
 #  include "std/smart_ptr_rv.hxx"
 #else
 #  include "std/smart_ptr.hxx"
+#  include "std/smart_ptr_tr1.hxx"
 #endif
