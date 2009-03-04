@@ -33,20 +33,20 @@ namespace stlx
     public:
       bad_weak_ptr()
       {}
-      const char* what() { return "tr1::bad_weak_ptr"; }
+      const char* what() __ntl_nothrow { return "tr1::bad_weak_ptr"; }
     };
 
     template<class T> class weak_ptr;
 
     // [2.2.3] Class template shared_ptr
 
-    namespace impl
+    namespace __
     {
       template<class T>
       struct shared_ptr_data
       {
         T* p;
-        size_t use_count, weak_count;
+        long use_count, weak_count;
 
         explicit shared_ptr_data()
           :p(), use_count(0), weak_count(0)
@@ -54,7 +54,7 @@ namespace stlx
         explicit shared_ptr_data(T* p)
           :p(p), use_count(1), weak_count(0)
         {}
-        ~shared_ptr_data() __ntl_nothrow {}
+        virtual ~shared_ptr_data() __ntl_nothrow {}
         virtual void free() __ntl_nothrow
         {
           delete p;
@@ -71,7 +71,7 @@ namespace stlx
       {
         D deleter;
 
-        shared_ptr_deleter(T* p, const D d)__ntl_nothrow
+        shared_ptr_deleter(T* p, const D& d)__ntl_nothrow
           :shared_ptr_data(p), deleter(d)
         {}
 
@@ -88,6 +88,13 @@ namespace stlx
       struct shared_cast_static{};
       struct shared_cast_dynamic{};
       struct shared_cast_const{};
+      template<class> struct check_shared;
+
+      template<class T, class U>
+      inline shared_ptr_data<T>* shared_data_cast(shared_ptr_data<U>* data)
+      {
+        return reinterpret_cast<shared_ptr_data<T>*>(data);
+      }
     }
 
     /**
@@ -100,7 +107,7 @@ namespace stlx
     template<class T>
     class shared_ptr
     {
-      typedef impl::shared_ptr_data<T> shared_data;
+      typedef __::shared_ptr_data<T> shared_data;
 
       struct explicit_bool { int _; };
       typedef int explicit_bool::*  explicit_bool_type;
@@ -119,6 +126,8 @@ namespace stlx
       template<class U>
       inline reference get_reference(true_type)  const { return ptr->p;  }
 
+      template<class Y>
+      void check_shared(Y* p, const shared_ptr<T>* ptr);
     public:
       typedef T element_type;
 
@@ -130,11 +139,12 @@ namespace stlx
       template<class Y> explicit shared_ptr(Y* p)
       {
         ptr = new shared_data(p);
+        check_shared(p, this);
       }
 
       template<class Y, class D> shared_ptr(Y* p, D d)
       {
-        ptr = new impl::shared_ptr_deleter<T,D>(p, d);
+        ptr = new __::shared_ptr_deleter<T,D>(p, d);
       }
 
       shared_ptr(const shared_ptr& r) __ntl_nothrow
@@ -143,7 +153,7 @@ namespace stlx
         add_ref();
       }
       template<class Y> shared_ptr(const shared_ptr<Y>& r) __ntl_nothrow
-        :ptr(reinterpret_cast<shared_data*>(r.ptr))
+        :ptr(__::shared_data_cast<T>(r.ptr))
       {
         static_assert((is_convertible<Y*,T*>::value), "Y* shall be convertible to T*");
         add_ref();
@@ -156,7 +166,7 @@ namespace stlx
         if(r.expired())
           __ntl_throw(bad_weak_ptr());
 
-        ptr = reinterpret_cast<shared_data*>(r.ptr);
+        ptr = __::shared_data_cast<T>(r.ptr);
         add_ref();
       }
       template<class Y> explicit shared_ptr(auto_ptr<Y>& r)__ntl_throws(bad_alloc)
@@ -173,7 +183,7 @@ namespace stlx
       {
         if(r.get()){
           // currently unique_ptr's deleter always are reference
-          ptr = new impl::shared_ptr_deleter<T,D>(r.get(), ref(r.get_deleter()));
+          ptr = new __::shared_ptr_deleter<T,D>(r.get(), ref(r.get_deleter()));
           r.release();
         }
       }
@@ -197,7 +207,7 @@ namespace stlx
 
       template<class Y> shared_ptr& operator=(const shared_ptr<Y>& r)
       {
-        if(ptr != reinterpret_cast<shared_data*>(r.ptr))
+        if(ptr != __::shared_data_cast<T>(r.ptr))
           shared_ptr(r).swap(*this);
         return *this;
       }
@@ -232,12 +242,13 @@ namespace stlx
       {
         reset();
         ptr = new shared_data(p);
+        check_shared(p, this);
       }
       
       template<class Y, class D> void reset(Y* p, D d)
       {
         reset();
-        ptr = new impl::shared_ptr_deleter<T,D>(p, d);
+        ptr = new __::shared_ptr_deleter<T,D>(p, d);
       }
       
       // [2.2.3.5] observers
@@ -273,23 +284,23 @@ namespace stlx
       template<class T, class U>
       friend bool operator<(shared_ptr<T> const& a, shared_ptr<U> const& b) __ntl_nothrow;
 
-      template<class Y> shared_ptr(const shared_ptr<Y>& r, impl::shared_cast_const) __ntl_nothrow
-        :ptr(reinterpret_cast<shared_data*>(r.ptr))
+      template<class Y> shared_ptr(const shared_ptr<Y>& r, __::shared_cast_const) __ntl_nothrow
+        :ptr(__::shared_data_cast<T>(r.ptr))
       {
         const_cast<T*>((Y*)0);
         add_ref();
       }
-      template<class Y> shared_ptr(const shared_ptr<Y>& r, impl::shared_cast_static) __ntl_nothrow
-        :ptr(reinterpret_cast<shared_data*>(r.ptr))
+      template<class Y> shared_ptr(const shared_ptr<Y>& r, __::shared_cast_static) __ntl_nothrow
+        :ptr(__::shared_data_cast<T>(r.ptr))
       {
         static_cast<T*>((Y*)0);
         add_ref();
       }
-      template<class Y> shared_ptr(const shared_ptr<Y>& r, impl::shared_cast_dynamic) __ntl_nothrow
+      template<class Y> shared_ptr(const shared_ptr<Y>& r, __::shared_cast_dynamic) __ntl_nothrow
         :ptr()
       {
         if(dynamic_cast<T*>(r.get())){
-          ptr = reinterpret_cast<shared_data*>(r.ptr);
+          ptr = __::shared_data_cast<T>(r.ptr);
           add_ref();
         }
       }
@@ -305,6 +316,7 @@ namespace stlx
         if(ptr && ptr->weak_count == 0){
           ptr->free();
           delete ptr;
+          ptr = nullptr;
         }
       }
     private:
@@ -325,7 +337,7 @@ namespace stlx
     template<class T, class U>
     inline bool operator<(shared_ptr<T> const& a, shared_ptr<U> const& b) __ntl_nothrow
     {
-      return a.ptr < reinterpret_cast<shared_ptr<T>::shared_data*>(b.ptr);
+      return a.ptr < __::shared_data_cast<T>(b.ptr);
     }
 
     // [2.2.3.8] shared_ptr specialized algorithms
@@ -339,18 +351,18 @@ namespace stlx
     inline shared_ptr<T> static_pointer_cast(shared_ptr<U> const& r) __ntl_nothrow
     {
       static_cast<T*>((U*)0); // check
-      return r.empty() ? shared_ptr<T>() : shared_ptr<T>(r, impl::shared_cast_static());
+      return r.empty() ? shared_ptr<T>() : shared_ptr<T>(r, __::shared_cast_static());
     }
     template<class T, class U> 
     inline shared_ptr<T> dynamic_pointer_cast(shared_ptr<U> const& r) __ntl_nothrow
     {
-      return r.empty() ? shared_ptr<T>() : shared_ptr<T>(r, impl::shared_cast_dynamic());
+      return r.empty() ? shared_ptr<T>() : shared_ptr<T>(r, __::shared_cast_dynamic());
     }
     template<class T, class U> 
     inline shared_ptr<T> const_pointer_cast(shared_ptr<U> const& r) __ntl_nothrow
     {
       const_cast<T*>((U*)0); // check
-      return r.empty() ? shared_ptr<T>() : shared_ptr<T>(r, impl::shared_cast_const());
+      return r.empty() ? shared_ptr<T>() : shared_ptr<T>(r, __::shared_cast_const());
     }
 
     // [2.2.3.7] shared_ptr I/O
@@ -377,7 +389,7 @@ namespace stlx
     template<class T>
     class weak_ptr
     {
-      typedef impl::shared_ptr_data<T>* shared_data;
+      typedef __::shared_ptr_data<T>* shared_data;
 
       template<class Y> friend class shared_ptr;
     public:
@@ -394,13 +406,13 @@ namespace stlx
       }
 
       template<class Y> weak_ptr(weak_ptr<Y> const& r) __ntl_nothrow
-        :ptr(reinterpret_cast<shared_data>(r.ptr))
+        :ptr(__::shared_data_cast<T>(r.ptr))
       {
         add_ref();
       }
 
       template<class Y> weak_ptr(shared_ptr<Y> const& r) __ntl_nothrow
-        :ptr(reinterpret_cast<shared_data>(r.ptr))
+        :ptr(__::shared_data_cast<T>(r.ptr))
       {
         add_ref();
       }
@@ -422,18 +434,18 @@ namespace stlx
       }
       template<class Y> weak_ptr& operator=(weak_ptr<Y> const& r) __ntl_nothrow
       {
-        if(ptr != reinterpret_cast<shared_data*>(r.ptr)){
+        if(ptr != __::shared_data_cast<T>(r.ptr)){
           reset();
-          ptr = reinterpret_cast<shared_data>(r.ptr);
+          ptr = __::shared_data_cast<T>(r.ptr);
           add_ref();
         }
         return *this;
       }
       template<class Y> weak_ptr& operator=(shared_ptr<Y> const& r) __ntl_nothrow
       {
-        if(ptr != reinterpret_cast<shared_data>(r.ptr)){
+        if(ptr != __::shared_data_cast<T>(r.ptr)){
           reset();
-          ptr = reinterpret_cast<shared_data>(r.ptr);
+          ptr = __::shared_data_cast<T>(r.ptr);
           add_ref();
         }
         return *this;
@@ -490,26 +502,19 @@ namespace stlx
      *
      *  A class \c T can inherit from \c enable_shared_from_this<T> to inherit the \c shared_from_this member functions that
      *  obtain a shared_ptr instance pointing to \c *this.
-     *
-     *  @bug Currently a condition <tt>(!(p < q ) && !(q < p))</tt> is not true, only <tt>p == </tt>.
      **/
     template<class T>
     class enable_shared_from_this
     {
-      shared_ptr<T> weak_this;
+      weak_ptr<T> weak_this;
+      friend struct __::check_shared<T>;
     protected:
       enable_shared_from_this() __ntl_nothrow
-      {
-        weak_this = shared_ptr<T>(static_cast<T*>(this));
-      }
-      enable_shared_from_this(enable_shared_from_this const& r) __ntl_nothrow
-        :weak_this(r.weak_this)
       {}
-      enable_shared_from_this& operator=(enable_shared_from_this const& r) __ntl_nothrow
-      {
-        weak_this = r.weak_this;
-        return *this;
-      }
+      enable_shared_from_this(enable_shared_from_this const&) __ntl_nothrow
+      {}
+      enable_shared_from_this& operator=(enable_shared_from_this const&) __ntl_nothrow
+      { return *this; }
       ~enable_shared_from_this() __ntl_nothrow
       {}
     public:
@@ -523,6 +528,30 @@ namespace stlx
         return shared_ptr<T const>(weak_this);
       }
     };
+
+    namespace __
+    {
+      template<class T>
+      struct check_shared
+      {
+        template<class>
+        static inline void check(...) {}
+
+        template<class Y>
+        static inline void check(enable_shared_from_this<T>* p, const shared_ptr<T>& ptr)
+        {
+          p->weak_this = ptr;
+        }
+      };
+    }
+
+    template<class T>
+    template<class Y>
+    inline void shared_ptr<T>::check_shared(Y* p, const shared_ptr<T>* ptr)
+    {
+      if(p)
+        __::check_shared<T>::check<Y>(p, *ptr);
+    }
 
     /**@} lib_tr1_util_smartptr */
     /**@} lib_tr1_util */
