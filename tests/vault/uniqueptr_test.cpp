@@ -28,10 +28,10 @@ namespace uniqueptr_test {
   {
     std::unique_ptr<derived> p1(new derived);
     std::unique_ptr<derived> p2(new derived);
-      //p2 = p1;  // should not compile
+    //p2 = p1;  // should not compile
     p2 = std::move(p1);
     std::unique_ptr<base> p3(new base);
-    //  p3 = p2;  // should not compile
+    //p3 = p2;  // should not compile
     p3 = std::move(p2);
   }
 #endif

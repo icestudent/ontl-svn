@@ -14,9 +14,9 @@ class ClassType { };
 class IncompleteClass;
 
 template class std::shared_ptr<int>;
-//template class std::shared_ptr<void>;           // is it right?
+template class std::shared_ptr<void>;           // it is right
 template class std::shared_ptr<ClassType>;
-template class std::shared_ptr<IncompleteClass>;  // warning C4150 at std.shared_ptr.free(): deletion of pointer to incomplete type 'IncompleteClass'; no destructor called
+//template class std::shared_ptr<IncompleteClass>;  // warning C4150 at std.shared_ptr.free(): deletion of pointer to incomplete type 'IncompleteClass'; no destructor called
 
 namespace 
 {
@@ -177,11 +177,11 @@ void deleter(A* p) { delete p; }
   #endif
 
   // DR 541. shared_ptr template assignment and void
-#if 0
+#if 1
   void test06()
   {
     std::shared_ptr<void> p;
-    p.operator=<void>(p);
+    //p.operator=<void>(p);
   }
 #endif
 
@@ -211,12 +211,12 @@ void deleter(A* p) { delete p; }
     VERIFY( B::ctor_count == 0 );
     VERIFY( B::dtor_count == 0 );
 
-    //a = std::shared_ptr<B>(new B); // BUG: error
-    //VERIFY( a.get() != 0 );
-    //VERIFY( A::ctor_count == 2 );
-    //VERIFY( A::dtor_count == 1 );
-    //VERIFY( B::ctor_count == 1 );
-    //VERIFY( B::dtor_count == 0 );
+    a = std::shared_ptr<B>(new B);
+    VERIFY( a.get() != 0 );
+    VERIFY( A::ctor_count == 2 );
+    VERIFY( A::dtor_count == 1 );
+    VERIFY( B::ctor_count == 1 );
+    VERIFY( B::dtor_count == 0 );
   }
 
   // 20.6.6.2.3 shared_ptr assignment [util.smartptr.shared.assign]
@@ -331,7 +331,7 @@ void deleter(A* p) { delete p; }
     using namespace a5;
     bool test __attribute__((unused)) = true;
 
-#if 0
+#if 1
     std::shared_ptr<A> a;
     std::shared_ptr<bool> b1(a, &test);
     VERIFY( b1.use_count() == 0 );
@@ -424,12 +424,12 @@ void deleter(A* p) { delete p; }
     bool test __attribute__((unused)) = true;
 
     std::shared_ptr<B> b(new B);
-    //std::shared_ptr<A> a(b); // BUG: can't mixing base and derived classes
-    //VERIFY( a.use_count() == 2 );
-    //VERIFY( A::ctor_count == 1 );
-    //VERIFY( A::dtor_count == 0 );
-    //VERIFY( B::ctor_count == 1 );
-    //VERIFY( B::dtor_count == 0 );
+    std::shared_ptr<A> a(b);
+    VERIFY( a.use_count() == 2 );
+    VERIFY( A::ctor_count == 1 );
+    VERIFY( A::dtor_count == 0 );
+    VERIFY( B::ctor_count == 1 );
+    VERIFY( B::dtor_count == 0 );
 
     return 0;
   }
@@ -441,14 +441,13 @@ void deleter(A* p) { delete p; }
     reset_count_struct __attribute__((unused)) reset;
     bool test __attribute__((unused)) = true;
 
-    // TODO: implement unresolved symbols
-    //std::shared_ptr<B> b(new B, &deleter);
-    //std::shared_ptr<A> a(b);
-    //VERIFY( a.use_count() == 2 );
-    //VERIFY( A::ctor_count == 1 );
-    //VERIFY( A::dtor_count == 0 );
-    //VERIFY( B::ctor_count == 1 );
-    //VERIFY( B::dtor_count == 0 );
+    std::shared_ptr<B> b(new B, &deleter);
+    std::shared_ptr<A> a(b);
+    VERIFY( a.use_count() == 2 );
+    VERIFY( A::ctor_count == 1 );
+    VERIFY( A::dtor_count == 0 );
+    VERIFY( B::ctor_count == 1 );
+    VERIFY( B::dtor_count == 0 );
 
     return 0;
   }
@@ -524,7 +523,9 @@ void deleter(A* p) { delete p; }
     bool test __attribute__((unused)) = true;
 
     std::unique_ptr<A> a;
-    //std::shared_ptr<A> p0(a); // do not write this
+#ifndef NTL__CXX_RV
+    std::shared_ptr<A> p0(a); // do not write this with RV
+#endif
     std::shared_ptr<A> p(move(a));
 
     return 0;
@@ -539,8 +540,7 @@ void deleter(A* p) { delete p; }
     using namespace a3;
     bool test __attribute__((unused)) = true;
 
-    // TODO: implement unresolved symbols
-#if 0
+#if 1
     A * const a = new A;
     std::shared_ptr<A> a1(a);
     std::weak_ptr<A> wa(a1);
@@ -582,21 +582,78 @@ void deleter(A* p) { delete p; }
     return 0;
   }
 #endif
+
+  long test_shared_ptr() {
+    class tester {
+    public:
+      static int &instance_count() {
+        static int i = 0;
+        return i;
+      }
+      tester() {
+        ++instance_count();
+      }
+      ~tester() {
+        --instance_count();
+      }
+    };
+
+    typedef std::shared_ptr<tester>	tester_ptr;
+
+    {
+      {
+        tester_ptr	test3;
+      }
+      {
+        tester_ptr	test1( new tester() );
+        tester_ptr	test2( test1 );
+      }
+      tester_ptr	test1( new tester() );
+
+      if( tester::instance_count() != 1 ) {
+        return 1;
+      }
+
+      tester_ptr	test2( test1 );
+
+      if( tester::instance_count() != 1 ) {
+        return 2;
+      }
+
+      tester_ptr	test3;
+      //test3 = test2;
+
+      if( tester::instance_count() != 1 ) {
+        return 3;
+      }
+
+      //test2 = test3;
+
+      if( tester::instance_count() != 1 ) {
+        return 4;
+      }
+    }
+    if( tester::instance_count() != 0 ) {
+      return 5;
+    }
+    return 0;
+  }
 }
 
 namespace sharedptr_test {
 
   void main()
   {
+    test_shared_ptr();
     test01();
-    test02(); // fail
+    test02();
     test03();
     test04();
     
     #ifdef NTL__CXX_RV
     test05();
     #endif
-    //test06(); // shared_ptr<void>
+    test06();
     test07();
     test08();
     test09();
@@ -606,16 +663,11 @@ namespace sharedptr_test {
     test14();
     test15();
     test16();
-    __try {
-      test17(); // access violation
-    }
-    __except(ntl::exception_execute_handler){
-      assert(false && "bug here");
-    }
+    test17();
     test18();
     test19();
     test20();
-    test21(); // fail
+    test21();
     test22();
     test23();
     test24();
