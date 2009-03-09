@@ -412,7 +412,9 @@ public:
     const_reference operator[](size_type pos) const
     {
       static const charT zero_char = charT();
-      return pos < str.size() ? *(begin() + pos) : zero_char;
+      if(pos < str.size())
+        return str[pos];
+      return zero_char;
     }
 
     /// 1 Returns: If pos < size(), returns *(begin() + pos).
