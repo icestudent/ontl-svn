@@ -25,7 +25,7 @@ namespace std
   class map<user_type, Data, Allocator> {};
 }
 
-namespace map_test {
+namespace {
 
 void test01()
 {
@@ -492,13 +492,24 @@ private:
   T value;
 };
 
-void main()
+}
+
+void map_test()
 {
   std::map<int,int> x1, x2;
   x1[0] = 1;
   x1[1] = 2;
-  //std::remove_copy_if(x1.begin(), x1.end(), x2.begin(), less_than<int>(2));
-  bool ok = x1.size() == x2.size();
+
+  x2 = x1;
+  assert(x2.size() == x1.size());
+  assert(x2 == x1);
+
+  std::map<int,int> x3(x1);
+  assert(x3.size() == x1.size());
+  assert(x3 == x1);
+  assert(!(x3 != x1));
+
+
   test01();
   test02(); // fail
  #ifdef _CPPUNWIND
@@ -516,5 +527,4 @@ void main()
   test10();
   test11();
 
-}
 }

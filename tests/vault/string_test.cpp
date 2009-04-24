@@ -35,10 +35,13 @@ namespace
 void string_test()
 {
   using std::string;
-
-  std::vector<string> v1(1, string("22"));
-  std::vector<string> v2;
-  v2 = v1;
+  {
+    std::vector<string> v1(1, string("22"));
+    std::vector<string> v2;
+    v2 = v1;
+    string s1; s1[0] = '1';
+    const string s2; s1[0] = s2[0];
+  }
   return;
 
   char* psz = "hi";

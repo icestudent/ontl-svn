@@ -524,7 +524,7 @@ void deleter(A* p) { delete p; }
 
     std::unique_ptr<A> a;
 #ifndef NTL__CXX_RV
-    std::shared_ptr<A> p0(a); // do not write this with RV
+    //std::shared_ptr<A> p0(a); // do not write this with RV
 #endif
     std::shared_ptr<A> p(move(a));
 

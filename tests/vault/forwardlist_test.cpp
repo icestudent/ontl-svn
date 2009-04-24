@@ -1,6 +1,6 @@
 // common tests part
 #include <cassert>
-#include <nt/new.hxx>
+//#include <nt/new.hxx>
 
 #define __attribute__(x)
 #pragma warning(disable:4101 4189)
@@ -8,6 +8,7 @@
 #define sizeofa(a) (sizeof(a) / sizeof(*a))
 
 #include <forward_list>
+#include <array>
 
 template class std::forward_list<int>;
 template class std::forward_list<int, std::allocator<char> >;
@@ -17,7 +18,11 @@ namespace
   namespace a1 {
   // A nontrivial type.
   template<typename T>
-  struct A { };
+  struct A 
+  {
+    friend bool operator==(const A&, const A&){ return false; }
+    friend bool operator< (const A&, const A&){ return false; }
+  };
 
   // Another nontrivial type
   struct B { };
