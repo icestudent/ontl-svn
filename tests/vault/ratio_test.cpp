@@ -2,6 +2,11 @@
 //#define SMALL_RATIO
 #include <ratio>
 
+//static_assert(0,"nrb");
+#ifdef __ICL
+#pragma warning(disable:593)
+#endif
+
 namespace {
 
 using namespace std;
@@ -10,16 +15,16 @@ using namespace std;
 #define __attribute__(x)
 
 
-template<ratio_t N, ratio_t D>
+template<ratio_t N, ratio_t D, typename _ = int>
 struct xshow_ratio
 {
-  char _[0];
+  char _[sizeof(_) == sizeof(char)];
 };
 
-template<typename T>
+template<typename T, typename _ = int>
 struct xshow_type
 {
-  char _[0];
+  char _[sizeof(_) == sizeof(char)];
 };
 
 template<ratio_t N, ratio_t D>
@@ -30,16 +35,16 @@ struct xshow_type<std::ratio<N,D>>
 };
 
 
-template<int value>
+template<int value, typename _ = int>
 struct xshow_value
 {
-  char _[0];
+  char _[sizeof(_) == sizeof(char)];
 };
 
-template<__int64 value>
+template<__int64 value, typename _ = int>
 struct xshow_value64
 {
-  char _[0];
+  char _[sizeof(_) == sizeof(char)];
 };
 
 #define SHOWR(T) xshow_type<T> _Join(__x_show_type, __COUNTER__);

@@ -1108,6 +1108,7 @@ namespace
     return 0;
   }
 
+#if defined NTL__CXX_LAMBDA && defined NTL__CXX_RV
   void test41()
   {
     using namespace ntl::nt;
@@ -1127,6 +1128,7 @@ namespace
     ntstatus wait = NtWaitForMultipleObjects(hardware_concurrency, handles, wait_type::WaitAll, false, system_time::infinite());
     bool ok = success(wait);
   }
+#endif
 }
 
 namespace mutex_test

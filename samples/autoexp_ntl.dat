@@ -8,6 +8,7 @@
 ; v 0.5 - unique_ptr, shared_ptr
 ; v 0.6 - forward_list
 ; v 0.6a- some fixes
+; v 0.7 - added char16_t
 ;---------------------------------------------------------------
 ;
 ; While debugging, Data Tips and items in the Watch and Variable
@@ -270,6 +271,29 @@ std::basic_string<wchar_t,*>{
   (
     #([raw]: [$e,!],  #array( expr: $e.str.begin_[$i], size: $e.str.end_-$e.str.begin_))
   )
+}
+
+; char16_t
+std::basic_string<std::char16_t,*>{
+  preview
+  (
+    #if($e.str.begin_ == $e.str.end_)(
+      "<empty>"
+    ) #else (
+      [$e.str.begin_,su]
+    )
+  )
+
+  stringview
+  (
+    [$e.str.begin_,sub]
+  )
+
+  children
+  (
+    #([raw]: [$e,!],  #array( expr: $e.str.begin_[$i], size: $e.str.end_-$e.str.begin_))
+  )
+
 }
 
 std::basic_string<*>::iterator|std::basic_string<*>::const_iterator{
