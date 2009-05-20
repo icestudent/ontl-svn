@@ -1108,7 +1108,7 @@ namespace
     return 0;
   }
 
-#if defined NTL__CXX_LAMBDA && defined NTL__CXX_RV
+#if defined NTL__CXX_LAMBDA && defined NTL__CXX_RVx
   void test41()
   {
     using namespace ntl::nt;

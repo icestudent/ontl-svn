@@ -6,9 +6,9 @@
 #pragma warning(disable:4101 4189)
 #define VERIFY(e) assert(e)
 #define sizeofa(a) (sizeof(a) / sizeof(*a))
-
 #include <forward_list>
 #include <array>
+#include <string>
 
 template class std::forward_list<int>;
 template class std::forward_list<int, std::allocator<char> >;
