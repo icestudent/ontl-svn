@@ -9,6 +9,7 @@
 ; v 0.6 - forward_list
 ; v 0.6a- some fixes
 ; v 0.7 - added char16_t
+; v 0.8 - added deque, queue
 ;---------------------------------------------------------------
 ;
 ; While debugging, Data Tips and items in the Watch and Variable
@@ -130,52 +131,6 @@ std::array<*> {
     #array(expr: $e.__elems[$i], size: $e.__actual_size)
   )
 }
-;------------------------------------------------------------------------------
-;  std::vector<bool,*> specialization
-;------------------------------------------------------------------------------
-
-std::vector<bool,*>{
-  children
-  (
-    #array
-    (
-      expr : ($c._Myvec._Myfirst[$i / _VBITS] >> ($i % _VBITS)),
-      size : ($c._Mysize)
-    )  : (bool)($e & 1)
-  )
-
-    preview
-    (
-            #(
-        "[",
-        $e._Mysize ,
-        "](",
-        #array
-        (
-          expr : ($c._Myvec._Myfirst[$i / _VBITS] >> ($i % _VBITS)),
-          size : ($c._Mysize)
-        )  : (bool)($e & 1), ")")
-  )
-}
-
-std::vector<bool,*>::iterator|std::vector<bool,*>::const_iterator|std::_Vb_iterator<*>|std::_Vb_const_iterator<*>{
-  preview
-  (
-    #(
-      (bool) (((*$e._Myptr) >> $e._Myoff) & 1)
-    )
-  )
-
-  children
-  (
-    #(
-      ptr: (bool) (((*$e._Myptr) >> $e._Myoff) & 1)
-    )
-  )
-
-
-}
-
 
 ;------------------------------------------------------------------------------
 ;  std::vector
@@ -189,7 +144,7 @@ std::vector<*>{
       expr :  ($c.begin_)[$i],
       size :  $c.end_-$c.begin_
     ),
-	[actual members]: [$e,!]
+	[raw]: [$e,!]
 	)
   )
 
@@ -208,8 +163,6 @@ std::vector<*>{
       ")"
     )
   )
-
-
 }
 
 std::vector<*>::iterator|std::vector<*>::const_iterator{
@@ -619,64 +572,47 @@ std::bitset<*>::reference{
 ;------------------------------------------------------------------------------
 ;  std::deque
 ;------------------------------------------------------------------------------
-
 std::deque<*>{
   children
   (
-    #(
-      [raw]: [$c,!],
-      #array
-      (
-        expr : $c._Map[ (($i + $c._Myoff) / $c._EEN_DS) % $c._Mapsize][($i + $c._Myoff) % $c._EEN_DS],
-        size : $c._Mysize
-      )
+	#(
+    #array
+    (
+      expr :  ($c.left)[$i],
+      size :  $c.right-$c.left
+    ),
+	[raw]: [$e,!]
+	)
+  )
+  preview
+    (
+      #(
+	      "[",
+            $e.right - $e.left ,
+        "](",
+
+	      #array
+		     (
+	      expr :   ($c.left)[$i],
+        size :   $c.right-$c.left
+  		    ),
+      	")"
     )
   )
+}
 
+std::deque<*>::iterator|std::deque<*>::const_iterator{
   preview
   (
-    #(
-      "[",
-      $e._Mysize,
-      "](",
-
-      #array
-      (
-        expr : $c._Map[ (($i + $c._Myoff) / $c._EEN_DS) % $c._Mapsize][($i + $c._Myoff) % $c._EEN_DS],
-        size : $c._Mysize
-      ),
-
-      ")"
-    )
+    #(*$e)
   )
-}
 
-std::deque<*,*>::iterator|std::_Deque_iterator<*,*,*>|std::_Deque_const_iterator<*,*,*>{
-   preview
-   (
-     #if( $e._Myoff >= ((std::deque<$T1,$T2 > *)$c._Mycont)->_Myoff + ((std::deque<$T1,$T2 > *)$c._Mycont)->_Mysize)
-     (
-         #("<end>")
-     )
-     #else(
-      #(
-        "deque[",
-        $e._Myoff - ((std::deque<$T1,$T2 > *)$c._Mycont)->_Myoff,
-        "] = ",
-        ((std::deque<$T1,$T2 > *)$c._Mycont)->_Map[ (($c._Myoff) / ((std::deque<$T1,$T2 > *)$c._Mycont)->_EEN_DS) % ((std::deque<$T1,$T2 > *)$c._Mycont)->_Mapsize][$c._Myoff % ((std::deque<$T1,$T2 > *)$c._Mycont)->_EEN_DS]
-      )
-    )
-  )
   children
   (
-     #if( ((std::deque<$T1,$T2 > *)$c._Mycont)->_Myoff + ((std::deque<$T1,$T2 > *)$c._Mycont)->_Mysize > $e._Myoff)
-     (
-      #(
-        ptr: ((std::deque<$T1,$T2 > *)$c._Mycont)->_Map[ ($c._Myoff / ((std::deque<$T1,$T2 > *)$c._Mycont)->_EEN_DS) % ((std::deque<$T1,$T2 > *)$c._Mycont)->_Mapsize][$c._Myoff % ((std::deque<$T1,$T2 > *)$c._Mycont)->_EEN_DS]
-      )
-    )
+    #(ptr: $e.)
   )
 }
+
 
 ;------------------------------------------------------------------------------
 ;  std::queue
