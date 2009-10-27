@@ -10,6 +10,9 @@
 ; v 0.6a- some fixes
 ; v 0.7 - added char16_t
 ; v 0.8 - added deque, queue
+; v 0.9 - chrono types
+; v 0.10- added iostreams
+;
 ;---------------------------------------------------------------
 ;
 ; While debugging, Data Tips and items in the Watch and Variable
@@ -110,6 +113,18 @@ std::greater<*>=greaterthan
 
 [Visualizer]
 ; This section contains visualizers for STL and ATL containers
+
+;------------------------------------------------------------------------------
+;  chrono
+;------------------------------------------------------------------------------
+std::chrono::duration<*> {
+	preview (
+	#( $e.rep_ )
+	)
+}
+std::chrono::time_point<*> {
+	preview ( #( $e.d ) )
+}
 ;------------------------------------------------------------------------------
 ;  std::array
 ;------------------------------------------------------------------------------
@@ -829,83 +844,6 @@ stdext::hash_map<*>|stdext::hash_multimap<*>|stdext::hash_set<*>|stdext::hash_mu
   )
 }
 
-;------------------------------------------------------------------------------
-;  std::complex
-;------------------------------------------------------------------------------
-
-std::complex<*>{
-  children
-  (
-    #(
-      real: $e._Val[0],
-      imaginary: $e._Val[1]
-    )
-  )
-  preview
-  (
-    #if($e._Val[1] != 0)
-    (
-      #if ($e._Val[0] != 0)
-      (                  ; Real and Imaginary components
-        #if ($e._Val[1] >= 0)
-        (
-          #($e._Val[0],"+i*", $e._Val[1])
-        )
-        #else
-        (
-          #($e._Val[0],"-i*", -$e._Val[1])
-        )
-      )
-      #else
-      (                  ; Purely imaginary
-        #if ($e._Val[1] >= 0.0)
-        (
-          #("i*", $e._Val[1])
-        )
-        #else
-        (
-          #("-i*", -$e._Val[1])
-        )
-      )
-    )
-    #else
-    (                    ; Purely real
-      $e._Val[0]
-    )
-  )
-}
-
-;------------------------------------------------------------------------------
-;  std::valarray
-;------------------------------------------------------------------------------
-
-std::valarray<*>{
-    preview
-    (
-    #(
-      "[",
-            $e._Mysize ,
-            "](",
-
-            #array
-            (
-        expr :   ($c._Myptr)[$i],
-        size :   $c._Mysize
-      ),
-
-      ")"
-    )
-  )
-
-  children
-  (
-    #array
-    (
-      expr :  ($c._Myptr)[$i],
-      size :  $c._Mysize
-    )
-  )
-}
 
 ; STL negators are previewed with "not[12](<stored functor>)".
 ; They have a child with the fake name of [pred], so that the
@@ -938,151 +876,172 @@ std::binary_negate<*>{
 }
 
 
-; Many TR1 visualizers use nested #()s.
-; Why not use #(foo, bar) instead of #(#(foo), #(bar))?
-; The former alphabetically sorts its fields, while the latter does not.
 ;------------------------------------------------------------------------------
-;  std::tr1::reference_wrapper
+;  I/O Streams
 ;------------------------------------------------------------------------------
-std::tr1::reference_wrapper<*>{
-  preview (
-    #if ($e._Callee._EEN_INDIRECT == 1) (
-      ; For ordinary T, reference_wrapper<T> stores a T * _Callee._Ptr
-      ; which is non-null. Actual references are previewed with what they
-      ; refer to, so reference_wrapper<T> is previewed with dereferencing its
-      ; stored pointer.
-      *$e._Callee._Ptr
-    ) #else (
-      ; When T is a pointer to function, pointer to member function,
-      ; or pointer to data member type, reference_wrapper<T> stores a
-      ; T _Callee._Object directly.
-      $e._Callee._Object
-    )
-  )
 
-  children (
-    #if ($e._Callee._EEN_INDIRECT == 1) (
-      ; Actual references have the same children as what they refer to.
-      ; Unfortunately, there appears to be no way to imitate this exactly.
-      ; Therefore, we make reference_wrapper<T> appear to have a single
-      ; child, its stored pointer, with a fake name of [ptr].
-      #([ptr] : $e._Callee._Ptr)
-    ) #else (
-      ; When T is a pointer to function, pointer to member function,
-      ; or pointer to data member type, T has no children, so we make
-      ; reference_wrapper<T> appear to have no children.
-      #array(expr: 0, size: 0)
-    )
-  )
+std::basic_ostream<*> {
+	preview ( #( "state(", [$e.state,x], ")" ) )
+	children (
+		#(
+			[raw]: [$e,!],
+			state: [$e.state,x],
+			exceptmask: [$e.exceptmask,x],
+			format: [$e.fmtfl,x],
+			precision: $e.prec,
+			width: $e.wide,
+			fill: $e.fillc
+		)
+	)
 }
-;------------------------------------------------------------------------------
-;  std::tr1::shared_ptr
-;------------------------------------------------------------------------------
-std::tr1::shared_ptr<*>{
-  preview (
-    ; shared_ptr<T> stores a T * _Ptr .
-    #if ($e._Ptr == 0) (
-      ; A default-constructed shared_ptr has a null _Ptr and a null _Rep,
-      ; and is formally said to be empty.
-      ; A shared_ptr constructed from a null pointer has a null _Ptr
-      ; and a NON-null _Rep . It is formally said to own the null pointer.
-      ; We preview both with "<empty>".
-      "<empty>"
-    ) #else (
-      ; Raw pointers are previewed with "<pointer value> <object>".
-      ; auto_ptr is previewed with "auto_ptr <object>".
-      ; Following these examples, shared_ptr is previewed with
-      ; "shared_ptr <object> [N strong refs, M weak refs]".
-      #(
-        "shared_ptr ",
-        *$e._Ptr,
-        " [",
-        $e._Rep->_Uses,
-        #if ($e._Rep->_Uses == 1) (" strong ref") #else (" strong refs"),
-        #if ($e._Rep->_Weaks - 1 > 0) (
-          #(
-            ", ",
-            $e._Rep->_Weaks - 1,
-            #if ($e._Rep->_Weaks - 1 == 1) (" weak ref") #else (" weak refs")
-          )
-        ),
-        "]"
-      )
-      ; Note: _Rep->_Uses counts how many shared_ptrs share ownership of the object,
-      ; so we directly display it as the strong reference count.
-      ; _Rep->_Weaks counts how many shared_ptrs and weak_ptrs share ownership of
-      ; the "representation object" (or "control block"). All of the shared_ptrs are
-      ; counted as a single owner. That is, _Weaks is initialized to 1, and when
-      ; _Uses falls to 0, _Weaks is decremented. This avoids incrementing and decrementing
-      ; _Weaks every time that a shared_ptr gains or loses ownership. Therefore,
-      ; _Weaks - 1 is the weak reference count, the number of weak_ptrs that are observing
-      ; the shared object.
-    )
-  )
 
-  children (
-    #if ($e._Ptr == 0) (
-      ; We make empty shared_ptrs (and shared_ptrs that own
-      ; the null pointer) appear to have no children.
-      #array(expr: 0, size: 0)
-    ) #else (
-      #(
-        ; We make shared_ptr appear to have a single child,
-        ; its stored pointer, with a fake name of [ptr].
-        #([ptr] : $e._Ptr),
-
-        ; Visualizers can't determine whether a shared_ptr has a custom deleter.
-        ; Therefore, we also show the actual members.
-        ; Look at what std::tr1::shared_ptr<T> > [actual members] > std::tr1::_Ptr_base<T> > _Rep points to.
-        ; Default deleter: std::tr1::_Ref_count<T>
-        ;  Custom deleter: std::tr1::_Ref_count_d<T, D> > _Dtor
-        #([actual members] : [$e,!])
-      )
-    )
-  )
+std::basic_istream<*> {
+	preview ( #( "state(", [$e.state,x], ")" ) )
+	children (
+		#(
+			[raw]: [$e,!],
+			state: [$e.state,x],
+			exceptmask: [$e.exceptmask,x],
+			format: [$e.fmtfl,x],
+			precision: $e.prec,
+			width: $e.wide,
+			fill: $e.fillc
+		)
+	)
 }
-;------------------------------------------------------------------------------
-;  std::tr1::weak_ptr
-;------------------------------------------------------------------------------
-std::tr1::weak_ptr<*>{
-  preview (
-    #if ($e._Ptr == 0) (
-      "<empty>"
-    ) #elif ($e._Rep->_Uses == 0) (
-      ; weak_ptr is just like shared_ptr, except that a weak_ptr can be expired.
-      "expired"
-    ) #else (
-      #(
-        "weak_ptr ",
-        *$e._Ptr,
-        " [",
-        $e._Rep->_Uses,
-        #if ($e._Rep->_Uses == 1) (" strong ref") #else (" strong refs"),
-        #if ($e._Rep->_Weaks - 1 > 0) (
-          #(
-            ", ",
-            $e._Rep->_Weaks - 1,
-            #if ($e._Rep->_Weaks - 1 == 1) (" weak ref") #else (" weak refs")
-          )
-        ),
-        "]"
-      )
-    )
+
+std::basic_iostream<*> {
+	preview ( #( "state(", [$e.state,x], ")" ) )
+	children (
+		#(
+			[raw]: [$e,!],
+			state: [$e.state,x],
+			exceptmask: [$e.exceptmask,x],
+			format: [$e.fmtfl,x],
+			precision: $e.prec,
+			width: $e.wide,
+			fill: $e.fillc
+		)
+	)
+}
+
+
+; ------------------------------------
+; string streams
+; ------------------------------------
+
+std::basic_ostringstream<*>{
+  preview
+  (
+    #( "state(", [$e.state,x], ") ", $e.sb.str_ )
   )
 
   children (
-    #if ($e._Ptr == 0) (
-      #array(expr: 0, size: 0)
-    ) #elif ($e._Rep->_Uses == 0) (
-      ; When a weak_ptr is expired, we make it appear to have no children.
-      #array(expr: 0, size: 0)
-    ) #else (
-      #(
-        #([ptr] : $e._Ptr),
-        #([actual members] : [$e,!])
-      )
-    )
+		#(
+			[raw]: [$e,!],
+			string: $e.sb.str_,
+			mode:   [$e.sb.mode_,x]
+		)
+	)
+}
+
+std::basic_istringstream<*>{
+  preview
+  (
+    #( "state(", [$e.state,x], ") ", $e.sb.str_ )
   )
+
+  children (
+		#(
+			[raw]: [$e,!],
+			string: $e.sb.str_,
+			mode:   [$e.sb.mode_,x]
+		)
+	)
+}
+
+std::basic_stringstream<*>{
+  preview
+  (
+    #( "state(", [$e.state,x], ") ", $e.sb.str_ )
+  )
+
+  children (
+		#(
+			[raw]: [$e,!],
+			string: $e.sb.str_,
+			mode:   [$e.sb.mode_,x]
+		)
+	)
+}
+
+; ------------------------------------
+; file streams
+; ------------------------------------
+std::basic_ofstream<*> {
+	preview ( #( "state(", [$e.state,x], ")" ) )
+	children (
+		#(
+			[raw]: [$e,!],
+			encoding: $e.sb.encoding,
+			mode: $e.sb.mode,
+			file: $e.sb.f
+		)
+	)
+}
+
+std::basic_ifstream<*> {
+	preview ( #( "state(", [$e.state,x], ")" ) )
+	children (
+		#(
+			[raw]: [$e,!],
+			encoding: $e.sb.encoding,
+			mode: $e.sb.mode,
+			file: $e.sb.f
+		)
+	)
+}
+
+std::basic_fstream<*> {
+	preview ( #( "state(", [$e.state,x], ")" ) )
+	children (
+		#(
+			[raw]: [$e,!],
+			encoding: $e.sb.encoding,
+			mode: $e.sb.mode,
+			file: $e.sb.f
+		)
+	)
+}
+
+;------------------------------------------------------------------------------
+;  NTL Types
+;------------------------------------------------------------------------------
+ntl::basic_handle<*> {
+	preview ( $e.h )
+	children ( $e.h )
+}
+
+ntl::nt::file_handler {
+	preview ( #( $e.h, ", ", $e.iosb ) )
+	children (
+		#(
+			[raw]:  [$e,!],
+			handle: $e.h,
+			iosb:   $e.iosb
+		)
+	)
+}
+
+ntl::km::file_handler {
+	preview ( #( $e.h, ", ", $e.iosb ) )
+	children (
+		#(
+			[raw]:  [$e,!],
+			handle: $e.h,
+			iosb:   $e.iosb
+		)
+	)
 }
 
 ; This section lets you define your own errors for the HRESULT display.
