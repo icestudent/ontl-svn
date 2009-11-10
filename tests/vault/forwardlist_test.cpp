@@ -434,7 +434,7 @@ namespace
     std::forward_list<int> fl1(i1, i1+sizeofa(i1));
     std::forward_list<int> fl2(i2, i2+sizeofa(i2));
 #endif
-    fl1.swap(fl2);
+    fl1.swap(move(fl2));
 
     VERIFY(fl1.front() == 666);
     VERIFY(fl2.front() == 0);
@@ -477,7 +477,7 @@ namespace
     std::forward_list<double>::const_iterator posa = a.cbefore_begin();
 
 
-    a.splice_after(posa, x);
+    a.splice_after(posa, move(x));
 
     ++posa;
     VERIFY(*posa == 666.0);
@@ -513,7 +513,7 @@ namespace
     ++endy;
     VERIFY(*endy == 14.0);
 
-    a.splice_after(posa, y, befy, endy);
+    a.splice_after(posa, move(y), befy, endy);
     VERIFY(*posa == 0.0);
 
     VERIFY(*befy == 10.0);
@@ -544,7 +544,7 @@ namespace
     std::forward_list<double>::const_iterator posz = z.begin();
     VERIFY(*posz == 42.0);
 
-    a.splice_after(posa, z, posz);
+    a.splice_after(posa, move(z), posz);
     VERIFY(*posa == 1.0);
     ++posa;
     VERIFY(*posa == 43.0);
@@ -679,7 +679,7 @@ namespace
     std::forward_list<double> r(d3, d3+sizeofa(d3));
 
 #endif
-    a.merge(b);
+    a.merge(move(b));
 
     VERIFY(a == r);
   }

@@ -7,8 +7,6 @@
 
 
 #include <memory>
-#include <nt/new.hxx>
-#include <nt/exception.hxx>
 
 class ClassType { };
 class IncompleteClass;
@@ -17,6 +15,8 @@ template class std::shared_ptr<int>;
 template class std::shared_ptr<void>;           // it is right
 template class std::shared_ptr<ClassType>;
 //template class std::shared_ptr<IncompleteClass>;  // warning C4150 at std.shared_ptr.free(): deletion of pointer to incomplete type 'IncompleteClass'; no destructor called
+
+using std::move;
 
 namespace 
 {
@@ -112,7 +112,7 @@ void deleter(A* p) { delete p; }
 
     std::shared_ptr<A> a(new A);
     std::auto_ptr<B> b(new B);
-    a = b;
+    a = move(b);
     VERIFY( a.get() != 0 );
     VERIFY( b.get() == 0 );
     VERIFY( A::ctor_count == 2 );
@@ -355,7 +355,7 @@ void deleter(A* p) { delete p; }
     bool test __attribute__((unused)) = true;
 
     std::auto_ptr<A> a(new A);
-    std::shared_ptr<A> a2(a);
+    std::shared_ptr<A> a2(move(a));
     VERIFY( a.get() == 0 );
     VERIFY( a2.get() != 0 );
     VERIFY( a2.use_count() == 1 );
