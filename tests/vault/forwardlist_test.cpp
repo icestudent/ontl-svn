@@ -129,11 +129,9 @@ namespace
     double tmpp = fld.front();
     fld.push_front(2.0);
     ci1 = fld.cbegin();
-    std::forward_list<double>::iterator i1 = fld.erase_after(ci1);
+    fld.erase_after(ci1);
     VERIFY(fld.empty() == false);
     tmpp = fld.front();
-    if(i1 != fld.end())
-      tmpp = *i1;
     VERIFY(fld.front() == 2.0);
   }
 
@@ -378,9 +376,6 @@ namespace
     ++pos;
     VERIFY(*pos == 1);
 
-    std::forward_list<int>::iterator next = fl.erase_after(pos);
-    VERIFY(*next == 1);
-
     VERIFY(*pos == 1);
     ++pos;
     VERIFY(*pos == 3);
@@ -411,9 +406,6 @@ namespace
     ++stop;
     ++stop;
     VERIFY(*stop == 4);
-
-    std::forward_list<int>::iterator next = fl.erase_after(pos, stop);
-    VERIFY(*next == 1);
 
     VERIFY(*pos == 1);
     ++pos;

@@ -201,21 +201,21 @@ std::vector<*>::iterator|std::vector<*>::const_iterator{
 std::basic_string<char,*>{
   preview
   (
-    #if($e.str.begin_ == $e.str.end_)(
+    #if($e.length_ == 0)(
       "<empty>"
     ) #else (
-      [$e.str.begin_,s]
+      [$e.buffer_,s]
     )
   )
 
   stringview
   (
-    [$e.str.begin_,sb]
+    [$e.buffer_,sb]
   )
 
   children
   (
-    #([raw]: [$e,!],  #array( expr: $e.str.begin_[$i], size: $e.str.end_-$e.str.begin_))
+    #([raw]: [$e,!],  #array( expr: $e.buffer_[$i], size: $e.length_))
   )
 
 }
@@ -223,21 +223,21 @@ std::basic_string<char,*>{
 std::basic_string<wchar_t,*>{
   preview
   (
-    #if($e.str.begin_ == $e.str.end_)(
+    #if($e.buffer_ == $e.str.end_)(
       "<empty>"
     ) #else (
-      [$e.str.begin_,su]
+      [$e.buffer_,su]
     )
   )
 
   stringview
   (
-    [$e.str.begin_,sub]
+    [$e.buffer_,sub]
   )
 
   children
   (
-    #([raw]: [$e,!],  #array( expr: $e.str.begin_[$i], size: $e.str.end_-$e.str.begin_))
+    #([raw]: [$e,!],  #array( expr: $e.buffer_[$i], size: $e.length_))
   )
 }
 
@@ -245,21 +245,21 @@ std::basic_string<wchar_t,*>{
 std::basic_string<std::char16_t,*>{
   preview
   (
-    #if($e.str.begin_ == $e.str.end_)(
+    #if($e.buffer_ == $e.str.end_)(
       "<empty>"
     ) #else (
-      [$e.str.begin_,su]
+      [$e.buffer_,su]
     )
   )
 
   stringview
   (
-    [$e.str.begin_,sub]
+    [$e.buffer_,sub]
   )
 
   children
   (
-    #([raw]: [$e,!],  #array( expr: $e.str.begin_[$i], size: $e.str.end_-$e.str.begin_))
+    #([raw]: [$e,!],  #array( expr: $e.buffer_[$i], size: $e.length_))
   )
 
 }
