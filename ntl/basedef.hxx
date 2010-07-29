@@ -1,18 +1,27 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *
+ *  Native Template Library types
  *
  ****************************************************************************
  */
-
 #ifndef NTL__BASEDEF
 #define NTL__BASEDEF
+#pragma once
 
-#include "cstddef"
-#include "cstdint"
-#include "vector"
+#ifndef NTL__STLX_CSTDDEF
+#include "stlx/cstddef.hxx"
+#endif
+#ifndef NTL__STLX_CSTDINT
+#include "stlx/cstdint.hxx"
+#endif
 
-/// NT Native Template Lybrary
+// std::vector forward declaration
+namespace std {
+  template<class T> class allocator;
+  template <class T, class Allocator> class vector;
+} // std
+
+/// Native Template Lybrary
 namespace ntl {
 
 /**\addtogroup  ntative_types ********** NT Native Types ********************
@@ -34,39 +43,79 @@ using std::uintptr_t;
 
 using std::ptrdiff_t;
 
-///\name  
+/// raw data representation
+typedef std::vector<uint8_t, std::allocator<uint8_t> > raw_data;
 
-typedef std::vector<uint8_t> raw_data;
-
-
-// class_enum by remark
-template<typename def>
-struct class_enum : def
+namespace __unspecified
 {
-  typedef typename def::type type;
+  struct noncopyable
+  {
+  protected:
+    noncopyable(){}
+    ~noncopyable(){}
+  private:
+    noncopyable(const noncopyable&) __deleted;
+    const noncopyable& operator=(const noncopyable&) __deleted;
+  };
+}
 
-  __forceinline
-  class_enum(type v) : value(v) {}
+/// Base class to deny copying of derived classes.
+typedef __unspecified::noncopyable noncopyable;
 
-  __forceinline
-  operator type () const {return value;}
-
-  type value;
+/// Type helper for the template specialization for functions 
+template<typename T>
+struct type2type
+{
+  typedef T type;
 };
 
+/// Integral value helper for the template specialization for functions 
+template<size_t v>
+struct int2type
+{
+  enum { value = v };
+};
 
-#define __class_enum(name) struct name ## _def; typedef class_enum<name ## _def> name; struct name ## _def { enum type
+/// class_enum by remark
+#if 0
+template<typename def, typename inner = def::type>
+struct class_enum: def
+{
+  typedef typename def::type type;
+  typedef typename inner inner;
+  
+  inline class_enum(type v)
+    :v(static_cast<type>(value))
+  {}
+  inline operator inner() const { return value; }
 
-enum times
+  inner value;
+};
+#else
+template<typename def>
+struct class_enum: public def
+{
+  typedef typename def::type type;
+  __forceinline
+    class_enum(type v) : value(v) {}
+  __forceinline
+    operator type () const { return value; }
+  type value;
+};
+#endif
+
+#define __class_enum(name) struct name ## _def; typedef ntl::class_enum<name ## _def> name; struct name ## _def { enum type
+
+__class_enum(times) 
 {
   nanoseconds   = 1,
   microseconds  = 10   * nanoseconds,
   milliseconds  = 1000 * microseconds,
   seconds       = 1000 * milliseconds,
-  minutes       = 60   * seconds, 
-//  hours         = int64_t(60)   * minutes,
-//  days          = int64_t(24)   * hours,
-};
+  minutes       = 60   * seconds
+  //  hours         = int64_t(60)   * minutes,
+  //  days          = int64_t(24)   * hours,
+};};
 
 ///@}
 

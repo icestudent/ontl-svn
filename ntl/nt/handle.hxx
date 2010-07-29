@@ -4,27 +4,29 @@
  *
  ****************************************************************************
  */
-
-
 #ifndef NTL__NT_HANDLE
 #define NTL__NT_HANDLE
+#pragma once
 
 #include "../handle.hxx"
-#include "../stdlib.hxx"
 #include "basedef.hxx"
 
 namespace ntl {
 namespace nt {
 
 
-typedef const struct _opaque { } * legacy_handle;
-
-static const legacy_handle null_handle;
+static const legacy_handle null_handle = 0;
 
 static inline legacy_handle current_process()
 {
   const legacy_handle current_process = legacy_handle(-1);
   return current_process;
+}
+
+static inline legacy_handle current_thread()
+{
+  const legacy_handle current_thread = legacy_handle(-2);
+  return current_thread;
 }
 
 
@@ -40,8 +42,94 @@ NtDuplicateObject(
     uint32_t        Options
     );
 
+// wait functions
+struct wait_type_def
+{
+  enum type { WaitAll, WaitAny };
+};
+typedef class_enum<wait_type_def> wait_type;
 
-enum duplicate_options 
+struct kwait_reason_def
+{
+  enum type
+  {
+    Executive,
+    FreePage,
+    PageIn,
+    PoolAllocation,
+    DelayExecution,
+    Suspended,
+    UserRequest,
+    WrExecutive,
+    WrFreePage,
+    WrPageIn,
+    WrPoolAllocation,
+    WrDelayExecution,
+    WrSuspended,
+    WrUserRequest,
+    WrEventPair,
+    WrQueue,
+    WrLpcReceive,
+    WrLpcReply,
+    WrVirtualMemory,
+    WrPageOut,
+    WrRendezvous,
+    Spare2,
+    Spare3,
+    Spare4,
+    Spare5,
+    Spare6,
+    WrKernel,
+    WrResource,
+    WrPushLock,
+    WrMutex,
+    WrQuantumEnd,
+    WrDispatchInt,
+    WrPreempted,
+    WrYieldExecution,
+    WrFastMutex,
+    WrGuardedMutex,
+    WrRundown,
+    MaximumWaitReason
+  };
+};
+typedef ntl::class_enum<kwait_reason_def> kwait_reason;
+
+static inline const systime_t& infinite_timeout()
+{
+  static const systime_t* const p = 0;
+  return *p;
+}
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  NtWaitForSingleObject(
+    legacy_handle     Handle,
+    bool              Alertable,
+    const systime_t&  Timeout
+    );
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  NtSignalAndWaitForSingleObject(
+    legacy_handle     SignalHandle,
+    legacy_handle     Handle,
+    bool              Alertable,
+    const systime_t&  Timeout
+    );
+
+NTL__EXTERNAPI
+ntstatus __stdcall
+  NtWaitForMultipleObjects(
+    uint32_t            Count,
+    const legacy_handle Handles[],
+    wait_type::type     WaitType,
+    bool                Alertable,
+    const systime_t&    Timeout
+    );
+
+
+enum duplicate_options
 {
   duplicate_close_source    = 1,
   duplicate_same_access     = 2,
@@ -49,8 +137,8 @@ enum duplicate_options
 };
 
 static __forceinline
-  duplicate_options operator|(duplicate_options m, duplicate_options m2) 
-{ 
+  duplicate_options operator|(duplicate_options m, duplicate_options m2)
+{
   return bitwise_or(m, m2);
 }
 
@@ -59,12 +147,12 @@ enum handle_attributes
 {
   handle_flag_none                = 0,
   handle_flag_inherit             = 1,
-  handle_flag_protect_from_close  = 2,
+  handle_flag_protect_from_close  = 2
 };
 
 static __forceinline
-  handle_attributes operator|(handle_attributes m, handle_attributes m2) 
-{ 
+  handle_attributes operator|(handle_attributes m, handle_attributes m2)
+{
   return bitwise_or(m, m2);
 }
 
@@ -94,7 +182,7 @@ ntstatus __stdcall
 
 static __forceinline
 ntstatus close(legacy_handle handle)
-{ 
+{
   return NtClose(handle);
 }
 
@@ -103,13 +191,13 @@ namespace aux {
 
 __forceinline
 void close(legacy_handle handle)
-{ 
+{
   nt::close(handle);
 }
 
 __forceinline
 legacy_handle duplicate(legacy_handle handle)
-{ 
+{
   return nt::duplicate(handle);
 }
 

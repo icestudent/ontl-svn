@@ -4,9 +4,9 @@
  *
  ****************************************************************************
  */
-
 #ifndef NTL__NT_IOCTL
 #define NTL__NT_IOCTL
+#pragma once
 
 #include "basedef.hxx"
 
@@ -153,7 +153,25 @@ struct ioctl
 
 };//struct ioctl
 
-} //namespace  ioctl
+} // ioctl
+
+typedef
+ntstatus __stdcall
+  control_file_t(
+    legacy_handle FileHandle,
+    legacy_handle Event,
+    io_apc_routine* ApcRoutine,
+    void* ApcContext,
+    io_status_block* IoStatusBlock,
+    uint32_t IoControlCode,
+    void* InputBuffer,
+    uint32_t InputBufferLength,
+    void* OutputBuffer,
+    uint32_t OutputBufferLength
+    );
+
+NTL__EXTERNAPI control_file_t NtDeviceIoControlFile, NtFsControlFile;
+
 
 }//namespace nt
 }//namespace ntl

@@ -4,20 +4,24 @@
  *
  ****************************************************************************
  */
-
 #ifndef NTL__WIN_SCM
 #define NTL__WIN_SCM
+#pragma once
 
 #include "windef.hxx"
 #include "../nt/service.hxx"
 
-#pragma comment(lib, "advapi32") // from PSDK
+#ifndef NTL__NO_AUTOLINK
+# pragma comment(lib, "advapi32") // from PSDK
+#endif
 
-//#pragma warning(disable:4061)// enumerator in switch of enum is not explicitly handled by a case label 
-//#pragma warning(disable:4127)// conditional expression is constant 
+//#pragma warning(disable:4061)// enumerator in switch of enum is not explicitly handled by a case label
+//#pragma warning(disable:4127)// conditional expression is constant
 
 namespace ntl {
 namespace win {
+/**\addtogroup  winapi_types_support *** Win32 API support library **********
+ *@{*/
 
 
 typedef const struct _opaque { } * legacy_sc_handle;
@@ -63,8 +67,8 @@ legacy_sc_handle __stdcall
     const wchar_t *   lpPassword
     );
 
-NTL__EXTERNAPI 
-int __stdcall 
+NTL__EXTERNAPI
+int __stdcall
   DeleteService(
     legacy_sc_handle hService
     );
@@ -96,7 +100,7 @@ int __stdcall
     );
 
 /// Service Control Manager
-class sc_manager 
+class sc_manager
 {
     sc_manager(const sc_manager &);
     const sc_manager & operator=(const sc_manager &);
@@ -117,8 +121,8 @@ class sc_manager
     };
 
   friend
-    access_mask operator | (access_mask m, access_mask m2) 
-    { 
+    access_mask operator | (access_mask m, access_mask m2)
+    {
       return bitwise_or(m, m2);
     }
 
@@ -132,7 +136,7 @@ class sc_manager
     {/**/}
 
     ~sc_manager()
-    { 
+    {
       if ( handle ) CloseServiceHandle(handle);
     }
 
@@ -145,7 +149,7 @@ class sc_manager
   private:
 
     const legacy_sc_handle handle;
-    
+
 };//template class sc_manager
 
 
@@ -191,7 +195,7 @@ class service_control
     }
 
     const service_status * operator->() const __ntl_nothrow
-    { 
+    {
       return handle ? &status : reinterpret_cast<const service_status*>(handle);
     }
 
@@ -199,12 +203,12 @@ class service_control
     {
       return 0 != ControlService(handle, command, &status);
     }
-    
+
     bool stop()     { return (*this)(nt::service::control_stop); }
     bool pause()    { return (*this)(nt::service::control_pause); }
     bool resume()   { return (*this)(nt::service::control_continue); }
     bool shutdown() { return (*this)(nt::service::control_shutdown); }
-      
+
     bool remove()
     {
       const bool r = 0 != DeleteService(handle);
@@ -231,6 +235,7 @@ class service_control
 
 };//template class service_control
 
+/**@} winapi_types_support */
 }//namespace win
 }//namespace ntl
 

@@ -1,18 +1,17 @@
 /**\file*********************************************************************
  *                                                                     \brief
  *  27.6.3 Standard manipulators [std.manip]
- *  1 The header <iomanip> defines several functions that support extractors
+ *  1 The header &ltiomanip&gt defines several functions that support extractors
  *    and inserters that alter information maintained by class ios_base and
  *    its derived classes.
  *
  ****************************************************************************
  */
-
 #ifndef NTL__STLX_IOMANIP
 #define NTL__STLX_IOMANIP
+#pragma once
 
-#include "iosfwd.hxx"
-#include "ios"
+#include "ios.hxx"
 #include "istream.hxx"
 #include "ostream.hxx"
 

@@ -1,12 +1,12 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  Kernel Threads
+ *  Kernel Processes
  *
  ****************************************************************************
  */
-
 #ifndef NTL__KM_PROCESS
 #define NTL__KM_PROCESS
+#pragma once
 
 #include "basedef.hxx"
 #include "apc.hxx"
@@ -14,7 +14,7 @@
 #include "object.hxx"
 #include "thread.hxx"
 #include "system_information.hxx"
-#include "image.hxx"
+#include "../pe/image.hxx"
 #include "mm.hxx"
 
 namespace ntl {
@@ -33,7 +33,7 @@ kprocess * __stdcall
 
 struct kprocess
 {
-  static 
+  static
   kprocess * get_current()
   {
 #ifndef NTL_SUPPRESS_IMPORT
@@ -58,7 +58,7 @@ struct kgdtentry
 {
 	/*<thisrel this+0x0>*/ /*|0x2|*/ uint16_t LimitLow;
 	/*<thisrel this+0x2>*/ /*|0x2|*/ uint16_t BaseLow;
-	/*<thisrel this+0x4>*/ /*|0x4|*/ 
+	/*<thisrel this+0x4>*/ /*|0x4|*/
 	union {
 		struct {
 			uint8_t   BaseMid;
@@ -250,7 +250,6 @@ struct ejob
 	/*<thisrel this+0x174>*/ /*|0x4|*/ uint32_t MemberLevel;
 	/*<thisrel this+0x178>*/ /*|0x4|*/ uint32_t JobFlags;
 };
-STATIC_ASSERT(sizeof(ejob)==0x180);
 
 struct alpc_process_context
 {
@@ -303,7 +302,7 @@ struct kprocess50
   uint8_t PowerState;
   bool DisableQuantum;
   uint8_t Spare[2];
-}; // <size 0x6c> 
+}; // <size 0x6c>
 
 struct kprocess51
 {
@@ -553,7 +552,10 @@ struct eprocess51
 	/*<thisrel this+0x158>*/ /*|0x4|*/ void* VdmObjects;
 	/*<thisrel this+0x15c>*/ /*|0x4|*/ void* DeviceMap;
 	/*<thisrel this+0x160>*/ /*|0x8|*/ list_entry PhysicalVadList;
-	/*<thisrel this+0x168>*/ /*|0x4|*/ hardware_pte PageDirectoryPte;
+  union {
+    /*<thisrel this+0x168>*/ /*|0x4|*/ hardware_pte PageDirectoryPte;
+    uint64_t Filler;
+  };
 	/*<thisrel this+0x170>*/ /*|0x4|*/ void* Session;
 	/*<thisrel this+0x174>*/ /*|0x10|*/ uint8_t ImageFileName[16];
 	/*<thisrel this+0x184>*/ /*|0x8|*/ list_entry JobLinks;
@@ -1009,7 +1011,7 @@ struct kprocess52 {
   /*<thisrel this+0xa8>*/ /*|0x10|*/ list_entry ProcessListEntry;
 }; // <size 0xb8>
 
-struct kprocess60 
+struct kprocess60
 {
   /*<thisrel this+0x0>*/ /*|0x18|*/ dispatcher_header Header;
   /*<thisrel this+0x18>*/ /*|0x10|*/ list_entry ProfileListHead;
@@ -1283,7 +1285,9 @@ struct eprocess60
 
 struct eprocess61: eprocess60 {};
 
-#endif//#elif defined(_M_X64)
+#endif
+
+
 
 
 ///\note XP+ only, use IoGetCurrentProcess instead
@@ -1303,7 +1307,7 @@ legacy_handle __stdcall
 
 ///\note XP+ only
 NTL__EXTERNAPI
-char * __stdcall
+int8_t * __stdcall
   PsGetProcessImageFileName(kprocess *);
 
 
@@ -1349,7 +1353,7 @@ void __stdcall
 
 typedef
 nt::peb * __stdcall
-  get_process_peb_t(kprocess * Process);
+  get_process_peb_t(kprocess const* Process);
 
 // XP+ only
 NTL__EXTERNAPI
@@ -1357,62 +1361,42 @@ get_process_peb_t PsGetProcessPeb;
 
 
 
-typedef
-void __stdcall
-  load_image_notify_routine_t(
-    unicode_string *  FullImageName,
-    legacy_handle     ProcessId,
-    image_info *      ImageInfo
-    );
 
-typedef 
-ntstatus __stdcall
-  set_remove_load_image_notify_routine_t(
-    load_image_notify_routine_t *  NotifyRoutine
-    );
+typedef	void
+(__stdcall* PCreateProcessNotifyRoutine)(
+  legacy_handle ParentId,
+  legacy_handle ProcessId,
+  bool Create
+  );
 
-NTL__EXTERNAPI
-set_remove_load_image_notify_routine_t  PsSetLoadImageNotifyRoutine;
+typedef void
+(__stdcall* PCreateThreadNotifyRoutine)(
+                                        legacy_handle ProcessId,
+                                        legacy_handle ThreadId,
+                                        bool Create
+                                        );
 
-NTL__EXTERNAPI
-set_remove_load_image_notify_routine_t  PsRemoveLoadImageNotifyRoutine;
-
-
-typedef
-void __stdcall
-  create_process_notify_routine_t(
-    legacy_handle ParentId,
-    legacy_handle ProcessId,
-    bool          Create);
 
 NTL__EXTERNAPI
 ntstatus __stdcall
-  PsSetCreateProcessNotifyRoutine(
-      create_process_notify_routine_t * NotifyRoutine,
-      bool Remove);
+PsSetCreateProcessNotifyRoutine(
+                                PCreateProcessNotifyRoutine NotifyRoutine,
+                                bool Remove
+                                );
 
-
-typedef
-void __stdcall
-  create_thread_notify_routine_t(
-    legacy_handle ProcessId,
-    legacy_handle ThreadId,
-    bool Create
-    );
-
-
-typedef 
+NTL__EXTERNAPI
 ntstatus __stdcall
-  set_remove_create_thread_notify_routine_t(
-    create_thread_notify_routine_t *  NotifyRoutine
-    );
+PsSetCreateThreadNotifyRoutine(
+                               PCreateThreadNotifyRoutine NotifyRoutine
+                               );
 
+#if (NTDDI_VERSION >= NTDDI_WINXP)
 NTL__EXTERNAPI
-set_remove_create_thread_notify_routine_t PsSetCreateThreadNotifyRoutine;
-
-// XP+ only
-NTL__EXTERNAPI
-set_remove_create_thread_notify_routine_t PsRemoveCreateThreadNotifyRoutine;
+ntstatus __stdcall
+PsRemoveCreateThreadNotifyRoutine (
+                                   PCreateThreadNotifyRoutine NotifyRoutine
+                                   );
+#endif
 
 
 }//namspace km

@@ -1,20 +1,22 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  Integer types ISO9899: 7.18
+ *  18.4 Integer types [cstdint]
  *
  ****************************************************************************
  */
-
 #ifndef NTL__STLX_CSTDINT
 #define NTL__STLX_CSTDINT
+#pragma once
 
 #include "climits.hxx"
 
 namespace std {
 
-/**\addtogroup  lib_language_support *** Language support library [18] ******
+/**\addtogroup  lib_language_support *** 18 Language support library [language.support]
  *@{*/
-/**\addtogroup  lib_support_types ****** Types [18.1] ***********************
+/** \addtogroup lib_cstdint 18.4 Integer types [cstdint]
+ *
+ *  This defines all functions, types, and macros the same as C99 7.18.
  *@{*/
 
 ///\name  Exact-width integer types 7.18.1.1
@@ -48,33 +50,35 @@ typedef int64_t   int_fast64_t;
 typedef uint64_t  uint_fast64_t;
 
 ///\name  Integer types capable of holding object pointers 7.18.1.4
-#ifdef _M_X64
-typedef          long long  intptr_t;
-typedef unsigned long long  uintptr_t;
+#if defined(_UINTPTR_T_DEFINED)
+  using ::intptr_t;
+  using ::uintptr_t;
+#elif defined(__GNUC__)
+  typedef __PTRDIFF_TYPE__    intptr_t;
+  typedef __SIZE_TYPE__       uintptr_t;
 #else
-typedef __w64    int  intptr_t;
-typedef __w64 unsigned int  uintptr_t;
+  #ifdef _M_X64
+  typedef          long long  intptr_t;
+  typedef unsigned long long  uintptr_t;
+  #else//if defined _M_IX86
+  typedef __w64          long intptr_t;
+  typedef __w64 unsigned long uintptr_t;
+  #endif
 #endif
+
 
 ///\name  Greatest-width integer types 7.18.1.5
 typedef int64_t   intmax_t;
 typedef uint64_t  uintmax_t;
+///\}
 
-#ifndef NTL__CXX
-typedef uint16_t char16_t;
-typedef uint32_t char32_t;
-#endif
+/**@} lib_cstdint */
 
-///@}
-
-/**@} lib_support_types
- */
-
-/**\addtogroup  lib_support_limits ***** Implementation properties [18.2] ***
+/**\addtogroup  lib_support_limits ***** 18.3 Implementation properties [support.limits]
  *@{*/
 
 ///\name  Limits of exact-width integer types 7.18.2.1
-#define INT8_MIN          SCHAR_MIN 
+#define INT8_MIN          SCHAR_MIN
 #define INT8_MAX          SCHAR_MAX
 #define UINT8_MAX         UCHAR_MAX
 
@@ -125,14 +129,27 @@ typedef uint32_t char32_t;
 #define UINT_FAST64_MAX   UINT64_MAX
 
 ///\name  Limits of integer types capable of holding object pointers 7.18.2.4
-#ifdef _M_X64
-#define INTPTR_MIN        INT64_MIN
-#define INTPTR_MAX        INT64_MAX
-#define UINTPTR_MAX       UINT64_MAX
+
+#ifdef __GNUC__
+  #if (__SIZEOF_POINTER__ == 4)
+    #define INTPTR_MIN        INT32_MIN
+    #define INTPTR_MAX        INT32_MAX
+    #define UINTPTR_MAX       UINT32_MAX
+  #elif (__SIZEOF_POINTER__ == 8)
+    #define INTPTR_MIN        INT64_MIN
+    #define INTPTR_MAX        INT64_MAX
+    #define UINTPTR_MAX       UINT64_MAX
+  #endif
 #else
-#define INTPTR_MIN        INT32_MIN
-#define INTPTR_MAX        INT32_MAX
-#define UINTPTR_MAX       UINT32_MAX
+  #ifdef _M_X64
+    #define INTPTR_MIN        INT64_MIN
+    #define INTPTR_MAX        INT64_MAX
+    #define UINTPTR_MAX       UINT64_MAX
+  #else
+    #define INTPTR_MIN        INT32_MIN
+    #define INTPTR_MAX        INT32_MAX
+    #define UINTPTR_MAX       UINT32_MAX
+  #endif
 #endif
 
 ///\name  Limits of greatest-width integer types 7.18.2.5
@@ -147,7 +164,5 @@ typedef uint32_t char32_t;
 
 /**@} lib_support_limits */
 /**@} lib_language_support */
-
 }//namespace std
-
 #endif//#ifndef NTL__STLX_CSTDINT

@@ -4,24 +4,21 @@
  *
  ****************************************************************************
  */
-
 #ifndef NTL__STLX_IOSTREAM
 #define NTL__STLX_IOSTREAM
+#pragma once
 
-#include "iosfwd.hxx"
-#if 0
-#include <ios>
-#include <streambuf>
-#include <istream>
-#include <ostream>
-#endif
+#include "streambuf.hxx"
+#include "istream.hxx"
+#include "ostream.hxx"
 
-namespace std {
+namespace std
+{
 
-/**\addtogroup  lib_input_output ******* Input/output library [27] **********
+/**\addtogroup  lib_input_output ******* 27 Input/output library [input.output]
  *@{*/
 
-///\name  Standard iostream objects [27.3 lib.iostream.objects]
+///\name  27.3 Standard iostream objects [lib.iostream.objects]
 extern istream  cin;
 extern ostream  cout;
 extern ostream  cerr;
@@ -36,4 +33,9 @@ extern wostream wclog;
 
 }//namespace std
 
-#endif//#ifndef NTL__STLX_IOSTREAM
+namespace
+{
+  std::ios_base::Init __iostream_objects_initializer;
+}
+
+#endif // NTL__STLX_IOSTREAM

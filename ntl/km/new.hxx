@@ -4,20 +4,9 @@
  *
  ****************************************************************************
  */
-
 #ifndef NTL__KM_NEW
 #define NTL__KM_NEW
-
-#define NTL_KM
-
-#ifndef NTL_NO_NEW 
-
-#ifdef NTL__NT_NEW
-#error nt/new.hxx already included
-#endif
-
-#include "pool.hxx"
-#include <new>
+#pragma once
 
 namespace ntl {
   namespace km {
@@ -26,6 +15,11 @@ namespace ntl {
       const std::nothrow_t nonpaged;
   }
 }
+
+#ifndef NTL_NO_NEW
+
+#include "pool.hxx"
+#include "../stlx/new.hxx"
 
 ///\name  Single-object forms
 
@@ -88,6 +82,6 @@ void __cdecl
   if ( ptr ) ntl::km::pool<ntl::km::NonPagedPool>::free(ptr);
 }
 
-#endif//#ifndef NTL_NO_NEW 
+#endif//#ifndef NTL_NO_NEW
 
 #endif//#ifndef NTL__KM_NEW

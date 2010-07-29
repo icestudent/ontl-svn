@@ -1,28 +1,31 @@
 /**\file*********************************************************************
-*                                                                     \brief
-*  NT Memory 
-*
-****************************************************************************
-*/
-
-
-#ifndef NTL__NT_MM
-#define NTL__NT_MM
+ *                                                                     \brief
+ *  Memory Manager
+ *
+ ****************************************************************************
+ */
+#ifndef NTL__KM_MM
+#define NTL__KM_MM
+#pragma once
 
 #include "basedef.hxx"
-#include "string.hxx"
-//#include "../nt/virtualmem.hxx"
+#include "../nt/virtualmem.hxx"
+#include "mutex.hxx" // for kguarded_mutex
 
 namespace ntl {
   namespace km {
 
-    struct eresource;
-    struct file_object;
-
     typedef uint32_t wsle_number_t;
     typedef uintptr_t pfn_number_t;
 
- //   using nt::memory_basic_information;
+    using nt::memory_basic_information;
+    using nt::NtAllocateVirtualMemory;
+    using nt::NtFreeVirtualMemory;
+    using nt::NtFlushVirtualMemory;
+    using nt::NtLockVirtualMemory;
+    using nt::NtProtectVirtualMemory;
+    using nt::NtQueryVirtualMemory;
+    using nt::NtUnlockVirtualMemory;
 
     enum section_inherit
     {
@@ -69,10 +72,10 @@ namespace ntl {
       map_system  = 2
     };
 
-//    enum memory_information_class
-//    {
-//      MemoryBasicInformation
-//    };
+    enum memory_information_class
+    {
+      MemoryBasicInformation
+    };
 
 
     /// common declarations
@@ -425,21 +428,21 @@ namespace ntl {
     };
 
     struct hardware_pte_x86pae {
-      uint64_t Valid : 1;
-      uint64_t Write : 1;
-      uint64_t Owner : 1;
-      uint64_t WriteThrough : 1;
-      uint64_t CacheDisable : 1;
-      uint64_t Accessed : 1;
-      uint64_t Dirty : 1;
-      uint64_t LargePage : 1;
-      uint64_t Global : 1;
-      uint64_t CopyOnWrite : 1; // software field
-      uint64_t Prototype : 1;   // software field
-      uint64_t reserved0 : 1;  // software field
-      uint64_t PageFrameNumber : 24;
-      uint64_t reserved1 : 28;  // software field
-    };
+          uint64_t Valid : 1;
+          uint64_t Write : 1;
+          uint64_t Owner : 1;
+          uint64_t WriteThrough : 1;
+          uint64_t CacheDisable : 1;
+          uint64_t Accessed : 1;
+          uint64_t Dirty : 1;
+          uint64_t LargePage : 1;
+          uint64_t Global : 1;
+          uint64_t CopyOnWrite : 1; // software field
+          uint64_t Prototype : 1;   // software field
+          uint64_t reserved0 : 1;  // software field
+          uint64_t PageFrameNumber : 24;
+          uint64_t reserved1 : 28;  // software field
+        };
 
     struct hardware_pte_x64 {
       uint64_t Valid : 1;
@@ -694,7 +697,7 @@ namespace ntl {
 
 #endif
 
-    struct mmaddress_node 
+    struct mmaddress_node
     {
       union {
         intptr_t Balance : 2;
@@ -846,7 +849,7 @@ namespace ntl {
     };
 
     // Page File structures.
- 
+
     struct mmmod_writer_listhead {
       list_entry ListHead;
       kevent Event;
@@ -864,7 +867,7 @@ namespace ntl {
       mmmod_writer_listhead* PagingListHead;
       list_entry* CurrentList;
       struct mmpaging_file *PagingFile;
-      file_object* File;
+      struct file_object* File;
       control_area* ControlArea;
       eresource* FileResource;
       mdl Mdl;
@@ -1095,4 +1098,4 @@ namespace ntl {
   } // km
 } // ntl
 
-#endif // NTL__NT_MM
+#endif // NTL__KM_MM

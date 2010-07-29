@@ -4,10 +4,9 @@
  *
  ****************************************************************************
  */
-
-
 #ifndef NTL__KM_NDIS
 #define NTL__KM_NDIS
+#pragma once
 
 #ifndef NTL__POOL_TAG
 #define NTL__POOL_TAG 'LTN_'  // _NTL
@@ -62,11 +61,11 @@ class ndis
       {
         success             = 0,
         pending             = 0x00000103,
-        closing             = (int)0xC0010002,
+        closing				      = (int)0xC0010002,
         bad_version         = (int)0xC0010004,
         bad_characteristics = (int)0xC0010005,
         adapter_not_found   = (int)0xC0010006,
-        open_failed         = (int)0xC0010007,
+        open_failed			    = (int)0xC0010007,
         resources           = (int)0xC000009A
       };
     };
@@ -123,12 +122,11 @@ class ndis
 
     struct reference
     {
-//        uintptr_t SpinLock;
       kspin_lock  SpinLock;
       uint16_t    ReferenceCount;
       bool        Closing;
     };
-    STATIC_ASSERT(sizeof(reference)==0x8);
+    //STATIC_ASSERT(sizeof(reference)==0x8);
 
     struct timer
     {
@@ -202,7 +200,7 @@ class ndis
           void *            MediaSpecificInformation;
           status::type      Status;
         };
-        STATIC_ASSERT(sizeof(oob_data) == 0x20);
+        //STATIC_ASSERT(sizeof(oob_data) == 0x20);
 
         typedef void  * pool;
 
@@ -257,7 +255,7 @@ class ndis
         {
           if ( !Private.ValidCounts )
           {
-            Private.TotalLength = Private.PhysicalCount = Private.Count = 0; 
+            Private.TotalLength = Private.PhysicalCount = Private.Count = 0;
             for ( buffer * tmp = Private.Head; tmp; tmp = tmp->next() )
             {
               Private.TotalLength += tmp->byte_count();
@@ -330,7 +328,7 @@ class ndis
     };
 
     typedef uint32_t  oid;
-  
+
     struct request
     {
       enum type
@@ -477,11 +475,11 @@ class ndis
               ndis::status::type      Status,
               unsigned                BytesTransferred
               );
-        
+
           typedef
           void __stdcall
             wan_transfer_data_complete_handler_t();
-        
+
           union
           {
             transfer_data_complete_handler_t *      TransferDataCompleteHandler;
@@ -652,7 +650,7 @@ class ndis
           co_af_register_notify_handler_t * CoAfRegisterNotifyHandler;
 
         };//struct characteristics
-        STATIC_ASSERT(sizeof(characteristics) == 0x6c);
+        //STATIC_ASSERT(sizeof(characteristics) == 0x6c);
 
         struct block
         {
@@ -669,7 +667,7 @@ class ndis
           struct m_driver_block *   AssociatedMiniDriver;
           struct miniport_block *   BindingAdapter;
         };// <size 0xc4>
-        STATIC_ASSERT(sizeof(block) == 0xc4);
+        //STATIC_ASSERT(sizeof(block) == 0xc4);
 
         explicit
         protocol(const protocol::characteristics & characteristics)
@@ -749,7 +747,7 @@ class ndis
 
     typedef ndis::protocol::characteristics::transfer_data_complete_handler_t
       transfer_data_complete_handler_t;
-        
+
     typedef ndis::protocol::characteristics::wan_transfer_data_complete_handler_t
       wan_transfer_data_complete_handler_t;
 
@@ -886,16 +884,16 @@ class ndis
       receive_complete_handler_t *        ReceiveCompleteHandler;
       wan_receive_handler_t *             WanReceiveHandler;
       request_complete_handler_t *        RequestCompleteHandler;
-  
+
       receive_packet_handler_t *          ReceivePacketHandler;
       send_packets_handler_t *            SendPacketsHandler;
-  
+
       reset_handler_t *                   ResetHandler;
       request_handler_t *                 RequestHandler;
       reset_complete_handler_t *          ResetCompleteHandler;
       status_handler_t *                  StatusHandler;
       status_complete_handler_t *         StatusCompleteHandler;
-  
+
       uint32_t            Flags;
       int32_t             References;
       kspin_lock          SpinLock;
@@ -927,7 +925,7 @@ class ndis
       kevent *            AfNotifyCompleteEvent;
 
     }; // struct common_open_block
-    STATIC_ASSERT(sizeof(common_open_block) == 0xf4);
+    //STATIC_ASSERT(sizeof(common_open_block) == 0xf4);
 
     struct open_block : public common_open_block { };
 
@@ -965,7 +963,7 @@ class ndis
         const ndis::packet *  PacketArray[],
         uint32_t              NumberOfPackets
         );
-    
+
     struct x_filter;
     typedef x_filter eth_filter;
 
@@ -1221,7 +1219,7 @@ class ndis
       /*<thisrel this+0x490>*/ /*|0xc|*/ reference  Ref;
     }; // struct miniport_block
     // <size 0x4a0>
-    STATIC_ASSERT(sizeof(miniport_block)==0x4a0);
+    //STATIC_ASSERT(sizeof(miniport_block)==0x4a0);
 
     typedef
     status::type __stdcall
@@ -1309,7 +1307,7 @@ class ndis
       /*<thisrel this+0x58>*/ /*|0x4|*/ void  (__stdcall*CoSendPacketsHandler)(void*, packet**, unsigned int);
       /*<thisrel this+0x5c>*/ /*|0x4|*/ int  (__stdcall*CoRequestHandler)(void*, void*, request*);
     };
-    STATIC_ASSERT(sizeof(miniport_characteristics_50)==0x60);
+    //STATIC_ASSERT(sizeof(miniport_characteristics_50)==0x60);
 
     struct miniport_characteristics_51 : public miniport_characteristics_50
     {
@@ -1321,7 +1319,7 @@ class ndis
       /*<thisrel this+0x74>*/ /*|0x4|*/ void* Reserved3;
       /*<thisrel this+0x78>*/ /*|0x4|*/ void* Reserved4;
     };
-    STATIC_ASSERT(sizeof(miniport_characteristics_51)==0x7c);
+    //STATIC_ASSERT(sizeof(miniport_characteristics_51)==0x7c);
 
     struct m_driver_block
     {
@@ -1333,7 +1331,7 @@ class ndis
       /*<thisrel this+0x18>*/ /*|0x4|*/ struct _NDIS_PENDING_IM_INSTANCE* PendingDeviceList;
       /*<thisrel this+0x1c>*/ /*|0x4|*/ void  (__stdcall*UnloadHandler)(struct _DRIVER_OBJECT*);
     };
-    STATIC_ASSERT(sizeof(m_driver_block)==0x20);
+    //STATIC_ASSERT(sizeof(m_driver_block)==0x20);
 
     struct m_driver_block_50 : public m_driver_block
     {
@@ -1344,7 +1342,7 @@ class ndis
       /*<thisrel this+0xb8>*/ /*|0x20|*/ kmutant IMStartRemoveMutex;
       /*<thisrel this+0xd8>*/ /*|0x4|*/ unsigned long DriverVersion;
     };
-    STATIC_ASSERT(sizeof(m_driver_block_50)==0xc0);
+    //STATIC_ASSERT(sizeof(m_driver_block_50)==0xc0);
 
     struct m_driver_block_51 : public m_driver_block
     {
@@ -1355,7 +1353,7 @@ class ndis
       /*<thisrel this+0xb8>*/ /*|0x20|*/ kmutant IMStartRemoveMutex;
       /*<thisrel this+0xd8>*/ /*|0x4|*/ unsigned long DriverVersion;
     };
-    STATIC_ASSERT(sizeof(m_driver_block_51)==0xdc);
+    //STATIC_ASSERT(sizeof(m_driver_block_51)==0xdc);
 
     struct packet_pool
     {
@@ -1601,7 +1599,8 @@ void __stdcall
 }//namspace km
 }//namespace ntl
 
-
-#pragma comment(lib,    "ndis.lib")
+#ifndef NTL__NO_AUTOLINK
+# pragma comment(lib,    "ndis.lib")
+#endif
 
 #endif//#ifndef NTL__KM_NDIS

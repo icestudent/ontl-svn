@@ -1,140 +1,154 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  N2315 27.6.2 Output streams [output.streams]
+ *  27.6.2 Output streams [output.streams]
  *
  ****************************************************************************
  */
 #ifndef NTL__STLX_SSTREAM
 #define NTL__STLX_SSTREAM
+#pragma once
 
 #include "ios.hxx"
-#include "iosfwd.hxx"
 
 namespace std {
 
-/**\addtogroup  lib_input_output ******* [27] Input/output library **********
- *@{*/
+/**\addtogroup  lib_input_output ******* 27 Input/output library [input.output]
+  *@{*/
 
-/**\addtogroup  lib_string_streams ***** [27.7] String-based streams ********
- *@{*/
+/**\addtogroup  lib_string_streams ***** 27.7 String-based streams
+  *@{*/
+  template <class charT, class traits, class Allocator>
+  class basic_stringbuf;
+
+  typedef basic_stringbuf<char> stringbuf;
+  typedef basic_stringbuf<wchar_t> wstringbuf;
+
+  template <class charT, class traits, class Allocator>
+  class basic_istringstream;
+
+  typedef basic_istringstream<char> istringstream;
+  typedef basic_istringstream<wchar_t> wistringstream;
+
+  template <class charT, class traits, class Allocator>
+  class basic_ostringstream;
+
+  typedef basic_ostringstream<char> ostringstream;
+  typedef basic_ostringstream<wchar_t> wostringstream;
+
+  template <class charT, class traits, class Allocator>
+  class basic_stringstream;
+
+  typedef basic_stringstream<char> stringstream;
+  typedef basic_stringstream<wchar_t> wstringstream;
 
 
-/// 27.7.1 Class template basic_stringbuf [stringbuf]
-/// 1 The class basic_stringbuf is derived from basic_streambuf to associate
-///   possibly the input sequence and possibly the output sequence with a sequence
-///   of arbitrary characters. The sequence can be initialized from, or made
-///   available as, an object of class basic_string.
-template <class charT, class traits, class Allocator>
-class basic_stringbuf : public basic_streambuf<charT, traits>
-{
+  /**
+   *	@brief 27.7.1 Class template basic_stringbuf [stringbuf]
+   *  @details The class basic_stringbuf is derived from basic_streambuf to associate
+   *  possibly the input sequence and possibly the output sequence with a sequence of arbitrary characters.
+   *  The sequence can be initialized from, or made available as, an object of class basic_string.
+   **/
+  template <class charT, class traits, class Allocator>
+  class basic_stringbuf:
+    public basic_streambuf<charT,traits>
+  {
+    typedef typename add_rvalue_reference<basic_stringbuf>::type rvalue;
+
+    static const size_t initial_output_size = 64;
   public:
-    typedef charT                     char_type;
+    ///\name Types
+    typedef charT char_type;
     typedef typename traits::int_type int_type;
     typedef typename traits::pos_type pos_type;
     typedef typename traits::off_type off_type;
-    typedef traits                    traits_type;
-    typedef Allocator                 allocator_type;
+    typedef traits traits_type;
+    typedef Allocator allocator_type;
 
-    /// 27.7.1.1 basic_stringbuf constructors [stringbuf.cons]
+    ///\name 27.7.1.1 Constructors:
     explicit basic_stringbuf(ios_base::openmode which = ios_base::in | ios_base::out)
-    : mode(which)
+      :mode_(which)
     {}
 
-    /// 5 Effects: Constructs an object of class basic_stringbuf, initializing
-    ///   the base class with basic_streambuf() (27.5.2.1), and initializing
-    ///   mode with which. Then calls str(s).
-    explicit basic_stringbuf(const basic_string<charT,traits,Allocator>& str,
-                            ios_base::openmode which = ios_base::in | ios_base::out)
-    : mode(which), str_(str)
+    explicit basic_stringbuf(const basic_string<charT,traits,Allocator>& s, ios_base::openmode which = ios_base::in | ios_base::out)
+      :mode_(which)
     {
-      set_ptrs();
+      str(s);
     }
 
-#ifdef NTL__CXX
+  #ifdef NTL__CXX_RV
     basic_stringbuf(basic_stringbuf&& rhs);
-#endif
+  #endif
 
-#ifdef NTL__CXX
-    ///\name 27.7.1.2 Assign and swap [stringbuf.assign]
-    basic_stringbuf& operator=(basic_stringbuf&& rhs);
-    void swap(basic_stringbuf&& rhs);
-#else
-    void swap(basic_stringbuf& rhs);
-#endif
+    ///\name 27.7.1.2 Assign and swap:
+  #ifdef NTL__CXX_RV
+    basic_stringbuf& operator=(basic_stringbuf&& rhs)
+    {
+      swap(rhs); return *this;
+    }
+  #endif
 
-    ///\name 27.7.1.3 Member functions [stringbuf.members]
+    void swap(basic_stringbuf& rhs)
+    {
+      if(this != &rhs){
+        basic_streambuf::swap(rhs);
+        std::swap(str_, rhs.str_);
+        std::swap(mode_, rhs.mode_);
+      }
+    }
 
-    /// 12 Returns: A basic_string object whose content is equal to the basic_stringbuf
-    ///   underlying character sequence. If the basic_stringbuf was created only
-    ///   in input mode, the resultant basic_string contains the character sequence
-    ///   in the range [eback(),egptr()). If the basic_stringbuf was created
-    ///   with which & ios_base::out being true then the resultant basic_string
-    ///   contains the character sequence in the range [pbase(),high_mark),
-    ///   where high_mark represents the position one past the highest initialized
-    ///   character in the buffer. Characters can be initialized by writing to
-    ///   the stream, by constructing the basic_stringbuf with a basic_string,
-    ///   or by calling the str(basic_string) member function. In the case of
-    ///   calling the str(basic_string) member function, all characters
-    ///   initialized prior to the call are now considered uninitialized
-    ///   (except for those characters re-initialized by the new basic_string).
-    ///   Otherwise the basic_stringbuf has been created in neither input nor
-    ///   output mode and a zero length basic_string is returned.
+    ///\name 27.7.1.3 Get and set:
     basic_string<charT,traits,Allocator> str() const
     {
-      const char_type * const beg = mode & ios_base::out ? this->pbase()
-                                  : mode & ios_base::in ? this->eback() : 0;
-      const char_type * const end = mode & ios_base::out ? this->pptr()
-                                  : mode & ios_base::in ? this->egptr() : 0;
+      // NOTE: update to the specification:
+      /*
+       * If the basic_stringbuf was created only in input mode, the resultant basic_string
+      contains the character sequence in the range [eback(),egptr()).
+       * If the basic_stringbuf was created with which & ios_base::out being true
+      then the resultant basic_string contains the character sequence in the range [pbase(),high_mark),
+      where high_mark represents the position one past the highest initialized character in the buffer.
+       */
+      const char_type * const beg = mode_ & ios_base::out ? this->pbase()
+        : mode_ & ios_base::in ? this->eback() : 0;
+      const char_type * const end = mode_ & ios_base::out ? this->pptr()
+        : mode_ & ios_base::in ? this->egptr() : 0;
       return basic_string<charT,traits,Allocator>(beg, end);
     }
 
-    /// 13 Effects: Copies the content of s into the basic_stringbuf underlying
-    ///   character sequence and initializes the input and output sequences according to mode.
-    /// 14 Postconditions: If mode & ios_base::out is true, pbase() points to
-    ///   the first underlying character and epptr() >= pbase() + s.size() holds;
-    ///   in addition, if mode & ios_base::in is true, pptr() == pbase() + s.data()
-    ///   holds, otherwise pptr() == pbase() is true.
-    ///   If mode & ios_base::in is true, eback() points to the first underlying
-    ///   character, and both gptr() == eback() and egptr() == eback() + s.size() hold.
     void str(const basic_string<charT,traits,Allocator>& s)
-    { 
+    {
+      //str_ = s;
+      if(mode_ & ios_base::out){
+        // reserve additional characters for output buffer
+        str_.reserve(s.size() + initial_output_size);
+      }
       str_.assign(s);
+      #ifdef NTL__DEBUG
+      str_.c_str(); // pretty view
+      #endif
       set_ptrs();
+      if(mode_ & ios_base::ate)
+        pbump(static_cast<int>(epptr()-pptr()));
     }
-
-    ///\}
 
   protected:
-
-    ///\name 27.7.1.4 Overridden virtual functions [stringbuf.virtuals]
-
-    /// 15 Returns: If the input sequence has a read position available,
-    ///   returns traits::to_int_type(*gptr()). Otherwise, returns traits::eof().
-    ///   Any character in the underlying buffer which has been initialized
-    ///   is considered to be part of the input sequence.
-    virtual int_type underflow()
+    ///\name 27.7.1.4 Overridden virtual functions:
+    streamsize showmanyc()
     {
-      return this->gptr() < this->egptr()
-              ? traits::to_int_type(*this->gptr()) : traits::eof();
+      streamsize c = -1;
+      if(mode_ & ios_base::in){
+        syncg();
+        c = egptr()-gptr();
+      }
+      return c;
     }
 
-    /// 16 Effects: Puts back the character designated by c to the input sequence,
-    ///   if possible, in one of three ways:
-    ///   — If traits::eq_int_type(c,traits::eof()) returns false and if
-    ///     the input sequence has a putback position available, and if
-    ///     traits::eq(to_char_type(c),gptr()[-1]) returns true, assigns
-    ///     gptr() - 1 to gptr().
-    ///     Returns: c.
-    ///   — If traits::eq_int_type(c,traits::eof()) returns false and if
-    ///     the input sequence has a putback position available, and if
-    ///     mode & ios_base::out is nonzero, assigns c to *--gptr().
-    ///     Returns: c.
-    ///   — If traits::eq_int_type(c,traits::eof()) returns true and if
-    ///     the input sequence has a putback position available, assigns gptr() - 1 to gptr().
-    ///     Returns: traits::not_eof(c).
-    /// 17 Returns: traits::eof() to indicate failure.
-    /// 18 Remarks: If the function can succeed in more than one of these ways,
-    ///    it is unspecified which way is chosen.
+    virtual int_type underflow()
+    {
+      syncg();
+      return this->gptr() < this->egptr()
+        ? traits::to_int_type(*this->gptr()) : traits::eof();
+    }
+
     virtual int_type pbackfail(int_type c = traits::eof())
     {
       // backup sequence
@@ -143,7 +157,7 @@ class basic_stringbuf : public basic_streambuf<charT, traits>
         if ( !traits::eq_int_type(c, traits::eof()) )
         {
           if ( !traits::eq(traits::to_char_type(c), this->gptr()[-1])
-            && mode & ios_base::out )
+            && mode_ & ios_base::out )
             this->gptr()[-1] = traits::to_char_type(c);
         }
         this->gbump(-1);
@@ -152,308 +166,338 @@ class basic_stringbuf : public basic_streambuf<charT, traits>
       return traits::eof();
     }
 
-    virtual int_type overflow (int_type c = traits::eof());
-
-    virtual pos_type seekoff(off_type off, ios_base::seekdir way, ios_base::openmode which = ios_base::in | ios_base::out);
-    virtual pos_type seekpos(pos_type sp, ios_base::openmode which = ios_base::in | ios_base::out);
-
-    /// 29 Effects: implementation-defined, except that setbuf(0,0) has no effect.
-    virtual basic_streambuf<charT,traits>* setbuf(charT*, streamsize)
+    virtual int_type overflow (int_type c = traits::eof())
     {
-      return this;
+      const int_type eof = traits::eof();
+      if(traits::eq_int_type(c, eof))
+        return eof;
+
+      if(!(mode_ & ios_base::out))
+        return eof;
+
+      const char_type cc = traits::to_char_type(c);
+      if(pptr() < epptr()){
+        *pptr() = cc;
+        pbump(1);
+      }else{
+        if(mode_ & ios_base::app)
+          pbump(static_cast<int>(epptr()-pptr()));
+
+        const ptrdiff_t gp = gptr() - eback(), pp = pptr() - pbase();
+
+        str_.resize(max(initial_output_size, __ntl_grow_heap_block_size(str_.size())), '\0');
+        if(str_.size() < str_.capacity())
+          str_.resize(str_.capacity(), '\0'); // we are also buffer, so lets use all memory
+
+        char_type* newbeg = str_.begin();
+        setp(newbeg, str_.end());
+        pbump(static_cast<int>(pp)); // NOTE: there is an issue in "C++ Standard Library Issues List" about this
+
+        // 27.8.1.4/8
+        if(mode_ & ios_base::in)
+          setg(newbeg, newbeg+gp, pptr());
+        *pptr() = cc;
+        pbump(1);
+      }
+      return c;
     }
 
-  private:
+    virtual pos_type seekoff(off_type off, ios_base::seekdir way, ios_base::openmode which = ios_base::in | ios_base::out)
+    {
+      pos_type re = pos_type(off_type(-1));
+      bool in = (which & mode_ & ios_base::in) != 0,
+        out = (which & mode_ & ios_base::out) != 0;
+      in &= !(which & ios_base::out);
+      out&= !(which & ios_base::in);
+      const bool both = in && out && way != ios_base::cur;
 
+      const char_type* const beg = in ? eback() : pbase();
+      if((beg || !off) && (in || out || both)){
+        // updage egptr
+        syncg();
+        off_type newoff = off;
+        if(way == ios_base::cur)
+          newoff += gptr() - beg;
+        else if(way == ios_base::end)
+          newoff += egptr() - beg;
+
+        if((in || both) && newoff >= 0 && egptr()-beg >= newoff){
+          gbump(static_cast<int>((beg+newoff)-gptr()));
+          re = pos_type(newoff);
+        }
+        if((out || both) && newoff >= 0 && egptr()-beg >= newoff){
+          pbump(static_cast<int>((beg+newoff)-pptr()));
+          re = pos_type(newoff);
+        }
+      }
+      return re;
+    }
+
+    virtual pos_type seekpos(pos_type sp, ios_base::openmode which = ios_base::in | ios_base::out)
+    {
+    #if 1
+      return seekoff(off_type(sp), ios_base::beg, which);
+    #else
+      const bool in = (which & ios_base::in) != 0, out = (which & ios_base::out) != 0;
+      bool ok = false;
+      if(sp != -1 && (in || out)){
+        syncg();
+        ok = true;
+        if(in){
+          if(sp >= 0 && sp < (egptr()-eback()))
+            gbump(static_cast<int>( eback() - gptr() + static_cast<streamoff>(sp) ));
+          else
+            ok = false;
+        }
+        if(out){
+          if(sp >= 0 && sp < (epptr()-pbase()))
+            pbump(static_cast<int>(  pbase() - pptr() + static_cast<streamoff>(sp)));
+          else
+            ok = false;
+        }
+      }
+      return ok ? sp : pos_type(off_type(-1));
+    #endif
+    }
+
+    ///\}
+
+  private:
     /// set stream poiners according to mode. \see str.
     void set_ptrs()
     {
-      if ( mode & ios_base::out )
+      if ( mode_ & ios_base::out )
       {
-        this->setp(s.begin(), s.end());
-        //if ( mode & ios_base::in )
-        //  this->gbump(s.size());
+        if(str_.empty())
+          str_.resize(initial_output_size); // characters by default
+        this->setp(str_.begin(), str_.end());
       }
-      if ( mode & ios_base::in )
-        this->setg(s.begin(), s.begin(), s.end());      
+      if ( mode_ & ios_base::in )
+        this->setg(str_.begin(), str_.begin(), str_.end());
     }
-
-    basic_string<charT,traits,Allocator>  str_;
-    ios_base::openmode mode;
-
-};// template class basic_stringbuf
-
-template <class charT, class traits, class Allocator>
-void swap(basic_stringbuf<charT, traits, Allocator>& x,
-          basic_stringbuf<charT, traits, Allocator>& y)
-{
-  x.swap(y);
-}
-
-#ifdef NTL__CXX
-
-template <class charT, class traits, class Allocator>
-void swap(basic_stringbuf<charT, traits, Allocator>&& x,
-          basic_stringbuf<charT, traits, Allocator>& y);
-
-template <class charT, class traits, class Allocator>
-void swap(basic_stringbuf<charT, traits, Allocator>& x,
-          basic_stringbuf<charT, traits, Allocator>&& y);
-
-#endif
+    void syncg()
+    {
+      char_type* const p = pptr();
+      if(p && p > egptr()){
+        if(mode_ & ios_base::in)
+          setg(eback(), gptr(), p);
+        else
+          setg(p, p, p);
+      }
+    }
+  private:
+    basic_string<charT, traits> str_;
+    ios_base::openmode mode_;
+  };
 
 
-/// 27.7.2 Class template basic_istringstream [istringstream]
-/// 1 The class basic_istringstream<charT, traits, Allocator> supports reading
-///   objects of class basic_string<charT, traits, Allocator>.
-///   It uses a basic_stringbuf object to control the associated storage.
-template <class charT, class traits, class Allocator>
-class basic_istringstream : public basic_istream<charT,traits>
-{
+  /**
+   *	@brief 27.7.2 Class template basic_istringstream [istringstream]
+   *  @details The class basic_istringstream<charT, traits, Allocator> supports reading objects of class
+   *  basic_string<charT, traits, Allocator>. It uses a basic_stringbuf<charT, traits, Allocator> object
+   *  to control the associated storage.
+   **/
+  template <class charT, class traits, class Allocator>
+  class basic_istringstream:
+    public basic_istream<charT,traits>
+  {
+    typedef typename add_rvalue_reference<basic_istringstream>::type rvalue;
   public:
-
     ///\name Types
-    typedef charT                     char_type;
+    typedef charT char_type;
     typedef typename traits::int_type int_type;
     typedef typename traits::pos_type pos_type;
     typedef typename traits::off_type off_type;
-    typedef traits                    traits_type;
-    typedef Allocator                 allocator_type;
+    typedef traits traits_type;
+    typedef Allocator allocator_type;
 
-    ///\name 27.7.2.1 basic_istringstream constructors [istringstream.cons]
-
-    /// 2 Effects: Constructs an object of class basic_istringstream<charT, traits>,
-    ///   initializing the base class with basic_istream(&sb) and initializing
-    ///   sb with basic_stringbuf<charT, traits, Allocator>(which|ios_base::in))
+    ///\name 27.7.2.1 Constructors:
     explicit basic_istringstream(ios_base::openmode which = ios_base::in)
-    : basic_istream<charT,traits>(&sb), sb(which | ios_base::in)
-    {;}
+      :basic_istream<charT,traits>(&sb), sb(which | ios_base::in)
+    {}
 
-    /// 3 Effects: Constructs an object of class basic_istringstream<charT, traits>,
-    ///   initializing the base class with basic_istream(&sb) and initializing
-    ///   sb with basic_stringbuf<charT, traits, Allocator>(str, which|ios_base::in))
-    explicit basic_istringstream(const basic_string<charT,traits,Allocator>& str,
-                                 ios_base::openmode which = ios_base::in)
-    : basic_istream<charT,traits>(&sb), sb(which | ios_base::in)
-    {;}
+    explicit basic_istringstream(const basic_string<charT,traits,Allocator>& str, ios_base::openmode which = ios_base::in)
+      :basic_istream<charT,traits>(&sb), sb(str, which | ios_base::in)
+    {}
 
-#ifdef NTL__CXX
-    /// 4 Effects: Move constructs from the rvalue rhs. This is accomplished by
-    ///   move constructing the base class, and the contained basic_stringbuf.
-    ///   Next basic_istream<charT,traits>::set_rdbuf(&sb) is called to install
-    ///   the contained basic_stringbuf.
+  #ifdef NTL__CXX_RV
     basic_istringstream(basic_istringstream&& rhs);
-#endif
 
-    /// 27.7.2.2 Assign and swap [istringstream.assign]
+    ///\name 27.7.2.2 Assign and swap:
+    basic_istringstream& operator=(basic_istringstream&& rhs)
+    {
+      swap(rhs); return *this;
+    }
+  #endif
 
-#ifdef NTL__CXX
-    basic_istringstream& operator=(basic_istringstream&& rhs);
-    void swap(basic_istringstream&& rhs);
-#else
-    void swap(basic_istringstream& rhs);
-#endif
+    void swap(basic_istringstream& rhs)
+    {
+      basic_istream::swap(rhs);
+      sb.swap(rhs.sb);
+    }
 
-    /// 27.7.2.3 Member functions [istringstream.members]
-
+    ///\name 27.7.2.3 Members:
     basic_stringbuf<charT,traits,Allocator>* rdbuf() const
     {
       return const_cast<basic_stringbuf<charT,traits,Allocator>*>(&sb);
     }
 
-    basic_string<charT,traits,Allocator> str() const
-    {
-      return sb.str();
-    }
-
-    void str(const basic_string<charT,traits,Allocator>& s)
-    {
-      sb.str(s);
-    }
+    basic_string<charT,traits,Allocator> str() const { return sb.str(); }
+    void str(const basic_string<charT,traits,Allocator>& s) { sb.str(s); }
 
     ///\}
-
   private:
     basic_stringbuf<charT,traits,Allocator> sb;
+  };
 
-};// template class basic_istringstream
 
 
-/// 27.7.3 Class basic_ostringstream [ostringstream]
-/// 1 The class basic_ostringstream<charT, traits, Allocator> supports writing
-///   objects of class basic_string<charT, traits, Allocator>.
-///   It uses a basic_stringbuf object to control the associated storage.
-template <class charT, class traits, class Allocator>
-class basic_ostringstream : public basic_ostream<charT,traits>
-{
+  /**
+   *	@brief 27.7.3 Class basic_ostringstream [ostringstream]
+   *  @details The class basic_ostringstream<charT, traits, Allocator> supports writing objects of class
+   *  basic_string<charT, traits, Allocator>. It uses a basic_stringbuf object to control the associated storage.
+   **/
+  template <class charT, class traits, class Allocator>
+  class basic_ostringstream:
+    public basic_ostream<charT,traits>
+  {
+    typedef typename add_rvalue_reference<basic_ostringstream>::type rvalue;
   public:
-
     ///\name Types
-    typedef charT                     char_type;
+    typedef charT char_type;
     typedef typename traits::int_type int_type;
     typedef typename traits::pos_type pos_type;
     typedef typename traits::off_type off_type;
-    typedef traits                    traits_type;
-    typedef Allocator                 allocator_type;
+    typedef traits traits_type;
+    typedef Allocator allocator_type;
 
-    ///\name 27.7.3.1 basic_ostringstream constructors [ostringstream.cons]
-
-    /// 2 Effects: Constructs an object of class basic_ostringstream, initializing
-    ///   the base class with basic_ostream(&sb) and initializing sb with
-    ///   basic_stringbuf<charT, traits, Allocator>(which | ios_base::out))
+    ///\name 27.7.3.1 Constructors/destructor:
     explicit basic_ostringstream(ios_base::openmode which = ios_base::out)
-    : basic_ostream<charT,traits>(&sb), sb(which | ios_base::out)
-    {;}
-    
-    /// 3 Effects: Constructs an object of class basic_ostringstream<charT, traits>,
-    ///   initializing the base class with basic_ostream(&sb) and initializing
-    ///   sb with basic_stringbuf<charT, traits, Allocator>(str, which|ios_base::out))
-    explicit basic_ostringstream(const basic_string<charT,traits,Allocator>& str,
-                                 ios_base::openmode which = ios_base::out)
-    : basic_ostream<charT,traits>(&sb), sb(str, which | ios_base::out)
-    {;}
+      :basic_ostream<charT,traits>(&sb), sb(which | ios_base::out)
+    {}
 
-#ifdef NTL__CXX
-    /// 4 Effects: Move constructs from the rvalue rhs. This is accomplished 
-    ///   move constructing the base class, and the contained basic_stringbuf.
-    ///   Next basic_ostream<charT,traits>::set_rdbuf(&sb) is called to install
-    ///  the contained basic_stringbuf.
+    explicit basic_ostringstream(const basic_string<charT,traits,Allocator>& str, ios_base::openmode which = ios_base::out)
+      : basic_ostream<charT,traits>(&sb), sb(str, which | ios_base::out)
+    {}
+
+  #ifdef NTL__CXX_RV
     basic_ostringstream(basic_ostringstream&& rhs);
-#endif
 
-    ///\name 27.7.3.2 Assign and swap [ostringstream.assign]
+    ///\name 27.7.3.2 Assign/swap:
+    basic_ostringstream& operator=(basic_ostringstream&& rhs)
+    {
+      swap(rhs); return *this;
+    }
+  #endif
 
-#ifdef NTL__CXX
-    basic_ostringstream& operator=(basic_ostringstream&& rhs);
-    void swap(basic_ostringstream&& rhs);
-#else
-    void swap(basic_ostringstream& rhs);
-#endif
+    void swap(basic_ostringstream& rhs)
+    {
+      basic_ostream::swap(rhs);
+      sb.swap(rhs.sb);
+    }
 
-    ///\name 27.7.3.3 Member functions [ostringstream.members]
-
+    ///\name 27.7.3.3 Members:
     basic_stringbuf<charT,traits,Allocator>* rdbuf() const
     {
       return const_cast<basic_stringbuf<charT,traits,Allocator>*>(&sb);
     }
-
-    basic_string<charT,traits,Allocator> str() const
-    { 
-      return sb.str();
-    }
-
-    void str(const basic_string<charT,traits,Allocator>& s)
-    { 
-      sb.str(s);
-    }
-
+    basic_string<charT,traits,Allocator> str() const { return sb.str(); }
+    void str(const basic_string<charT,traits,Allocator>& s) { sb.str(s); }
     ///\}
-
   private:
-     basic_stringbuf<charT,traits,Allocator> sb;
+    basic_stringbuf<charT,traits,Allocator> sb;
+  };
 
-};// template class basic_ostringstream
 
 
-/// 27.7.4 Class template basic_stringstream [stringstream]
-/// 1 The class template basic_stringstream<charT, traits> supports reading and
-///   writing from objects of class basic_string<charT, traits, Allocator>.
-///   It uses a basic_stringbuf<charT, traits, Allocator> object to control
-///   the associated sequence.
-template <class charT, class traits, class Allocator>
-class basic_stringstream : public basic_iostream<charT, traits> 
-{
+  /**
+   *	@brief 27.7.1 Class template basic_stringstream [stringstream]
+   *  @details The class template basic_stringstream<charT, traits> supports reading and writing from objects of
+   *  class basic_string<charT, traits, Allocator>. It uses a basic_stringbuf<charT, traits, Allocator>
+   *  object to control the associated sequence.
+   **/
+  template <class charT, class traits, class Allocator>
+  class basic_stringstream:
+    public basic_iostream<charT,traits>
+  {
+    typedef typename add_rvalue_reference<basic_stringstream>::type rvalue;
+    typedef basic_iostream<charT, traits> base_type;
   public:
-
     ///\name Types
-    typedef charT                     char_type;
+    typedef charT char_type;
     typedef typename traits::int_type int_type;
     typedef typename traits::pos_type pos_type;
     typedef typename traits::off_type off_type;
-    typedef traits                    traits_type;
-    typedef Allocator                 allocator_type;
+    typedef traits traits_type;
+    typedef Allocator allocator_type;
 
-    ///\name 27.7.1.1 basic_stringbuf constructors [stringbuf.cons]
-
-    /// 1 Effects: Constructs an object of class basic_stringstream<charT,traits>,
-    ///   initializing the base class with basic_iostream(&sb) and initializing
-    ///   sb with basic_stringbuf<charT,traits,Allocator>(which).
+    ///\name constructors/destructors
     explicit basic_stringstream(ios_base::openmode which = ios_base::out|ios_base::in)
-    : basic_iostream<charT, traits>(&sb), sb(which)
+      : sb(which), base_type(&sb)
     {}
 
-    /// 2 Effects: Constructs an object of class basic_stringstream<charT, traits>,
-    ///   initializing the base class with basic_iostream(&sb) and initializing
-    ///   sb with basic_stringbuf<charT, traits, Allocator>(str,which).
-    explicit basic_stringstream(const basic_string<charT,traits,Allocator>& str,
-                                ios_base::openmode which = ios_base::out|ios_base::in)
-    : basic_iostream<charT, traits>(&sb), sb(str, which)
+    explicit basic_stringstream(const basic_string<charT,traits,Allocator>& str, ios_base::openmode which = ios_base::out|ios_base::in)
+      :sb(str, which), base_type(&sb)
     {}
 
-  #ifdef NTL__CXX
-    /// 3 Effects: Move constructs from the rvalue rhs. This is accomplished by
-    ///   move constructing the base class, and the contained basic_stringbuf.
-    ///   Next basic_istream<charT,traits>::set_rdbuf(&sb) is called to install
-    ///   the contained basic_stringbuf.
+  #ifdef NTL__CXX_RV
     basic_stringstream(basic_stringstream&& rhs);
   #endif
 
-    ///\name 27.7.5.1 Assign and swap [stringstream.assign]
-
-  #ifdef NTL__CXX
+    ///\name 27.7.5.1 Assign/swap:
+  #ifdef NTL__CXX_RV
     basic_stringstream& operator=(basic_stringstream&& rhs);
-    void swap(basic_stringstream&& rhs);
-  #else
-    void swap(basic_stringstream& rhs);
   #endif
 
-    ///\name 27.7.6 Member functions [stringstream.members]
-
-    basic_stringbuf<charT,traits,Allocator>* rdbuf() const
+    void swap(basic_stringstream& rhs)
     {
-      return const_cast<basic_stringbuf<charT,traits,Allocator>*>(&sb);
+      std::swap(sb, rhs.sb);
     }
 
-    basic_string<charT,traits,Allocator> str() const
-    { 
-      return sb.str();
-    }
-
-    void str(const basic_string<charT,traits,Allocator>& str)
-    { 
-      sb.str(str);
-    }
-
+    ///\name Members:
+    basic_stringbuf<charT,traits,Allocator>* rdbuf() const { return const_cast<basic_stringbuf<charT,traits,Allocator>*>(&sb); }
+    basic_string<charT,traits,Allocator> str() const { return sb.str(); }
+    void str(const basic_string<charT,traits,Allocator>& str) { sb.str(str); }
     ///\}
-
   private:
      basic_stringbuf<charT, traits> sb;
+  };
 
-};// template class basic_stringstream
 
+  ///\name Swap functions
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_stringbuf    <charT, traits, Allocator>& x, basic_stringbuf    <charT, traits, Allocator>& y) { x.swap(y); }
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_istringstream<charT, traits, Allocator>& x, basic_istringstream<charT, traits, Allocator>& y) { x.swap(y); }
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_ostringstream<charT, traits, Allocator>& x, basic_ostringstream<charT, traits, Allocator>& y) { x.swap(y); }
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_stringstream <charT, traits, Allocator>& x, basic_stringstream <charT, traits, Allocator>& y) { x.swap(y); }
 
-template <class charT, class traits, class Allocator>
-void swap(basic_stringstream<charT, traits, Allocator>& x,
-          basic_stringstream<charT, traits, Allocator>& y)
-{
-  x.swap(y);
-}
+#ifdef NTL__CXX_RV__0 // disabled in N2857+
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_stringbuf<charT, traits, Allocator>&& x, basic_stringbuf<charT, traits, Allocator>& y) { x.swap(y); }
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_stringbuf<charT, traits, Allocator>& x, basic_stringbuf<charT, traits, Allocator>&& y) { x.swap(y); }
 
-#ifdef NTL__CXX
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_istringstream<charT, traits, Allocator>&& x, basic_istringstream<charT, traits, Allocator>& y) { x.swap(y); }
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_istringstream<charT, traits, Allocator>& x, basic_istringstream<charT, traits, Allocator>&& y) { x.swap(y); }
 
-template <class charT, class traits, class Allocator>
-void swap(basic_stringstream<charT, traits, Allocator>&& x,
-          basic_stringstream<charT, traits, Allocator>& y);
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_ostringstream<charT, traits, Allocator>&& x, basic_ostringstream<charT, traits, Allocator>& y) { x.swap(y); }
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_ostringstream<charT, traits, Allocator>& x, basic_ostringstream<charT, traits, Allocator>&& y) { x.swap(y); }
 
-template <class charT, class traits, class Allocator>
-void swap(basic_stringstream<charT, traits, Allocator>& x,
-          basic_stringstream<charT, traits, Allocator>&& y);
-
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_stringstream<charT, traits, Allocator>&& x, basic_stringstream<charT, traits, Allocator>& y) { x.swap(y); }
+  template <class charT, class traits, class Allocator>
+  inline void swap(basic_stringstream<charT, traits, Allocator>& x, basic_stringstream<charT, traits, Allocator>&& y) { x.swap(y); }
 #endif
-
-/**@} lib_string_streams */
-/**@} lib_input_output */
-
-} // namespace std
+  ///\}
+  /**@} lib_string_streams */
+  /**@} lib_input_output */
+} // std
 
 #endif // NTL__STLX_SSTREAM

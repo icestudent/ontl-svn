@@ -4,15 +4,15 @@
  *
  ****************************************************************************
  */
-
 #ifndef NTL__KM_OBJECT
 #define NTL__KM_OBJECT
+#pragma once
 
 #include "basedef.hxx"
 #include "string.hxx"
 #include "handle.hxx"
 #include "../nt/object.hxx"
-
+#include "../memory"
 
 namespace ntl {
 namespace km {
@@ -30,29 +30,64 @@ using nt::object_session_information;
 
 struct device_object;
 struct file_object;
+struct object_type;
+struct access_state;
 
+NTL__EXTERNVAR object_type **IoDeviceObjectType, **IoDriverObjectType, **IoFileObjectType, **IoCompletionObjectType, **IoDeviceHandlerObjectType;
 
-struct object_attributes : public nt::object_attributes
+struct object_attributes:
+  public nt::object_attributes
 {
-    object_attributes(
-      const const_unicode_string &  name,
-      const attributes              attr      = case_insensitive | kernel_handle,
-      const security_descriptor *   security  = 0)
+  object_attributes(
+    const const_unicode_string &  name,
+    const attributes              attr      = case_insensitive | kernel_handle,
+    const security_descriptor *   security  = 0)
     : nt::object_attributes(name, attr, security)
-    {/**/}
+  {/**/}
 
-    object_attributes(
-      const legacy_handle           root,
-      const const_unicode_string &  name,
-      const attributes              attr      = case_insensitive | kernel_handle,
-      const security_descriptor *   security  = 0)
+  object_attributes(
+    const unicode_string &        name,
+    const attributes              attr      = case_insensitive | kernel_handle,
+    const security_descriptor *   security  = 0)
+    : nt::object_attributes(name, attr, security)
+  {/**/}
+
+  object_attributes(
+    const legacy_handle           root,
+    const const_unicode_string &  name,
+    const attributes              attr      = case_insensitive | kernel_handle,
+    const security_descriptor *   security  = 0)
     : nt::object_attributes(root, name, attr, security)
-    {/**/}
+  {/**/}
 
-  private:
+  object_attributes(
+    const legacy_handle           root,
+    const unicode_string &        name,
+    const attributes              attr      = case_insensitive | kernel_handle,
+    const security_descriptor *   security  = 0)
+    : nt::object_attributes(root, name, attr, security)
+  {/**/}
 
-    //object_attributes(const object_attributes &);
-//    const object_attributes & operator=(const object_attributes &);
+private:
+
+  void __test_create()
+  {
+    _assert_msg("do not run");
+    //shall not compile to dissallow storing the pointer to a temp const_unicode_string 
+    //object_attributes a1(L" ");
+    const_unicode_string cus(L" ");
+    object_attributes a2(cus);
+    //unicode_string us(L" ");   
+    const_unicode_string us(L" ");
+    object_attributes a3(cus);
+    std::wstring ws(L" ");
+    //object_attributes a40(unicode_string(ws));
+    unicode_string cus2(ws);
+    object_attributes a4(cus2);
+  }
+
+  //object_attributes(const object_attributes &);
+  const object_attributes & operator=(const object_attributes &);
 
 };
 
@@ -100,8 +135,8 @@ STATIC_ASSERT(sizeof(object_type) ==0x190);
 
 struct object_handle_information
 {
-  uint32_t HandleAttributes;
-  uint32_t GrantedAccess;
+	uint32_t HandleAttributes;
+	uint32_t GrantedAccess;
 };
 
 
@@ -147,6 +182,32 @@ ObjectType *
                                         desired_access, obj_type, access_mode);
 }
 
+NTL__EXTERNAPI
+ntstatus __stdcall
+  ObReferenceObjectByName(
+    const const_unicode_string& ObjectName,
+    uint32_t                    Attributes,
+    access_state*               AccessState   __optional,
+    access_mask                 DesiredAccess __optional,
+    const object_type*          ObjectType,
+    kprocessor_mode             AccessMode,
+    void*                       ParseContext  __optional,
+    void*                       Object
+    );
+
+template<typename ObjectType>
+static __forceinline 
+ObjectType* reference_object(
+  const const_unicode_string& name, 
+  const object_type* type,
+  object_attributes::attributes attributes = object_attributes::case_insensitive,
+  kprocessor_mode access_mode = KernelMode)
+{
+  ObjectType* ptr;
+  return nt::success(ObReferenceObjectByName(name, attributes, nullptr, no_access, type, access_mode, nullptr, &ptr)) ? ptr : nullptr;
+}
+
+
 
 NTL__EXTERNAPI
 void __fastcall
@@ -165,6 +226,30 @@ void dereference_object(file_object * pfo)
   ObfDereferenceObject(pfo);
 }
 
+namespace __ 
+{
+  struct dereference_object
+  {
+    inline void operator()(void* pdo)
+    {
+      ntl::km::ObfDereferenceObject(pdo);
+    }
+  };
+}
+
+/**
+ *	@brief Referenced object holder
+ *
+ *  referenced_object could be used to hold objects from ObReferenceObjectBy*. 
+ *  It calls dereference_object automatically when object is not needed anymore.
+ **/
+template<class Object>
+struct referenced_object: std::unique_ptr<Object, __::dereference_object>
+{
+  explicit referenced_object(Object* obj)
+    :unique_ptr(obj)
+  {}
+};
 
 /// Volume Parameter Block
 struct vpb
@@ -193,7 +278,7 @@ struct io_timer
 };
 
 
-enum io_allocation_action 
+enum io_allocation_action
 {
   KeepObject                    = 0x1,
   DeallocateObject              = 0x2,
@@ -235,6 +320,5 @@ struct wait_context_block
 
 }//namspace km
 }//namespace ntl
-
 
 #endif//#ifndef NTL__KM_OBJECT

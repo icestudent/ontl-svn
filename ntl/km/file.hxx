@@ -4,9 +4,9 @@
  *
  ****************************************************************************
  */
-
 #ifndef NTL__KM_FILE
 #define NTL__KM_FILE
+#pragma once
 
 #include "../nt/file.hxx"
 #include "basedef.hxx"
@@ -23,7 +23,6 @@ namespace km {
 ///\name  Legacy API
 
 
-#pragma warning(push)
 //#pragma warning(disable:4190)// C-linkage specified, but returns UDT 'identifier2' which is incompatible with C
 
 NTL__EXTERNAPI
@@ -82,7 +81,12 @@ ntstatus __stdcall
     const uint32_t *  Key           __optional
     );
 
-#pragma warning(pop)
+NTL__EXTERNAPI
+ntstatus __stdcall ZwFlushBuffersFile(legacy_handle FileHandle, io_status_block* IoStatusBlock);
+
+using nt::ZwQueryFullAttributesFile;
+using nt::ZwDeleteFile;
+using nt::ZwQueryDirectoryFile;
 
 ///@}
 
@@ -95,23 +99,36 @@ class file_handler;
 
 template<>
 struct device_traits<km::file_handler>
-: public device_traits<nt::file_handler> {/**/};
+: public device_traits<nt::file_handler> 
+{
+  static const creation_options io_attach_device_api = static_cast<creation_options>(0x80000000);
+};
 
 
 namespace km {
 
 class file_handler : public handle, public device_traits<file_handler>
 {
+  void __test_create()
+  {
+    _assert_msg("do not run");
+    create(L" ");
+    create(const_unicode_string(L" "));// Ok to init object_attributes with a temp string
+    //create(object_attributes(L" "));// may not construct object_attributes with temp string
+    create(object_attributes(const_unicode_string(L" ")));//should not compile
+    create(std::wstring(L" "));
+  }
+  
   ////////////////////////////////////////////////////////////////////////////
   public:
 
     __forceinline
     ntstatus
       create(
-        const object_attributes &   oa, 
+        const object_attributes &   oa,
         const creation_disposition  cd              = creation_disposition_default,
         const access_mask           desired_access  = access_mask_default,
-        const share_mode            share           = share_mode_default, 
+        const share_mode            share           = share_mode_default,
         const creation_options      co              = creation_options_default,
         const attributes            attr            = attribute_default,
         const uint64_t *            allocation_size = 0,
@@ -127,10 +144,10 @@ class file_handler : public handle, public device_traits<file_handler>
     __forceinline
     ntstatus
       create(
-        const std::wstring &        file_name, 
+        const std::wstring &        file_name,
         const creation_disposition  cd              = creation_disposition_default,
         const access_mask           desired_access  = access_mask_default,
-        const share_mode            share           = share_mode_default, 
+        const share_mode            share           = share_mode_default,
         const creation_options      co              = creation_options_default,
         const attributes            attr            = attribute_default,
         const uint64_t *            allocation_size = 0,
@@ -148,7 +165,7 @@ class file_handler : public handle, public device_traits<file_handler>
     __forceinline
     ntstatus
       open(
-        const object_attributes &   oa, 
+        const object_attributes &   oa,
         const access_mask           desired_access  = access_mask_default,
         const share_mode            share           = share_mode_default,
         const creation_options      co              = creation_options_default
@@ -158,10 +175,21 @@ class file_handler : public handle, public device_traits<file_handler>
       return ZwOpenFile(this, desired_access, &oa, &iosb, share, co);
     }
 
-    operator unspecified_bool_type() const
-    { 
-      return ntl::brute_cast<unspecified_bool_type>(get());
-    } 
+    ntstatus
+      open(
+        const std::wstring&         file_name,
+        const access_mask           desired_access  = access_mask_default,
+        const share_mode            share           = share_mode_default,
+        const creation_options      co              = creation_options_default
+        ) __ntl_nothrow
+    {
+      reset();
+      const const_unicode_string uname(file_name);
+      const object_attributes oa(uname);
+      return ZwOpenFile(this, desired_access, &oa, &iosb, share, co);
+    }
+
+    //operator explicit_bool_type() const { return explicit_bool(get()); } 
 
     void close() { reset(); }
 
@@ -181,11 +209,11 @@ class file_handler : public handle, public device_traits<file_handler>
         legacy_handle     completion_event  = legacy_handle(),
         io_apc_routine *  apc_routine       = 0,
         const void *      apc_context       = 0,
-        const uint32_t *  key               = 0
-        ) __ntl_nothrow
+        const uint32_t *  blocking_key      = 0
+        ) const __ntl_nothrow
     {
       return ZwReadFile(get(), completion_event, apc_routine, apc_context,
-                        &iosb, out_buf, out_size, offset, key);
+                          &iosb, out_buf, out_size, offset, blocking_key);
     }
 
     ntstatus
@@ -196,37 +224,72 @@ class file_handler : public handle, public device_traits<file_handler>
         legacy_handle     completion_event  = legacy_handle(),
         io_apc_routine *  apc_routine       = 0,
         const void *      apc_context       = 0,
-        const uint32_t *  key               = 0
+        const uint32_t *  blocking_key      = 0
         ) __ntl_nothrow
     {
       return ZwWriteFile(get(), completion_event, apc_routine, apc_context,
-                          &iosb, in_buf, in_size, offset, key);
+                          &iosb, in_buf, in_size, offset, blocking_key);
     }
 
+    ntstatus flush()
+    {
+      return ZwFlushBuffersFile(get(), &iosb);
+    }
 
-    int64_t 
-      size() const
+    size_type size() const
     {
       file_information<file_standard_information> file_info(get());
       return file_info ? file_info.data()->size() : 0;
     }
-  
+
     ntstatus size(const size_type & new_size)
     {
-      const file_end_of_file_information & fi = 
+      const file_end_of_file_information & fi =
         *reinterpret_cast<const file_end_of_file_information*>(&new_size);
       file_information<file_end_of_file_information> file_info(get(), fi);
       return file_info;
     }
 
-    ntstatus rename(
-      const const_unicode_string &  new_name,
-      bool                          replace_if_exists)
+    size_type tell() const
     {
-      file_rename_information::file_rename_information_ptr fi = 
-        file_rename_information::alloc(new_name, replace_if_exists);
-      if ( !fi ) return status::insufficient_resources;
-      file_information<file_rename_information> file_info(get(), *fi);
+      file_information<file_position_information> file_info(get());
+      return file_info ? file_info.data()->CurrentByteOffset : 0;
+    }
+
+    enum Origin { file_begin, file_current, file_end };
+    ntstatus seek(const size_type& offset, Origin origin, size_type* new_offset = 0)
+    {
+      file_position_information fi = {offset};
+      if(origin != file_begin){
+        if(origin == file_current){
+          file_information<file_position_information> file_info(get());
+          if(!file_info || offset == 0){
+            // special case for using seek(0, cur) as tell()
+            if(new_offset) *new_offset = file_info ? file_info->CurrentByteOffset : 0;
+            return file_info;
+          }
+          fi.CurrentByteOffset += file_info->CurrentByteOffset;
+        }else if(origin == file_end){
+          file_information<file_standard_information> file_info(get());
+          if(!file_info)
+            return file_info;
+          fi.CurrentByteOffset += file_info->EndOfFile;
+        }
+      }
+      file_information<file_position_information> file_info(get(), fi);
+      if(new_offset) *new_offset = file_info ? fi.CurrentByteOffset : 0;
+      return file_info;
+    }
+
+    ntstatus rename(const const_unicode_string& new_name, bool replace_if_exists = true)
+    {
+      file_information<file_rename_information> file_info(get(), new_name, replace_if_exists);
+      return file_info;
+    }
+
+    ntstatus link(const const_unicode_string& name, bool replace_if_exists = false)
+    {
+      file_information<file_link_information> file_info(get(), name, replace_if_exists);
       return file_info;
     }
 
@@ -235,16 +298,13 @@ class file_handler : public handle, public device_traits<file_handler>
   ////////////////////////////////////////////////////////////////////////////
   private:
 
-    io_status_block iosb;
+    mutable io_status_block iosb;
 
 }; // class file_handler
 
 typedef basic_file<file_handler> file;
 
 }//namespace km
-
-using km::file;
-
 }//namespace ntl
 
 #endif//#ifndef NTL__KM_FILE

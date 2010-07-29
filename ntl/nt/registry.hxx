@@ -4,9 +4,9 @@
  *
  ****************************************************************************
  */
-
 #ifndef NTL__NT_REGISTRY
 #define NTL__NT_REGISTRY
+#pragma once
 
 #include "../iterator"
 #include "../string"
@@ -14,6 +14,8 @@
 #include "basedef.hxx"
 #include "handle.hxx"
 #include "object.hxx"
+
+#include <vector>
 
 
 namespace ntl {
@@ -24,7 +26,7 @@ namespace nt {
 
 ///\note  Because ntoskernel does not export Nt* variants,
 ///       Zw* exports are used here, and this header is to be used from KM;
-///       howecer, DO remember nt::object_attributes have 
+///       howecer, DO remember nt::object_attributes have
 ///       no default kernel_handle flag set
 
 ///\name  Legacy API
@@ -118,12 +120,12 @@ ntstatus __stdcall
 NTL__EXTERNAPI
 ntstatus __stdcall
   ZwEnumerateValueKey(
-    legacy_handle         KeyHandle,
-    uint32_t              Index,
+    legacy_handle                 KeyHandle,
+    uint32_t                      Index,
     key_value_information_class   KeyValueInformationClass,
     void *                        KeyValueInformation,
-    uint32_t              Length,
-    uint32_t *            ResultLength
+    uint32_t                      Length,
+    uint32_t *                    ResultLength
     );
 
 ///@}
@@ -161,18 +163,18 @@ struct device_traits<nt::key> : public device_traits<>
   };
   static const access_mask access_mask_default = access_mask(read);
 
-  friend access_mask operator | (access_mask m, access_mask m2) 
-  { 
+  friend access_mask operator | (access_mask m, access_mask m2)
+  {
     return bitwise_or(m, m2);
   }
 
   friend access_mask operator | (access_mask m, nt::access_mask m2)
-  { 
+  {
     return m | static_cast<access_mask>(m2);
   }
 
   friend access_mask operator | (nt::access_mask m, access_mask m2)
-  { 
+  {
     return m2 | m;
   }
 
@@ -188,8 +190,8 @@ struct device_traits<nt::key> : public device_traits<>
   };
   static const creation_options creation_options_default = creation_options(0x00000000);
 
-  friend creation_options operator | (creation_options m, creation_options m2) 
-  { 
+  friend creation_options operator | (creation_options m, creation_options m2)
+  {
     return bitwise_or(m, m2);
   }
 
@@ -223,7 +225,7 @@ class key : public handle, public device_traits<key>
     bool
     __forceinline
       create(
-        const object_attributes &     oa, 
+        const object_attributes &     oa,
         const access_mask             desired_access,
         const creation_options        co          = creation_options_default,
         disposition *                 cd          = 0,
@@ -239,7 +241,7 @@ class key : public handle, public device_traits<key>
     bool
     __forceinline
       open(
-        const object_attributes & oa, 
+        const object_attributes & oa,
         const access_mask         desired_access  = access_mask_default
         ) __ntl_nothrow
     {
@@ -249,7 +251,7 @@ class key : public handle, public device_traits<key>
 
     __forceinline
     explicit key(
-        const object_attributes & oa, 
+        const object_attributes & oa,
         const access_mask         desired_access  = access_mask_default
         )
     {
@@ -259,7 +261,7 @@ class key : public handle, public device_traits<key>
 
     __forceinline
     explicit key(
-        const const_unicode_string &  name, 
+        const const_unicode_string &  name,
         const access_mask             desired_access  = access_mask_default
         )
     {
@@ -270,7 +272,7 @@ class key : public handle, public device_traits<key>
     __forceinline
     explicit key(
         const handle &        root,
-        const std::wstring &  name, 
+        const std::wstring &  name,
         const access_mask     desired_access  = access_mask_default
         )
     {
@@ -290,7 +292,7 @@ class key : public handle, public device_traits<key>
       return *this;
     }
 
-    operator const void*() { return get(); } 
+    // inherited operator const void*() { return get(); }
 
     bool erase()
     {
@@ -366,11 +368,22 @@ class key : public handle, public device_traits<key>
                               length, &result_length);
     }
 
+    static std::wstring crop(std::wstring& s)
+    {
+      while ( s.size() && !s.back() ) s.resize(s.size()-1);
+      return s;
+    }
+
+    /// There is the catch: returned value_string may contain terminating '\0'
+    /// so a logically equal wstring may be false compared.
+    /// It is logical to crop it but wat if it is to be stored back?
+    /// The choise is yours.
     __forceinline
     bool
       query(
         const const_unicode_string &  value_name,
-        std::wstring &                value_string
+        std::wstring &                value_string,
+        bool                          crop          = false
         ) const
     {
       uint32_t size = query_buf_default_size;
@@ -394,6 +407,7 @@ class key : public handle, public device_traits<key>
               value_string.assign(reinterpret_cast<const wchar_t*>(&p->Data[0]),
                                   p->DataLength / sizeof(wchar_t));
               delete[] buf;
+              if ( crop ) key::crop(value_string);
               return true;
             }
           default:
@@ -480,27 +494,10 @@ class key : public handle, public device_traits<key>
                         value.size() * sizeof(const_unicode_string::value_type)));
     }
 
-    ///\note
-    /// There is potential `ambiguous call to overloaded function` 
-    /// when 2nd arg is const wchar_t[].
-    /// We may enable the overload below to resolve the issue.
-    /// However older versions have no such problem because 3rd arg `type`
-    /// had no defaul value.
-    /// And, there is no need to to specify reg_sz since std::wstring is
+    ///\note There is no need to to specify reg_sz since std::wstring is
     /// implicitly convertable to const_unicode_string (as const wchar_t[] does).
-
-#if 0
-    template<size_t Size>
-    bool
-      set(
-        const const_unicode_string &  value_name,
-        const wchar_t (&value)[Size])
-    {
-      STATIC_ASSERT(Size > 0);
-      return nt::success(set(value_name, reg_sz, value, (Size-1) * sizeof(wchar_t)));
-    }
-#endif
-
+    /// Otherwise, there is `ambiguous call to overloaded function' with
+    /// set(L"value_name", L"value");
     bool
       set(
         const const_unicode_string &  value_name,
@@ -508,11 +505,11 @@ class key : public handle, public device_traits<key>
         value_type                    type        /*= reg_sz*/)
     {
       return nt::success(set(value_name, type, value.begin(),
-                              value.size() * sizeof(std::wstring::value_type)));
+                              (uint32_t)(value.size() * sizeof(std::wstring::value_type))));
     }
 
 
-    struct basic_information 
+    struct basic_information
     {
       int64_t   LastWriteTime;
       uint32_t  TitleIndex;
@@ -529,7 +526,7 @@ class key : public handle, public device_traits<key>
       uint32_t  NameLength;
       wchar_t   Name[1];  //  Variable-length string
     };
-    
+
     static
     ntstatus
       enumerate_key(
@@ -568,7 +565,7 @@ class key : public handle, public device_traits<key>
 
         __forceinline
         subkey_iterator & operator++()
-        { 
+        {
           ///\note does not handle ++subkey_end()
           ++index;
           read();
@@ -641,13 +638,13 @@ class key : public handle, public device_traits<key>
 
     __forceinline
     subkey_iterator subkey_begin() const
-    { 
+    {
       return subkey_iterator(get() , subkey_iterator::begin_index);
     }
 
     __forceinline // God bless RVO
     const subkey_iterator & subkey_end() const
-    { 
+    {
       return subkey_end_;
     }
 

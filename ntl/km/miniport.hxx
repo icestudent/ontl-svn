@@ -4,10 +4,9 @@
  *
  ****************************************************************************
  */
-
-
 #ifndef NTL__KM_MINIPORT
 #define NTL__KM_MINIPORT
+#pragma once
 
 #include "basedef.hxx"
 
@@ -39,16 +38,15 @@ enum interface_type
   I1394,
 };
 
-enum dma_width
-{
+
+enum dma_width {
   Width8Bits,
   Width16Bits,
   Width32Bits,
   MaximumDmaWidth
 };
 
-enum dma_speed
-{
+enum dma_speed {
   Compatible,
   TypeA,
   TypeB,
@@ -57,8 +55,7 @@ enum dma_speed
   MaximumDmaSpeed
 };
 
-enum bus_data_type
-{
+enum bus_data_type {
   ConfigurationSpaceUndefined = -1,
   Cmos,
   EisaConfiguration,

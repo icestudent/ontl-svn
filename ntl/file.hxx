@@ -4,13 +4,13 @@
  *
  ****************************************************************************
  */
-
 #ifndef NTL__FILE
 #define NTL__FILE
+#pragma once
 
 #include "device_traits.hxx"
 #include "handle.hxx"
-
+#include "stlx/vector.hxx"
 
 namespace ntl {
 
@@ -30,48 +30,35 @@ class basic_file : public traits
 
     inline basic_file() : f() {}
 
-    typedef typename traits::unspecified_bool_type unspecified_bool_type; 
-    operator unspecified_bool_type() const { return f.operator unspecified_bool_type(); }
+    operator explicit_bool_type() const { return f.operator explicit_bool_type(); } 
+    //operator const void*() { return f.operator const void*(); }
 
     template<typename objectT>
     explicit __forceinline
       basic_file(
-        const objectT &             object, 
+        const objectT &             object,
         const creation_disposition  cd              = traits::creation_disposition_default,
         const access_mask           desired_access  = traits::access_mask_default,
-        const share_mode            share_access    = traits::share_mode_default, 
+        const share_mode            share_access    = traits::share_mode_default,
         const creation_options      co              = traits::creation_options_default,
         const attributes            attr            = traits::attribute_default
-        ) /* nothrow */
+        ) __ntl_nothrow
     {
       f.create(object, cd, desired_access, share_access, co, attr);
-    }
-
-    //bool open(const char* filename, const char* mode);
-    template<typename objectT>
-    bool
-      open(
-        const objectT &             object, 
-        const access_mask           desired_access  = traits::access_mask_default,
-        const share_mode            share           = traits::share_mode_default,
-        const creation_options      co              = traits::creation_options_default
-        ) /* nothrow */
-    {
-      return FileDevice::success(f.open(object, desired_access, share, co));
     }
 
     template<typename objectT>
     bool
       create(
-        const objectT &             object, 
+        const objectT &             object,
         const creation_disposition  cd              = traits::creation_disposition_default,
         const access_mask           desired_access  = traits::access_mask_default,
-        const share_mode            share_access    = traits::share_mode_default, 
+        const share_mode            share_access    = traits::share_mode_default,
         const creation_options      co              = traits::creation_options_default,
         const attributes            attr            = traits::attribute_default
-        ) /* nothrow */
+        ) __ntl_nothrow
     {
-      return FileDevice::success(f.create(object, cd, desired_access, share_access, co, attr));
+      return success(f.create(object, cd, desired_access, share_access, co, attr));
     }
 
     /*
@@ -82,64 +69,37 @@ class basic_file : public traits
     }
     */
 
-    void close() /* nothrow */ { f.close(); }
-    bool flush() /* nothrow */ { return FileDevice::success(f.flush()); }
-
-    bool read(void * out, const size_t & out_size) /* nothrow */
+    bool read(void * out, const uint32_t out_size) __ntl_nothrow
     {
-      return FileDevice::success(f.read(out, out_size));
+      return success(f.read(out, out_size));
     }
 
-    bool read(void * out, size_t & out_size) /* nothrow */
+    bool write(const void * in, const uint32_t in_size) __ntl_nothrow
     {
-      bool const r = FileDevice::success(f.read(out, out_size));
-      out_size = f.read_write_count();
-      return r;
+      return success(f.write(in, in_size));
     }
 
-    bool write(const void * in, const size_t in_size) /* nothrow */
-    {
-      return FileDevice::success(f.write(in, in_size));
-    }
-
-    bool write(void * out, size_t & out_size) /* nothrow */
-    {
-      bool const r = FileDevice::success(f.write(out, out_size));
-      out_size = f.read_write_count();
-      return r;
-    }
-
-    size_type size() const /* nothrow */
+    size_type size() const __ntl_nothrow
     {
       return f.size();
     }
 
-    bool size(const size_type & new_size) /* nothrow */
+    bool size(const size_type & new_size) __ntl_nothrow
     {
-      return FileDevice::success(f.size(new_size));
+      return success(f.size(new_size));
     }
 
-    bool remove() /* nothrow */
+    bool erase()
     {
-      return FileDevice::success(f.remove());
+      return success(f.erase());
     }
 
     template<class NameType>
     bool rename(
       const NameType &  new_name,
-      bool              replace_if_exists = true) /* nothrow */
+      bool              replace_if_exists)
     {
-      return FileDevice::success(f.rename(new_name, replace_if_exists));
-    }
-
-    bool getpos(long long & pos) /* nothrow */
-    {
-      return FileDevice::success(f.getpos(pos));
-    }
-
-    bool setpos(const long long & pos) /* nothrow */
-    {
-      return FileDevice::success(f.setpos(pos));
+      return success(f.rename(new_name, replace_if_exists));
     }
 
     __forceinline
@@ -157,8 +117,8 @@ class basic_file : public traits
       return file_content;
     }
 
-    const FileDevice & handler() const /* nothrow */
-    { 
+    const FileDevice & handler() const
+    {
       return f;
     }
 

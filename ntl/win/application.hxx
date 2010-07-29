@@ -1,12 +1,12 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  Win32 Application support 
+ *  Win32 Application support
  *
  ****************************************************************************
  */
-
 #ifndef NTL__WIN_APPLICATION
 #define NTL__WIN_APPLICATION
+#pragma once
 
 #include "windef.hxx"
 #include "handle.hxx"
@@ -15,8 +15,12 @@
 
 namespace ntl {
 namespace win {
+/**\addtogroup  winapi_types_support *** Win32 API support library **********
+ *@{*/
 
-#pragma comment(lib,    "kernel32.lib")
+#ifndef NTL__NO_AUTOLINK
+# pragma comment(lib,    "kernel32.lib")
+#endif
 
 
 NTL__EXTERNAPI
@@ -38,22 +42,22 @@ void __stdcall
     );
 
 
-/**\addtogroup  win_application *** Win32 Application support library *******
- *@{*/
-
-
 #if defined(UNICODE) || defined(_UNICODE)
 typedef wchar_t tchar_t;
 #else
 typedef char    tchar_t;
 #endif
 
+typedef long boolean;
+
 
 typedef pe::image * hinstance;
 
+/**\addtogroup  application ****** Application support library **************
+*@{*/
 
 template<class charT>
-class application
+class application: noncopyable
 {
   ///////////////////////////////////////////////////////////////////////////
   public:
@@ -66,7 +70,7 @@ class application
     }
 
     struct startupinfo
-    {  
+    {
       uint32_t        cb;
       char_type *     lpReserved;
       char_type *     lpDesktop;
@@ -99,7 +103,7 @@ class application
       legacy_handle   hStdError;
 
       void inline get();
-    }; 
+    };
 
 
     struct command_line
@@ -110,6 +114,7 @@ class application
       typedef const char_type * * iterator;
       typedef const char_type* const * const_iterator;
       typedef std::reverse_iterator<iterator> reverse_iterator;
+      typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
       iterator begin() { return &argv[0]; }
       iterator end()   { return &argv[argc]; }
@@ -119,6 +124,20 @@ class application
 
       const_iterator cbegin() const{ return begin(); }
       const_iterator cend() const  { return end(); }
+
+      reverse_iterator        rbegin()        { return reverse_iterator(end()); }
+      const_reverse_iterator  rbegin() const  { return const_reverse_iterator(end()); }
+      reverse_iterator        rend()          { return reverse_iterator(begin()); }
+      const_reverse_iterator  rend()   const  { return const_reverse_iterator(begin()); }
+
+      const_reverse_iterator  crbegin()const { return rbegin(); }
+      const_reverse_iterator  crend()  const { return rend(); }
+
+      // random access
+      const char_type* operator[](int argno)
+      {
+        return argv[argno];
+      }
 
       int size() const { return argc; }
       bool empty() const { return false; }
@@ -136,27 +155,27 @@ class application
         // self
         if(*p == '"'){
           argv[argc++] = ++p;
-          while ( *p && *p != '"' ) p++;
-          if ( ! *p ) return -1;
+          while(*p && *p != '"') p++;
+          if(!*p) return -1;
           *p++ = '\0';
         }else{
           argv[argc++] = p;
-          while ( *p < '\0' || *p > ' ' ) p++;
-          if ( *p ) *p++ = '\0';
+          while(*p < '\0' || *p > ' ') p++;
+          if(*p) *p++ = '\0';
         }
         // arguments
         while(*p){
-          while ( *p > '\0' && *p <= ' ') p++;
-          if ( ! *p ) break;
+          while(*p > '\0' && *p <= ' ') p++;
+          if(!*p) break;
           if(*p == '"'){
             argv[argc++] = ++p;
             while(*p && *p != '"') p++;
             if(!*p) return -1;
             *p++ = '\0';
           }else{
-          argv[argc++] = p;
-          while ( *p < '\0' || *p > ' ' ) p++;
-          if ( *p ) *p++ = '\0';
+            argv[argc++] = p;
+            while(*p < '\0' || *p > ' ') p++;
+            if(*p) *p++ = '\0';
           }
         }
         return argc;
@@ -187,7 +206,7 @@ application<wchar_t>::command_line::get()
 }
 
 
-/**@} win_application */
+/**@} application */
 
 typedef application<char>::startupinfo    startupinfoa;
 typedef application<wchar_t>::startupinfo startupinfow;
@@ -210,7 +229,7 @@ void startupinfow::get()
 {
   GetStartupInfoW(this);
 }
-
+/**@} winapi_types_support */
 }//namespace win
 }//namespace ntl
 

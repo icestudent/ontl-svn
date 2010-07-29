@@ -4,10 +4,9 @@
  *
  ****************************************************************************
  */
-
-
 #ifndef NTL__KM_TDI
 #define NTL__KM_TDI
+#pragma once
 
 #include "basedef.hxx"
 //#include "string.hxx"
@@ -164,7 +163,7 @@ class tdi
       stack->MinorFunction = query_information;
       stack->DeviceObject = DevObj;
       stack->FileObject = FileObj;
-      request_kernel_query_information & params = 
+      request_kernel_query_information & params =
         *reinterpret_cast<request_kernel_query_information*>(&stack->Parameters);
       params.QueryType = QType;
       params.RequestConnectionInformation = ConnInfo;

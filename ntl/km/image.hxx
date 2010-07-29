@@ -4,10 +4,9 @@
  *
  ****************************************************************************
  */
-
-
 #ifndef NTL__KM_IMAGE
 #define NTL__KM_IMAGE
+#pragma once
 
 #include "../pe/image.hxx"
 #include "basedef.hxx"
@@ -37,7 +36,7 @@ void __stdcall
     );
 
 
-typedef 
+typedef
 ntstatus __stdcall
   set_remove_load_image_notify_routine_t(
     load_image_notify_routine_t *  NotifyRoutine

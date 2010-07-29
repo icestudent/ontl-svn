@@ -4,9 +4,9 @@
  *
  ****************************************************************************
  */
-
 #ifndef NTL__KM_LOOKASIDE_LIST
 #define NTL__KM_LOOKASIDE_LIST
+#pragma once
 
 #include "basedef.hxx"
 #include "pool.hxx"
@@ -75,7 +75,7 @@ struct general_lookaside_pool
   };
   uint32_t              Future[2];
 };
-STATIC_ASSERT(sizeof(general_lookaside_pool)==0x48);
+//STATIC_ASSERT(sizeof(general_lookaside_pool)==0x48);
 
 
 #pragma warning(push)
@@ -92,7 +92,7 @@ struct npaged_lookaside_list : public general_lookaside
 
     typedef CellType  value_type;
 
-  explicit 
+  explicit
   npaged_lookaside_list(
     allocate_function_t *   Allocate    = 0,
     free_function_t *       Free        = 0,

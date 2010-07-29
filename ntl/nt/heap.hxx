@@ -4,14 +4,16 @@
  *
  ****************************************************************************
  */
-
 #ifndef NTL__NT_HEAP
 #define NTL__NT_HEAP
+#pragma once
 
 #include "basedef.hxx"
 #include "peb.hxx"
 
-#pragma comment(lib, "ntdll.lib")
+#ifndef NTL__NO_AUTOLINK
+# pragma comment(lib, "ntdll.lib")
+#endif
 
 namespace ntl {
 namespace nt {
@@ -25,8 +27,8 @@ typedef rtl_heap * heap_ptr;
 struct rtl_heap_parameters;
 
 
-__declspec(restrict)
 NTL__EXTERNAPI
+__declspec(restrict)
 heap_ptr __stdcall
   RtlCreateHeap(
     uint32_t              Flags,
@@ -43,8 +45,8 @@ ntstatus __stdcall
     heap_ptr HeapHandle
     );
 
-__declspec(restrict)
 NTL__EXTERNAPI
+__declspec(restrict)
 void * __stdcall
   RtlAllocateHeap(
     heap_ptr  HeapHandle,
@@ -342,6 +344,21 @@ enum heap_information_class
     HeapCompatibilityInformation
 };
 
+struct rtl_heap_parameters
+{
+  uint32_t Length;
+  uint32_t SegmentReserve;
+  uint32_t SegmentCommit;
+  uint32_t DeCommitFreeBlockThreshold;
+  uint32_t DeCommitTotalFreeThreshold;
+  uint32_t MaximumAllocationSize;
+  uint32_t VirtualMemoryThreshold;
+  uint32_t InitialCommit;
+  uint32_t InitialReserve;
+  ntstatus (__stdcall *CommitRoutine)(void* Base, void** CommitAddress, uint32_t* CommitSize);
+  uint32_t Reserved[2];
+};
+
 NTL__EXTERNAPI
 ntstatus
 __stdcall
@@ -385,8 +402,8 @@ RtlMultipleFreeHeap (
 
 class heap
 {
-  heap(const heap&);
-  const heap& operator=(const heap&);
+  heap(const heap&) __deleted;
+  const heap& operator=(const heap&) __deleted;
 
   ///////////////////////////////////////////////////////////////////////////
 public:
@@ -394,13 +411,17 @@ public:
   enum flag
   {
     none,
+    /** disable heap synchronization */
     no_serialize              = 0x00000001,
     growable                  = 0x00000002,
-    generate_exceprions       = 0x00000004,
+    /** generates exception on failures */
+    generate_exceptions       = 0x00000004,
     zero_memory               = 0x00000008,
+    /** grow memory in place only */
     realloc_in_place_only     = 0x00000010,
     tail_checking_enabled     = 0x00000020,
     free_checking_enabled     = 0x00000040,
+    /** leaves adjacent blocks of heap memory separate when they are freed */
     disable_coalesce_on_free  = 0x00000080,
     create_align_16           = 0x00010000,
     create_enable_tracing     = 0x00020000,
@@ -473,6 +494,24 @@ public:
   {/**/}
 
   ~heap() { destroy(h); }
+
+#ifdef NTL__CXX_RV
+  heap(heap&& rh)
+    :h(rh.h)
+  {
+    rh.h = nullptr;
+  }
+
+  heap& operator=(heap&& rh)
+  {
+    if(this != &rh){
+      destroy(h);
+      h = rh.h;
+      rh.h = nullptr;
+    }
+    return *this;
+  }
+#endif
 
   void * alloc(
     size_t  size,

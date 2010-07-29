@@ -4,25 +4,24 @@
  *
  ****************************************************************************
  */
-
 #ifndef NTL__NT_SYSTEM_INFORMATION
 #define NTL__NT_SYSTEM_INFORMATION
+#pragma once
 
 #include "basedef.hxx"
 #include "string.hxx"
 #include "../iterator"
-//#include "new"
 
 // for SystemProcessInformation
 #include "teb.hxx"
-// km::kpriority
-#include "../km/basedef.hxx"
-
 // for SystemModuleInformation
 #include "../pe/image.hxx"
 
+#include "thread.hxx"
 
 namespace ntl {
+
+
 namespace nt {
 
 /**\addtogroup  system_information ********* System Information *************
@@ -31,101 +30,112 @@ namespace nt {
 
 enum system_information_class
 {
-  SystemBasicInformation                = 0,
-  SystemProcessorInformation            = 1,
-  SystemPerformanceInformation          = 2,
-  SystemTimeOfDayInformation            = 3,
-  SystemPathInformation                 = 4,  ///< not implemented
-  SystemProcessInformation              = 5,  ///< SystemProcessesAndThreadsInformation
-  SystemCallCountInformation            = 6,
-  SystemDeviceInformation               = 7,  ///< SystemConfigurationInformation
-  SystemProcessorPerformanceInformation = 8,
-  SystemFlagsInformation                = 9,  ///< NT GlobalFlag
-  SystemCallTimeInformation             = 10,
-  SystemModuleInformation               = 11,
-  SystemLocksInformation                = 12,
-  SystemStackTraceInformation           = 13,
-  SystemPagedPoolInformation            = 14,
-  SystemNonPagedPoolInformation         = 15,
-  SystemHandleInformation               = 16,
-  SystemObjectInformation               = 17,
-  SystemPageFileInformation             = 18,
-  SystemVdmInstemulInformation          = 19,
-  SystemVdmBopInformation               = 20, 
-  SystemFileCacheInformation            = 21,
-  SystemPoolTagInformation              = 22,
-  SystemInterruptInformation            = 23,
-  SystemDpcBehaviourInformation         = 24,
-  SystemFullMemoryInformation           = 25,
-  SystemLoadGdiDriverInformation        = 26,
-  SystemUnloadGdiDriverInformation      = 27,
-  SystemTimeAdjustmentInformation       = 28,
-  SystemSummaryMemoryInformation        = 29,
-  SystemMirrorMemoryInformation         = 30,
-  SystemPerformanceTraceInformation     = 31,
-  SystemCrashDumpInformation            = 32,
-  SystemExceptionInformation            = 33,
-  SystemCrashDumpStateInformation       = 34,
-  SystemKernelDebuggerInformation       = 35,
-  SystemContextSwitchInformation        = 36,
-  SystemRegistryQuotaInformation        = 37,
-  SystemExtendServiceTableInformation   = 38, ///< SystemLoadAndCallImage
-  SystemPrioritySeperation              = 39,
-  SystemVerifierAddDriverInformation    = 40,
-  SystemVerifierRemoveDriverInformation = 41,
-  SystemProcessorIdleInformation        = 42,
-  SystemLegacyDriverInformation         = 43,
-  SystemCurrentTimeZoneInformation      = 44,
-  SystemLookasideInformation            = 45,
-  SystemTimeSlipNotification            = 46,
-  SystemSessionCreate                   = 47,
-  SystemSessionDetach                   = 48,
-  SystemSessionInformation              = 49,
-  SystemRangeStartInformation           = 50,
-  SystemVerifierInformation             = 51,
-  SystemVerifierThunkExtend             = 52,
-  SystemSessionProcessInformation       = 53,
-  SystemLoadGdiDriverInSystemSpace      = 54,
-  SystemNumaProcessorMap                = 55,
-  SystemPrefetcherInformation           = 56,
-  SystemExtendedProcessInformation      = 57,
-  SystemRecommendedSharedDataAlignment  = 58,
-  SystemComPlusPackage                  = 59,
-  SystemNumaAvailableMemory             = 60,
-  SystemProcessorPowerInformation       = 61,
-  SystemEmulationBasicInformation       = 62,
-  SystemEmulationProcessorInformation   = 63,
-  SystemExtendedHandleInformation       = 64,
-  SystemLostDelayedWriteInformation     = 65,
-  SystemBigPoolInformation              = 66,
-  SystemSessionPoolTagInformation       = 67,
-  SystemSessionMappedViewInformation    = 68,
-  SystemHotpatchInformation             = 69,
-  SystemObjectSecurityMode              = 70,
-  SystemWatchdogTimerHandler            = 71,
-  SystemWatchdogTimerInformation        = 72,
-  SystemLogicalProcessorInformation     = 73,
-  SystemWow64SharedInformation          = 74,
-  SystemRegisterFirmwareTableInformationHandler = 75,
-  SystemFirmwareTableInformation        = 76,
-  SystemModuleInformationEx             = 77,
-  SystemVerifierTriageInformation       = 78,
-  SystemSuperfetchInformation           = 79,
-  SystemMemoryListInformation           = 80,
-  SystemFileCacheInformationEx          = 81,
+  SystemBasicInformation,
+  SystemProcessorInformation,
+  SystemPerformanceInformation,
+  SystemTimeOfDayInformation,
+  SystemPathInformation,  ///< not implemented
+  SystemProcessInformation,  ///< SystemProcessesAndThreadsInformation
+  SystemCallCountInformation,
+  SystemDeviceInformation,  ///< SystemConfigurationInformation
+  SystemProcessorPerformanceInformation,
+  SystemFlagsInformation,  ///< NT GlobalFlag
+  SystemCallTimeInformation,
+  SystemModuleInformation,
+  SystemLocksInformation,
+  SystemStackTraceInformation,
+  SystemPagedPoolInformation,
+  SystemNonPagedPoolInformation,
+  SystemHandleInformation,
+  SystemObjectInformation,
+  SystemPageFileInformation,
+  SystemVdmInstemulInformation,
+  SystemVdmBopInformation,
+  SystemFileCacheInformation,
+  SystemPoolTagInformation,
+  SystemInterruptInformation,
+  SystemDpcBehaviourInformation,
+  SystemFullMemoryInformation,
+  SystemLoadGdiDriverInformation,
+  SystemUnloadGdiDriverInformation,
+  SystemTimeAdjustmentInformation,
+  SystemSummaryMemoryInformation,
+  SystemMirrorMemoryInformation,
+  SystemPerformanceTraceInformation,
+  SystemCrashDumpInformation,
+  SystemExceptionInformation,
+  SystemCrashDumpStateInformation,
+  SystemKernelDebuggerInformation,
+  SystemContextSwitchInformation,
+  SystemRegistryQuotaInformation,
+  SystemExtendServiceTableInformation, ///< SystemLoadAndCallImage
+  SystemPrioritySeperation,
+  SystemVerifierAddDriverInformation,
+  SystemVerifierRemoveDriverInformation,
+  SystemProcessorIdleInformation,
+  SystemLegacyDriverInformation,
+  SystemCurrentTimeZoneInformation,
+  SystemLookasideInformation,
+  SystemTimeSlipNotification,
+  SystemSessionCreate,
+  SystemSessionDetach,
+  SystemSessionInformation,
+  SystemRangeStartInformation,
+  SystemVerifierInformation,
+  SystemVerifierThunkExtend,
+  SystemSessionProcessInformation,
+  SystemLoadGdiDriverInSystemSpace,
+  SystemNumaProcessorMap,
+  SystemPrefetcherInformation,
+  SystemExtendedProcessInformation,
+  SystemRecommendedSharedDataAlignment,
+  SystemComPlusPackage,
+  SystemNumaAvailableMemory,
+  SystemProcessorPowerInformation,
+  SystemEmulationBasicInformation,
+  SystemEmulationProcessorInformation,
+  SystemExtendedHandleInformation,
+  SystemLostDelayedWriteInformation,
+  SystemBigPoolInformation,
+  SystemSessionPoolTagInformation,
+  SystemSessionMappedViewInformation,
+  SystemHotpatchInformation,
+  SystemObjectSecurityMode,
+  SystemWatchdogTimerHandler,
+  SystemWatchdogTimerInformation,
+  SystemLogicalProcessorInformation,
+  SystemWow64SharedInformation,
+  SystemRegisterFirmwareTableInformationHandler,
+  SystemFirmwareTableInformation,
+  SystemModuleInformationEx,
+  SystemVerifierTriageInformation,
+  SystemSuperfetchInformation,
+  SystemMemoryListInformation,
+  SystemFileCacheInformationEx,
+  MaxSystemInfoClass
 };
 
+STATIC_ASSERT(SystemFileCacheInformationEx == 81);
 
 typedef
 ntstatus __stdcall
   query_system_information_t(
     system_information_class  SystemInformationClass,
     void *                    SystemInformation,
-    unsigned long             SystemInformationLength,
-    unsigned long *           ReturnLength
+    uint32_t                  SystemInformationLength,
+    uint32_t *                ReturnLength
+    );
+
+typedef
+ntstatus __stdcall
+  set_system_information_t(
+    system_information_class  SystemInformationClass,
+    const void *              SystemInformation,
+    uint32_t                  SystemInformationLength
     );
 
 NTL__EXTERNAPI query_system_information_t NtQuerySystemInformation;
+NTL__EXTERNAPI set_system_information_t NtSetSystemInformation;
 
 
 ///\note  most of SystemInformationClasses have either big or variable size,
@@ -143,7 +153,7 @@ class system_information_base
 
     typedef InformationClass info_class;
 
-    system_information_base() __ntl_nothrow : ptr(0) 
+    system_information_base() __ntl_nothrow : ptr(0)
     {
       unsigned long length = 0;
       for ( unsigned long i = sizeof(info_class);
@@ -197,6 +207,25 @@ struct system_information
                                 NtQuerySystemInformation>
 {};
 
+//////////////////////////////////////////////////////////////////////////
+
+///\name  SystemBasicInformation (0)
+struct system_basic_information
+{
+  static const system_information_class info_class_type = SystemBasicInformation;
+
+  uint32_t Reserved;
+  uint32_t TimerResolution;
+  uint32_t PageSize;
+  uint32_t NumberOfPhysicalPages;
+  uint32_t LowestPhysicalPageNumber;
+  uint32_t HighestPhysicalPageNumber;
+  uint32_t AllocationGranularity;
+  uintptr_t MinimumUserModeAddress;
+  uintptr_t MaximumUserModeAddress;
+  uintptr_t ActiveProcessorsAffinityMask;
+  int8_t    NumberOfProcessors;
+};
 
 ///\name  SystemProcessInformation (5)
 
@@ -211,8 +240,8 @@ struct system_thread_information
   km::kpriority Priority;
   km::kpriority BasePriority;
   uint32_t      ContextSwitches;
-  uint32_t      ThreadState;
-  uint32_t      WaitReason;
+  thread_state::type  ThreadState;
+  kwait_reason::type  WaitReason;
 };
 
 struct system_process_information
@@ -245,7 +274,7 @@ struct system_process_information
   size_t                PagefileUsage;
   size_t                PeakPagefileUsage;
   size_t                PrivatePageCount;
-  // IO counters (win2K+)
+  // IO counters (win2k+)
   uint64_t              ReadOperationCount;
   uint64_t              WriteOperationCount;
   uint64_t              OtherOperationCount;
@@ -258,22 +287,30 @@ struct system_process_information
   typedef const system_thread_information *     const_iterator;
   typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
+#if 0
   const_iterator begin() const
-  { 
-    // ST: does not depend on sizeof(system_process_information) && should also support NT4
-    return reinterpret_cast<system_thread_information*>(
-          uintptr_t(this) + NextEntryOffset
-          - (ImageName.size() ? ImageName.max_size()*sizeof(const_unicode_string::value_type) : 0))
-      - NumberOfThreads;
-    //return reinterpret_cast<system_thread_information*>(this + 1);
+  {
+    return end() - NumberOfThreads;
   }
-  
+
+  const_iterator end() const
+  {
+    return reinterpret_cast<system_thread_information*>(
+      uintptr_t(this) + NextEntryOffset
+      - (ImageName.size() ? ImageName.max_size()*sizeof(const_unicode_string::value_type) : 0));
+  }
+#else
+  const_iterator begin() const
+  {
+    return reinterpret_cast<system_thread_information*>(uintptr_t(this) + sizeof(system_process_information));
+  }
+
   const_iterator end() const
   {
     return begin() + NumberOfThreads;
   }
-
-  const_reverse_iterator  rbegin() const { return const_reverse_iterator(const_iterator()); }
+#endif
+  const_reverse_iterator  rbegin() const { return const_reverse_iterator(end()); }
   const_reverse_iterator  rend() const  { return const_reverse_iterator(begin()); }
   const_iterator cbegin() const { return begin(); }
   const_iterator cend()   const { return end(); }
@@ -281,7 +318,7 @@ struct system_process_information
   const_reverse_iterator  crend()   const { return rend(); }
 
 };
-STATIC_ASSERT(sizeof(system_process_information) == 0xB8);
+//STATIC_ASSERT(sizeof(system_process_information) == 0xB8);
 
 struct system_processes: public system_process_information
 {
@@ -303,18 +340,18 @@ struct system_processes: public system_process_information
 
     friend
       bool operator==(const const_iterator & x, const const_iterator & y)
-      { 
+      {
         return x.p == y.p;
       }
 
     friend
       bool operator!=(const const_iterator & x, const const_iterator & y)
-      { 
+      {
         return !(x == y);
       }
 
     ///////////////////////////////////////////////////////////////////////////
- //   private:
+    private:
 
       const system_process_information * p;
 
@@ -329,7 +366,7 @@ struct system_processes: public system_process_information
   const_iterator cbegin() const {  return this; }
   const_iterator cend() const { return 0; }
 
-  const system_process_information * 
+  const system_process_information *
   find_process(const const_unicode_string & image_name) const
   {
     for ( const_iterator it = cbegin(); it != cend(); ++it )
@@ -358,12 +395,12 @@ struct rtl_process_module_information// RTL_PROCESS_MODULE_INFORMATION
   char        FullPathName[full_path_name_len];
 
   pe::image * image() const
-  { 
-    return pe::image::bind(ImageBase);
+  {
+    return this ? pe::image::bind(ImageBase) : nullptr;
   }
 
   const char * file_name() const
-  { 
+  {
     return &FullPathName[OffsetToFileName];
   }
 
@@ -378,7 +415,7 @@ struct system_modules_information //RTL_PROCESS_MODULES
 
   size_t size() const { return NumberOfModules; }
 
-  typedef rtl_process_module_information *        iterator;      
+  typedef rtl_process_module_information *        iterator;
   typedef const rtl_process_module_information *  const_iterator;
   typedef std::reverse_iterator<iterator>         reverse_iterator;
   typedef std::reverse_iterator<const_iterator>   const_reverse_iterator;
@@ -398,7 +435,7 @@ struct system_modules_information //RTL_PROCESS_MODULES
 
   /// @note returns Modules[0] when file_name == nullptr
   __forceinline
-  const rtl_process_module_information * 
+  const rtl_process_module_information *
     find_module(const char file_name[]) const
   {
     for ( uint32_t i = 0; i != NumberOfModules; ++i )
@@ -409,7 +446,7 @@ struct system_modules_information //RTL_PROCESS_MODULES
   }
 
   __forceinline
-  const rtl_process_module_information * 
+  const rtl_process_module_information *
     find_module(const std::string & file_name) const
   {
     for ( uint32_t i = 0; i != NumberOfModules; ++i )

@@ -4,18 +4,17 @@
  *
  ****************************************************************************
  */
-
-
 #ifndef NTL__KM_APC
 #define NTL__KM_APC
+#pragma once
 
 #include "basedef.hxx"
-
+#include "../nt/apc.hxx"
 
 namespace ntl {
 namespace km {
 
-
+using nt::knormal_routine_t;
 struct kprocess;
 
 /// KAPC_STATE
@@ -30,14 +29,6 @@ struct kapc_state
 
 
 struct kapc;
-
-typedef
-void __stdcall
-  knormal_routine_t(
-    const void *  NormalContext,
-    const void *  SystemArgument1,
-    const void *  SystemArgument2
-    );
 
 typedef
 void __stdcall
@@ -133,7 +124,7 @@ struct apc : kapc
     return KeInsertQueueApc(this, system_argument1, system_argument2, increment);
   }
 
-  static 
+  static
   void __stdcall
     default_kernel_routine(const kapc * Apc, knormal_routine_t *, void *, void *, void *)
   {
