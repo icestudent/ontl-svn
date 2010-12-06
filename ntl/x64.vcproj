@@ -1107,6 +1107,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\nt\timer.hxx"
+					>
+				</File>
+				<File
 					RelativePath=".\nt\virtualmem.hxx"
 					>
 				</File>
