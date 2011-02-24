@@ -15,7 +15,7 @@
 //using std::va_list;
 
 
-#ifndef _INC_STDLIB// MSVC compatibility
+//#ifndef _INC_STDLIB// MSVC compatibility
 
 NTL__EXTERNAPI size_t __cdecl
   sprintf(char *buffer, const char *format, ...);
@@ -26,13 +26,14 @@ NTL__EXTERNAPI size_t __cdecl
 NTL__EXTERNAPI size_t __cdecl
   _vsnprintf(char *buffer, size_t count, const char *format, va_list argptr);
 
+#ifndef _INC_STDLIB// MSVC compatibility
+
 NTL__EXTERNAPI wchar_t* __cdecl _wcslwr(wchar_t * str);
 
 //NTL__EXTERNAPI size_t __cdecl
 //  _snwprintf(wchar_t *buffer, size_t count, const wchar_t *format, ...);
 //NTL__EXTERNAPI size_t __cdecl
 //  _vsnwprintf(wchar_t *buffer, size_t count, const wchar_t *format, va_list argptr);
-
 
 #endif
 

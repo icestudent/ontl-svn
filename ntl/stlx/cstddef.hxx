@@ -131,7 +131,9 @@ namespace std {
 /// _countof macro to calculate array length in compile time
 template <typename T, size_t N>
 char (*__countof_helper(T(&array)[N]))[N];
+#ifndef _countof
 #define _countof(array) sizeof(*__countof_helper(array))
+#endif
 #define _endof(array) (array+_countof(array))
 
 namespace std { namespace __{ using ntl::explicit_bool; using ntl::explicit_bool_type; } }
