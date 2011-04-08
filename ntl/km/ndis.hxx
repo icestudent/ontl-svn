@@ -380,6 +380,8 @@ class ndis
 
     struct vc_context;
     struct open_block;
+    struct m_driver_block;
+    struct miniport_block;
 
 
     class protocol
@@ -665,8 +667,8 @@ class ndis
           unsigned long             MutexOwner;
           ndis::string *            BindDeviceName;
           ndis::string *            RootDeviceName;
-          struct m_driver_block *   AssociatedMiniDriver;
-          struct miniport_block *   BindingAdapter;
+          m_driver_block *          AssociatedMiniDriver;
+          miniport_block *          BindingAdapter;
         };// <size 0xc4>
         //STATIC_ASSERT(sizeof(block) == 0xc4);
 
@@ -847,7 +849,6 @@ class ndis
         const request * NdisRequest
         );
 
-    struct miniport_block;
 
     struct queued_close
     {
