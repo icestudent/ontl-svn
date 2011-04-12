@@ -450,7 +450,7 @@ struct system_modules_information //RTL_PROCESS_MODULES
     find_module(const std::string & file_name) const
   {
     for ( uint32_t i = 0; i != NumberOfModules; ++i )
-      if ( file_name == Modules[i].file_name() )
+      if ( ! _strnicmp(file_name.begin(), Modules[i].file_name(), file_name.size())  )
         return &Modules[i];
     return 0;
   }
