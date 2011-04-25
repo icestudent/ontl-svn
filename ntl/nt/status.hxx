@@ -4,9 +4,9 @@
  *
  ****************************************************************************
  */
+
 #ifndef NTL__NT_STATUS
 #define NTL__NT_STATUS
-#pragma once
 
 
 namespace ntl {
@@ -15,32 +15,6 @@ namespace nt {
 /**\addtogroup  native_types_support *** NT Types support library ***********
  *@{*/
 
-  /**
-   *	@brief status code
-   *
-   *  Status values are 32 bit values layed out as follows:
-   *
-   *   3 3 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1
-   *   1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0
-   *  +---+-+-------------------------+-------------------------------+
-   *  |Sev|C|       Facility          |               Code            |
-   *  +---+-+-------------------------+-------------------------------+
-   *
-   *  where
-   *
-   *      Sev - is the severity code
-   *
-   *          00 - Success
-   *          01 - Informational
-   *          10 - Warning
-   *          11 - Error
-   *
-   *      C - is the Customer code flag
-   *
-   *      Facility - is the facility code
-   *
-   *      Code - is the facility's status code
-   **/
 struct status
 {
   enum type
@@ -59,7 +33,6 @@ struct status
     alerted                                                        = (int)0x00000101,
     timeout                                                        = (int)0x00000102,
     pending                                                        = (int)0x00000103,
-    still_active = pending,
     reparse                                                        = (int)0x00000104,
     more_entries                                                   = (int)0x00000105,
     not_all_assigned                                               = (int)0x00000106,
@@ -1656,42 +1629,21 @@ struct status
     ipsec_integrity_check_failed                                   = (int)0xC0360006,
     ipsec_clear_text_drop                                          = (int)0xC0360007,
 
-#if !defined(__BCPLUSPLUS__) && !defined(__ICL)
     cxx_exception = (int)(0xE0000000|'msc'),
-    com_exception = (int)(0xE0000000|'MOC'),
-    complus_exception = (int)(0xE0000000|'RCC')
-#else
-    cxx_exception = (int)0xE063736D,
-    com_exception = (int)0xE0434F4D,
-    complus_exception = (int)0xE0434352
-#endif
+    com_exception = (int)0xE0000000|'MOC'
+
   };
-
-  static bool is_error(const type s)
-  {
-    return static_cast<unsigned>(s) >> 30 == 3;
-  }
-  static bool is_warning(const type s)
-  {
-    return static_cast<unsigned>(s) >> 30 == 2;
-  }
-  static bool is_informational(const type s)
-  {
-    return static_cast<unsigned>(s) >> 30 == 1;
-  }
-
 };
 
-typedef nt::status::type ntstatus;
-
 static __forceinline
-bool success(const ntstatus s)
+bool success(const status::type & s)
 {
   return s >= 0;
 }
 
 /**@} native_types_support */
 
+typedef nt::status::type ntstatus;
 
 }//namespace nt
 

@@ -4,9 +4,9 @@
  *
  ****************************************************************************
  */
+
 #ifndef NTL__NT_SHARED_DATA
 #define NTL__NT_SHARED_DATA
-#pragma once
 
 #include "../cpu.hxx"
 #include "../stdint.h"
@@ -18,23 +18,19 @@ struct system_time
 {
     typedef int64_t type;
     static const type resolution = (1000 * 1000 * 1000) / 100; // 100ns
-    
-    static const type& infinite()
-    {
-      static const type* const null = 0;
-      return *null;
-    }
 
+    #pragma warning(push)
+    #pragma warning(disable:4127)//conditional expression is constant
     __forceinline type get() volatile const
     {
-#ifdef _M_X64
-      return *reinterpret_cast<int64_t volatile const*>(this);
-#else
       uint32_t l; int32_t h;
-      do { cpu::pause(); l = low; h = high; } while ( h != high2 );
+      if ( sizeof(std::uintptr_t) > sizeof(int32_t) )// don't like #ifdef _M_X64
+        return *reinterpret_cast<int64_t volatile const*>(this);
+      do { cpu::pause(); l = low; h = high; }
+      while ( h != high2 );
       return (type)h << 32 | l;
-#endif
     }
+    #pragma warning(pop)
 
     __forceinline operator type() const
     {
@@ -45,14 +41,16 @@ struct system_time
     int32_t   high, high2;
 };
 
-enum product_type
+//typedef nt::system_time km::ksystem_time;
+
+enum product_type 
 {
   NtProductWinNt = 1,
   NtProductLanManNt,
   NtProductServer
 };
 
-enum alternative_architecture_type
+enum alternative_architecture_type 
 {
   StandardDesign,
   NEC98x86,
@@ -61,7 +59,6 @@ enum alternative_architecture_type
 
 #pragma pack(push)
 #pragma pack(8)
-
 /// The data shared between kernel and user mode.
 ///\note read-only for UM.
 struct shared_data_32
@@ -74,27 +71,25 @@ struct shared_data_32
 
   static const uintptr_t um_base = 0x7ffe0000;
 
-protected:
   static const shared_data_32& um_instance()
   {
     return *reinterpret_cast<const shared_data_32*>(um_base);
   }
+
   static shared_data_32& km_instance()
   {
     return *reinterpret_cast<shared_data_32*>(km_base);
   }
-public:
-#ifdef NTL_KM
-  static shared_data_32& instance()
-  {
-    return km_instance();
-  }
-#else //#elif defined NTL_NT || defined NTL_WIN
+
   static const shared_data_32& instance()
   {
+#ifdef NTL_KM
+    return km_instance();
+//#elif defined NTL_NT || defined NTL_WIN
+#else
     return um_instance();
-  }
 #endif
+  }
 
             uint32_t      TickCountLowDeprecated;
             uint32_t      TickCountMultiplier;
@@ -133,58 +128,42 @@ public:
             uint32_t      SystemCall;
             uint32_t      SystemCallReturn;
             uint64_t      SystemCallPad[3];
-
-            // xpsp2+
   union {
     volatile system_time  TickCount;
     volatile uint64_t     TickCountQuad;
   };
             uint32_t      Cookie;
-
 };
 STATIC_ASSERT(sizeof(shared_data_32) == 0x338 );
 
-#ifdef _M_X64
 struct shared_data_64 : public shared_data_32
 {
-#ifdef NTL_KM
-  static shared_data_64& instance()
+  static const shared_data_64& um_instance()
   {
-    return static_cast<shared_data_64&>(km_instance());
+    return *static_cast<const shared_data_64*>(&shared_data_32::um_instance());
   }
-#else
+
+  static shared_data_64& km_instance()
+  {
+    return *static_cast<shared_data_64*>(&shared_data_32::km_instance());
+  }
+
   static const shared_data_64& instance()
   {
-    return static_cast<const shared_data_64&>(um_instance());
+    return *static_cast<const shared_data_64*>(&shared_data_32::instance());
   }
-#endif
 
-  enum wow64_shared_information
-  {
-    SharedNtdll32LdrInitializeThunk,
-    SharedNtdll32KiUserExceptionDispatcher,
-    SharedNtdll32KiUserApcDispatcher,
-    SharedNtdll32KiUserCallbackDispatcher,
-    SharedNtdll32LdrHotPatchRoutine,
-    SharedNtdll32ExpInterlockedPopEntrySListFault,
-    SharedNtdll32ExpInterlockedPopEntrySListResume,
-    SharedNtdll32ExpInterlockedPopEntrySListEnd,
-    SharedNtdll32Reserved2,
-    Wow64SharedPageEntriesCount
-  };
             uint32_t      Wow64SharedInformation[max_wow64_shared_entries];
-            // NT6.0+
             uint16_t      UserModeGlobalLogger[8];
             uint32_t      HeapTracingPid[2];
             uint32_t      CritSecTracingPid[2];
             uint32_t      ImageFileExecutionOptions;
   union {
     uint64_t              AffinityPad;
-    km::kaffinity         ActiveProcessorAffinity;
+    //km::kaffinity_t       ActiveProcessorAffinity;
   };
   volatile  uint64_t      InterruptTimeBias;
 };
-#endif // _M_X64
 
 #pragma pack(pop)
 

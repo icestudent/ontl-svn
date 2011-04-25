@@ -1,13 +1,14 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  27.5 Stream buffers [stream.buffers]
+ *  N2315 27.5 Stream buffers [stream.buffers]
  *
  ****************************************************************************
  */
+
 #ifndef NTL__STLX_STREAMBUF
 #define NTL__STLX_STREAMBUF
-#pragma once
 
+#include "iosfwd.hxx"
 #include "locale.hxx"
 
 #ifdef _MSC_VER
@@ -15,28 +16,22 @@
 #pragma warning(disable:4820) // X bytes padding added...
 #endif
 
-namespace std
-{
+namespace std {
 
-/**\addtogroup  lib_input_output ******* 27 Input/output library [input.output]
+/**\addtogroup  lib_input_output ******* [27] Input/output library **********
  *@{*/
-/**\addtogroup  lib_stream_buffers ***** 27.5 Stream buffers
+/**\addtogroup  lib_stream_buffers ***** [27.5] Stream buffers **************
  *@{*/
 
-/**
- *	@brief 27.5.2 Class template basic_streambuf<charT,traits> [streambuf]
- *
- *  The class template basic_streambuf<charT,traits> serves as an abstract base class for deriving various
- *  stream buffers whose objects each control two character sequences:
- *  - a character input sequence;
- *  - a character output sequence.
- **/
+/// 27.5.2 Class template basic_streambuf<charT,traits> [streambuf]
 template <class charT, class traits /*= char_traits<charT>*/ >
 class basic_streambuf
 {
   ///////////////////////////////////////////////////////////////////////////
   public:
+
     ///\name Types:
+
     typedef charT                     char_type;
     typedef typename traits::int_type int_type;
     typedef typename traits::pos_type pos_type;
@@ -44,7 +39,7 @@ class basic_streambuf
     typedef traits                    traits_type;
 
   protected:
-
+    
     /// 27.5.2.1 basic_streambuf constructors [streambuf.cons]
     __forceinline
     basic_streambuf()
@@ -52,37 +47,10 @@ class basic_streambuf
       pbeg(0), pend(0), pnext(0)/*, l(locale())*/
     {/**/}
 
-    basic_streambuf(const basic_streambuf& r)
-    : gbeg(r.gbeg), gend(r.gend), gnext(r.gnext),
-      pbeg(r.pbeg), pend(r.pend), pnext(r.pnext)
-  #if STLX__CONFORMING_LOCALE
-      , l(r.l)
-  #endif
-    {/**/}
-  
-    basic_streambuf& operator=(const basic_streambuf& r)
-    {
-      if(this == &r)
-        return *this;
-      gbeg = r.gbeg; gend = r.gend; gnext = r.gnext;
-      pbeg = r.pbeg; pend = r.pend; pnext = r.pnext;
-    #if STLX__CONFORMING_LOCALE
-      l = r.l;
-    #endif
-      return *this;
-    }
+    basic_streambuf(const basic_streambuf& rhs);
+    basic_streambuf& operator=(const basic_streambuf& rhs);
 
-    void swap(basic_streambuf& rhs)
-    {
-      if(this == &rhs)
-        return;
-      std::swap(gbeg,  rhs.gbeg);
-      std::swap(gend,  rhs.gend);
-      std::swap(gnext, rhs.gnext);
-      std::swap(pbeg,  rhs.pbeg);
-      std::swap(pend,  rhs.pend);
-      std::swap(pnext, rhs.pnext);
-    }
+    void swap(basic_streambuf&/*&*/ rhs);
 
   public:
 
@@ -90,24 +58,19 @@ class basic_streambuf
 
     //  27.5.2.2 basic_streambuf public member functions [streambuf.members]
 
-    ///\name 27.5.2.2.1 Locales [streambuf.locales]
+    ///\name  // 27.5.2.2.1 Locales [streambuf.locales]
 
-    locale pubimbue(const locale& loc)
-    {
-      locale prev = getloc();
-      imbue(loc);
-      return prev;
-    }
+    locale pubimbue(const locale& loc);
 
     locale getloc() const
-    {
-  #if !STLX__CONFORMING_LOCALE
+    { 
+#if !STLX__CONFORMING_LOCALE
       locale  l;
-  #endif
+#endif
       return l;
     }
 
-    ///\name 27.5.2.2.2 Buffer management and positioning [streambuf.buffer]
+    ///\name  // 27.5.2.2.2 Buffer management and positioning [streambuf.buffer]
 
     basic_streambuf<char_type,traits>* pubsetbuf(char_type* s, streamsize n)
     {
@@ -128,7 +91,7 @@ class basic_streambuf
     }
 
     int pubsync()
-    {
+    { 
       return sync();
     }
 
@@ -143,7 +106,7 @@ class basic_streambuf
       const streamsize ravail = gend - gnext;
       return 0 < ravail ? ravail : showmanyc();
     }
-
+    
     int_type snextc()
     {
       const int_type c = sbumpc();
@@ -176,7 +139,7 @@ class basic_streambuf
       return !(0 < pbavail) || !traits_type::eq(c ,gnext[-1])
         ? pbackfail(traits_type::to_int_type(c)) : traits_type::to_int_type(*--gnext);
     }
-
+    
     int_type sungetc()
     {
       const streamsize pbavail = gnext - gbeg;
@@ -189,9 +152,9 @@ class basic_streambuf
     {
       const int_type ic = traits_type::to_int_type(c);
       const streamsize wavail = pend - pnext;
-      return !(0 < wavail) ? overflow(ic) : *pnext++ = c, ic;
+      return !(0 < wavail) ? overflow(ic) : *pnext++ = traits_type::to_char_type(ic), ic;
     }
-
+    
     streamsize sputn(const char_type* s, streamsize n)
     {
       return xsputn(s, n);
@@ -204,10 +167,10 @@ class basic_streambuf
 
     ///\name  27.5.2.3.2 Get area access [streambuf.get.area]
 
-    char_type* eback() const  { return gbeg;  }
+    char_type* eback() const  { return gbeg; }
     char_type* gptr()  const  { return gnext; }
-    char_type* egptr() const  { return gend;  }
-    void gbump(int n)         { gnext += n;   }
+    char_type* egptr() const  { return gend; }
+    void gbump(int n)         { gnext += n; }
 
     void setg(char_type* gbeg, char_type* gnext, char_type* gend)
     {
@@ -216,10 +179,10 @@ class basic_streambuf
 
     ///\name  27.5.2.3.3 Put area access [streambuf.put.area]
 
-    char_type* pbase() const { return pbeg;   }
-    char_type* pptr()  const { return pnext;  }
-    char_type* epptr() const { return pend;   }
-    void pbump(int n)        { pnext += n;    }
+    char_type* pbase() const { return pbeg; }
+    char_type* pptr()  const { return pnext; }
+    char_type* epptr() const { return pend; }
+    void pbump(int n)        { pnext += n; }
 
     void setp(char_type* pbeg, char_type* pend)
     {
@@ -229,16 +192,19 @@ class basic_streambuf
     // 27.5.2.4 basic_streambuf virtual functions [streambuf.virtuals]
 
     ///\name  27.5.2.4.1 Locales [streambuf.virt.locales]
+#if STLX__CONFORMING_LOCALE
     virtual void imbue(const locale&)
     {
       // Default behavior: Does nothing.
     }
+#endif
 
     ///\name  27.5.2.4.2 Buffer management and positioning [streambuf.virt.buffer]
 
-    virtual basic_streambuf<char_type,traits>* setbuf(char_type*, streamsize)
-    {
-      // Default behavior: Does nothing.
+    virtual basic_streambuf<char_type,traits>*
+      setbuf(char_type* s, streamsize n)
+    { 
+      this->setp(s, s + n);
       return this;
     }
 
@@ -260,16 +226,15 @@ class basic_streambuf
     }
 
     virtual int sync()
-    {
-      // Default behavior: Returns zero.
-      return 0;
+    { 
+      return pptr() > pbase() || 
+              traits_type::eq_int_type(traits_type::eof(), overflow()) ? -1 : 0;
     }
 
     ///\name  27.5.2.4.3 Get area [streambuf.virt.get]
 
     virtual streamsize showmanyc()
-    {
-      // Default behavior: Returns zero.
+    { 
       return 0;
     }
 
@@ -296,10 +261,10 @@ class basic_streambuf
     }
 
     virtual int_type underflow()
-    {
+    { 
       ///\note The public members of basic_streambuf call this virtual function
       ///      only if gptr() is null or gptr() >= egptr()
-      assert(!gptr() || gptr() >= egptr());
+      _Assert(!gptr() || gptr() >= egptr());
       //  Default behavior: Returns traits::eof().
       return traits_type::eof();
     }
@@ -316,14 +281,14 @@ class basic_streambuf
 
     ///\name  27.5.2.4.4 Putback [streambuf.virt.pback]
     virtual int_type pbackfail(int_type c = traits_type::eof())
-    {
+    { 
       ///\note The public functions of basic_streambuf call this virtual function
       ///      only when gptr() is null, gptr() == eback(),
       ///      or traits::eq(traits::to_char_type(c ),gptr()[-1]) returns false.
       ///      Other calls shall also satisfy that constraint.
-      assert(!gptr() || gptr() >= eback()
+      _Assert(!gptr() || gptr() >= eback()
           || !traits_type::eq(traits_type::to_char_type(c),gnext[-1]));
-      (void)(c);
+      (c);
       //  Default behavior: Returns traits::eof().
       return traits_type::eof();
     }
@@ -332,21 +297,14 @@ class basic_streambuf
 
     virtual streamsize xsputn(const char_type* s, streamsize n)
     {
-      const int_type eof = traits_type::eof();
       for ( streamsize copied = 0; ; )
       {
         if ( !(0 < n) ) return copied;
         const streamsize wavail = pend - pnext;
         if ( !(0 < wavail) )
         {
-          const char_type c = *s;
-          if ( traits_type::eq_int_type(eof, overflow(traits_type::to_int_type(c))) )
+          if ( traits_type::eq_int_type(traits_type::eof(), overflow()) )
             return copied;
-          //if(pbeg) // overflow already puts character into sequence
-          //  *pnext++ = c;
-          s++;
-          copied++;
-          n--;
           continue;
         }
         //__assume(n >= 0 && ravail >= 0);
@@ -360,7 +318,7 @@ class basic_streambuf
     }
 
     virtual int_type overflow(int_type = traits_type::eof())
-    {
+    { 
       //  Default behavior: Returns traits::eof().
       return traits_type::eof();
     }
@@ -370,17 +328,15 @@ class basic_streambuf
   ///////////////////////////////////////////////////////////////////////////
   //private:
 
-    char_type * gbeg; // read:  start
-    char_type * gend; //        end
-    char_type * gnext;//        pos
-
-    char_type * pbeg; // write: start
-    char_type * pend; //        end
-    char_type * pnext;//        pos
-
-  #if STLX__CONFORMING_LOCALE
+    char_type * gbeg;
+    char_type * gend;
+    char_type * gnext;
+    char_type * pbeg;
+    char_type * pend;
+    char_type * pnext;
+#if STLX__CONFORMING_LOCALE
     locale      l;
-  #endif
+#endif
 };
 
 /**@} lib_stream_buffers */

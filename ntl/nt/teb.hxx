@@ -4,106 +4,145 @@
  *
  ****************************************************************************
  */
+
 #ifndef NTL__NT_TEB
 #define NTL__NT_TEB
-#pragma once
 
 #include "handle.hxx"
 
+
 namespace ntl {
 
+///\tode move to another header
 namespace intrinsic {
+  
 #if defined(_M_IX86)
-  extern "C" uint8_t  __cdecl __readfsbyte (uint32_t);
-	extern "C" uint16_t __cdecl __readfsword (uint32_t);
-	extern "C" uint32_t __cdecl __readfsdword(uint32_t);
-  extern "C" uint64_t __cdecl __readfsqword(uint32_t);
+
+  extern "C" uint8_t  __cdecl __readfsbyte (uint32_t Offset);
+  extern "C" uint16_t __cdecl __readfsword (uint32_t Offset);
+  extern "C" uint32_t __cdecl __readfsdword(uint32_t Offset);
+  extern "C" uint64_t __cdecl __readfsqword(uint32_t Offset);
 
   extern "C" void __cdecl __writefsbyte (uint32_t Offset, uint8_t Data);
   extern "C" void __cdecl __writefsword (uint32_t Offset, uint16_t Data);
-	extern "C" void __cdecl __writefsdword(uint32_t Offset, uint32_t Data);
+  extern "C" void __cdecl __writefsdword(uint32_t Offset, uint32_t Data);
   extern "C" void __cdecl __writefsqword(uint32_t Offset, uint64_t Data);
 
-#	pragma intrinsic(__readfsbyte)
-#	pragma intrinsic(__readfsword)
-#	pragma intrinsic(__readfsdword)
+#pragma intrinsic(__readfsbyte, __readfsword, __readfsdword/*, __readfsqword*/)
+#pragma intrinsic(__writefsbyte, __writefsword, __writefsdword/*, __writefsqword*/)
 
 #elif defined(_M_X64)
-  extern "C" uint8_t  __cdecl __readgsbyte (uint32_t);
-  extern "C" uint16_t __cdecl __readgsword (uint32_t);
-  extern "C" uint32_t __cdecl __readgsdword(uint32_t);
-  extern "C" uint64_t __cdecl __readgsqword(uint32_t);
+
+  extern "C" uint8_t  __cdecl __readgsbyte (uint32_t Offset);
+  extern "C" uint16_t __cdecl __readgsword (uint32_t Offset);
+  extern "C" uint32_t __cdecl __readgsdword(uint32_t Offset);
+  extern "C" uint64_t __cdecl __readgsqword(uint32_t Offset);
 
   extern "C" void __cdecl __writegsbyte (uint32_t Offset, uint8_t Data);
   extern "C" void __cdecl __writegsword (uint32_t Offset, uint16_t Data);
   extern "C" void __cdecl __writegsdword(uint32_t Offset, uint32_t Data);
   extern "C" void __cdecl __writegsqword(uint32_t Offset, uint64_t Data);
 
-#	pragma intrinsic(__readgsbyte)
-#	pragma intrinsic(__readgsword)
-#	pragma intrinsic(__readgsdword)
-#	pragma intrinsic(__readgsqword)
+#pragma intrinsic(__readgsbyte, __readgsword, __readgsdword, __readgsqword)
+#pragma intrinsic(__writegsbyte, __writegsword, __writegsdword, __writegsqword)
+
 #endif
-}//namespace intrin
 
-struct exception_registration; ///\see exception::registration. It's a forward declaration
+}//namespace intrinsic
 
-template<class Data>
-struct mapped_data
-{
-  template<typename type>
-  static inline type get(type Data::* member, int2type<sizeof(uint8_t)>)
-  {
-    return (type)
-    #if defined(_M_IX86)
-      ntl::intrinsic::__readfsbyte
-    #elif defined(_M_X64)
-      ntl::intrinsic::__readgsbyte
-    #endif
-      ((uint32_t)offsetof_ptr(Data,member));
+#if defined(_M_IX86)
+
+  __forceinline uint8_t  readsysptr(uint32_t Offset, uint8_t)
+  { 
+    return intrinsic::__readfsbyte(Offset);
   }
-  template<typename type>
-  static inline type get(type Data::* member, int2type<sizeof(uint16_t)>)
-  {
-    return (type)
-    #if defined(_M_IX86)
-      ntl::intrinsic::__readfsword
-    #elif defined(_M_X64)
-      ntl::intrinsic::__readgsword
-    #endif
-      ((uint32_t)offsetof_ptr(Data,member));
+  __forceinline uint16_t readsysptr(uint32_t Offset, uint16_t)
+  { 
+    return intrinsic::__readfsword(Offset);
   }
-  template<typename type>
-  static inline type get(type Data::* member, int2type<sizeof(uint32_t)>)
-  {
-    return (type)
-    #if defined(_M_IX86)
-      ntl::intrinsic::__readfsdword
-    #elif defined(_M_X64)
-      ntl::intrinsic::__readgsdword
-    #endif
-      ((uint32_t)offsetof_ptr(Data,member));
+  __forceinline uint32_t readsysptr(uint32_t Offset, uint32_t)
+  { 
+    return intrinsic::__readfsdword(Offset);
   }
-  template<typename type>
-  static inline type get(type Data::* member, int2type<sizeof(uint64_t)>)
-  {
-    return (type)
-    #if defined(_M_IX86)
-      ntl::intrinsic::__readfsqword
-    #elif defined(_M_X64)
-      ntl::intrinsic::__readgsqword
-    #endif
-      ((uint32_t)offsetof_ptr(Data,member));
+  __forceinline uint64_t readsysptr(uint32_t Offset, uint64_t)
+  { 
+    return intrinsic::__readfsdword(Offset) | (uint64_t)intrinsic::__readfsdword(Offset+4) << 32;
   }
-  template<typename type>
-  static inline type get(type Data::* member)
-  {
-    return get( member, int2type<sizeof(type)>() );
+  __forceinline uintptr_t readsysptr(uint32_t Offset, const void* = 0)
+  { 
+    return intrinsic::__readfsdword(Offset);
   }
 
-  static __forceinline
-    Data& instance() { return *static_cast<Data*>(get(&Data::Self)); }
-};
+  __forceinline void writesysptr(uint32_t Offset, uint8_t Data)
+  { 
+    intrinsic::__writefsbyte(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint16_t Data)
+  { 
+    intrinsic::__writefsword(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint32_t Data)
+  { 
+    intrinsic::__writefsdword(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint64_t Data)
+  { 
+    intrinsic::__writefsdword(Offset, static_cast<uint32_t>(Data));
+    intrinsic::__writefsdword(Offset+4, static_cast<uint32_t>(Data >> 32));
+  }
+  __forceinline void writesysptr(uint32_t Offset, const void* Data)
+  { 
+    // static_cast to avoid warning C4244: 'argument' : conversion from 'std::uintptr_t' to 'std::uint32_t', possible loss of data
+    intrinsic::__writefsdword(Offset, static_cast<uint32_t>(reinterpret_cast<uintptr_t>(Data)));
+  }
+
+#elif defined(_M_X64)
+
+  __forceinline uint8_t  readsysptr(uint32_t Offset, uint8_t)
+  { 
+    return intrinsic::__readgsbyte(Offset);
+  }
+  __forceinline uint16_t readsysptr(uint32_t Offset, uint16_t)
+  { 
+    return intrinsic::__readgsword(Offset);
+  }
+  __forceinline uint32_t readsysptr(uint32_t Offset, uint32_t)
+  { 
+    return intrinsic::__readgsdword(Offset);
+  }
+  __forceinline uint64_t readsysptr(uint32_t Offset, uint64_t)
+  { 
+    return intrinsic::__readgsqword(Offset);
+  }
+  __forceinline uintptr_t readsysptr(uint32_t Offset, const void*)
+  { 
+    return intrinsic::__readgsqword(Offset);
+  }
+
+  __forceinline void writesysptr(uint32_t Offset, uint8_t Data)
+  { 
+    intrinsic::__writegsbyte(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint16_t Data)
+  { 
+    intrinsic::__writegsword(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint32_t Data)
+  { 
+    intrinsic::__writegsdword(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, uint64_t Data)
+  { 
+    intrinsic::__writegsqword(Offset, Data);
+  }
+  __forceinline void writesysptr(uint32_t Offset, const void* Data = 0)
+  { 
+    intrinsic::__writegsqword(Offset, reinterpret_cast<uintptr_t>(Data));
+  }
+
+#endif
+
+struct exception_registration;
 
 namespace nt {
 
@@ -113,9 +152,9 @@ struct peb;
 /// @note mapped at fs:0x00
 struct tib
 {
-  /* 0x00 */  exception_registration  * ExceptionList;/// teb32 on x64
-  /* 0x04 */  void                    * StackBase;    ///< upper stack address
-  /* 0x08 */  void                    * StackLimit;   ///< lower stack address
+  /* 0x00 */  exception_registration  * ExceptionList;
+  /* 0x04 */  void                    * StackBase;      ///< upper stack address
+  /* 0x08 */  void                    * StackLimit;     ///< lower stack address
   /* 0x0C */  void                    * SubSystemTib;
               union
               {
@@ -126,139 +165,38 @@ struct tib
   /* 0x18 */  tib                     * Self; ///< flat address of this structure
 };
 
-//STATIC_ASSERT(sizeof(tib) == 0x1C);
+STATIC_ASSERT(sizeof(tib) == 0x1C);
 
 
-struct teb: public tib
+struct client_id
 {
-#pragma warning(push)
-#pragma warning(disable:4311 4312) // pointer truncation & conversion from 'type1' to 'type2' of greater size
+  legacy_handle UniqueProcess;
+  legacy_handle UniqueThread;
+};
 
-  template<typename type>
-  static inline type get(type teb::* member, int2type<sizeof(uint8_t)>)
-  {
-    return (type)
-#if defined(_M_IX86)
-      ntl::intrinsic::__readfsbyte
-#elif defined(_M_X64)
-      ntl::intrinsic::__readgsbyte
-#endif
-      ((uint32_t)offsetof_ptr(teb,member));
-  }
-  template<typename type>
-  static inline type get(type teb::* member, int2type<sizeof(uint16_t)>)
-  {
-    return (type)
-#if defined(_M_IX86)
-      ntl::intrinsic::__readfsword
-#elif defined(_M_X64)
-      ntl::intrinsic::__readgsword
-#endif
-      ((uint32_t)offsetof_ptr(teb,member));
-  }
-  template<typename type>
-  static inline type get(type teb::* member, int2type<sizeof(uint32_t)>)
-  {
-    return (type)
-#if defined(_M_IX86)
-      ntl::intrinsic::__readfsdword
-#elif defined(_M_X64)
-      ntl::intrinsic::__readgsdword
-#endif
-      ((uint32_t)offsetof_ptr(teb,member));
-  }
-  template<typename type>
-  static inline type get(type teb::* member, int2type<sizeof(uint64_t)>)
-  {
-    // bin_cast support for 64bit values in x86
-    union {
-      type t;
-#ifdef _M_IX86
-      struct {
-        uint32_t low;
-        uint32_t hi;
-      } u32;
-#else
-      uint64_t v;
-#endif
-    };
 
-#if defined(_M_IX86)
-      u32.low = ntl::intrinsic::__readfsdword((uint32_t)offsetof_ptr(teb,member)),
-      u32.hi = ntl::intrinsic::__readfsdword((uint32_t)offsetof_ptr(teb,member)+4);
-#elif defined(_M_X64)
-      v = ntl::intrinsic::__readgsqword((uint32_t)offsetof_ptr(teb,member));
-#endif
-
-    return t;
-  }
+struct teb : public tib
+{
   template<typename type>
-  static inline type get(type teb::* member)
+  static inline
+  type get(type teb::* member) 
   {
-    return get( member, int2type<sizeof(type)>() );
+    const teb * const p = 0;
+    const uint32_t offset = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&(p->*member)));
+    return (type)(readsysptr(offset, type()));
   }
-
-  static inline client_id get(client_id teb::*)
-  {
-    return instance().ClientId;
-  }
-
-  template<typename type, typename type2>
-  static inline void set(type teb::* member, type2 value, int2type<sizeof(uint8_t)>)
-  {
-#if defined(_M_IX86)
-    ntl::intrinsic::__writefsbyte
-#elif defined(_M_X64)
-    ntl::intrinsic::__writegsbyte
-#endif
-      ((uint32_t)offsetof_ptr(teb,member), (uint8_t)value);
-  }
-  template<typename type, typename type2>
-  static inline void set(type teb::* member, type2 value, int2type<sizeof(uint16_t)>)
-  {
-#if defined(_M_IX86)
-    ntl::intrinsic::__writefsword
-#elif defined(_M_X64)
-    ntl::intrinsic::__writegsword
-#endif
-      ((uint32_t)offsetof_ptr(teb,member), (uint16_t)value);
-  }
-  template<typename type, typename type2>
-  static inline void set(type teb::* member, type2 value, int2type<sizeof(uint32_t)>)
-  {
-#if defined(_M_IX86)
-    ntl::intrinsic::__writefsdword
-#elif defined(_M_X64)
-    ntl::intrinsic::__writegsdword
-#endif
-      ((uint32_t)offsetof_ptr(teb,member), (uint32_t)value);
-  }
-  template<typename type, typename type2>
-  static inline void set(type teb::* member, type2 value, int2type<sizeof(uint64_t)>)
-  {
-#if defined(_M_IX86)
-    ntl::intrinsic::__writefsqword
-#elif defined(_M_X64)
-    ntl::intrinsic::__writegsqword
-#endif
-      ((uint32_t)offsetof_ptr(teb,member), (uint64_t)value);
-  }
-#pragma warning(pop)
 
   template<typename type, typename type2>
   static inline
-  void set(type teb::* member, type2 value)
+  void set(type teb::* member, type2 value) 
   {
-    set(member, value, int2type<sizeof(type)>());
+    const teb * const p = 0;
+    const uint32_t offset = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&(p->*member)));
+    writesysptr(offset, value);
   }
 
   static __forceinline
-    teb & instance() { return *static_cast<teb*>(get(&tib::Self)); }
-
-#ifdef _M_X64
-  static __forceinline
-    teb & instance32() { return *reinterpret_cast<teb*>( get(&tib::ExceptionList) ); }
-#endif
+  teb & instance() { return *static_cast<teb*>(get(&tib::Self)); }
 
   // common part
   /* 0x1c */  void *    EnvironmentPointer;

@@ -1,16 +1,16 @@
 /**\file*********************************************************************
- *                                                                     \brief
- *  Debugger support
- *
- ****************************************************************************
- */
+*                                                                     \brief
+*  Debugger support
+*
+****************************************************************************
+*/
+
+
 #ifndef NTL__NT_DEBUG
 #define NTL__NT_DEBUG
-#pragma once
 
 #include "basedef.hxx"
 #include "string.hxx"
-#include "../stlx/cstdlib.hxx"
 
 namespace ntl {
   namespace nt {
@@ -29,23 +29,22 @@ namespace ntl {
 
       enum level
       {
-        error   = 0,
+        error = 0,
         warning = 2,
         trace   = 3,
         info    = 4,
-        __identifier(default) = error
       };
     };
 
-    NTL__EXTERNAPI
-      ntstatus
+   NTL__EXTERNAPI
+      ntstatus __stdcall
       DbgPrint(
       const char  Format[],
       ...
       );
 
     NTL__EXTERNAPI
-      ntstatus
+      ntstatus __stdcall
       DbgPrintEx(
       dpfltr::type  ComponentId,
       dpfltr::level Level,
@@ -59,7 +58,7 @@ namespace ntl {
 #pragma warning(push)
 #pragma warning(disable:4100)
 
-#ifdef NTL__DEBUG
+#if defined(_DEBUG) || defined(DBG)
 #	define KdBreakPoint() intrinsic::debugbreak()
 # ifndef KdPrint
 #	  define KdPrint(X) DbgPrint X
@@ -77,7 +76,7 @@ namespace ntl {
 # endif
 #endif
 
-    template <dpfltr::level DefaultLevel  = dpfltr::__identifier(default),
+    template <dpfltr::level DefaultLevel  = dpfltr::error,
       dpfltr::type  Type          = dpfltr::ihvdriver>
     struct dbgprint
     {
@@ -143,155 +142,126 @@ namespace ntl {
       }
 
       void operator()(const char msg[]) const
-      {
+      { 
         printf(msg);
       }
 
       void operator()(const wchar_t msg[]) const
-      {
+      { 
         printf("%ws", msg);
       }
 
       void operator()(const char msg[], int i) const
-      {
+      { 
         printf("%s%i", msg, i);
       }
 
       void operator()(const char msg[], unsigned u) const
-      {
+      { 
         printf("%s%u", msg, u);
       }
 
       void operator()(const char msg[], long i) const
-      {
+      { 
         printf("%s%i", msg, i);
       }
 
       void operator()(const char msg[], int64_t i) const
-      {
+      { 
         printf("%s%I64i", msg, i);
       }
 
       void operator()(const char msg[], uint64_t i) const
-      {
+      { 
         printf("%s%I64u", msg, i);
       }
 
       void operator()(const char msg[], unsigned long u) const
-      {
+      { 
         printf("%s%u", msg, u);
       }
 
       void operator()(const char msg[], const void* p) const
-      {
+      { 
         printf("%s%p", msg, p);
       }
 
       void operator()(const char msg[], char c) const
-      {
+      { 
         printf("%s`%c'", msg, c);
       }
 
       void operator()(char c) const
-      {
+      { 
         printf("%c", c);
       }
 
       void operator()(const char msg[], wchar_t c) const
-      {
+      { 
         printf("%s`%C'", msg, c);
       }
 
       void operator()(const char msg[], const char msg2[]) const
-      {
+      { 
         printf("%s`%s'", msg, msg2);
       }
 
       void operator()(const char msg[], const wchar_t msg2[]) const
-      {
+      { 
         printf("%s`%S'", msg, msg2);
       }
 
       void operator()(const char msg[], const const_unicode_string & msg2) const
-      {
+      { 
         printf("%s`%wZ'", msg, &msg2);
       }
 
       void operator()(const char msg[], const unicode_string & msg2) const
-      {
+      { 
         printf("%s`%wZ'", msg, &msg2);
       }
     };
 
-  } // namespace nt
-  namespace intrinsic {
-#ifndef __ICL
-    extern "C" void __debugbreak();
+    namespace intrinsic {
+      extern "C" void __cdecl __debugbreak();
+#pragma intrinsic(__debugbreak)
 
-#ifdef _MSC_VER
-# pragma intrinsic(__debugbreak)
-#endif
-#endif
+      static inline
+        void debugbreak()
+      {
+        intrinsic::__debugbreak();
+      }
 
-    static __forceinline
-      void debugbreak()
-    {
-      __debugbreak();
-    }
-
-
-
-  }//namespace intrinsic
-  namespace nt {
+    }//namespace intrinsic
 
 #pragma warning(pop)
 
     namespace dbg {
 
 #ifdef NTL_DBG_FILTER
-      const dbgprint<dpfltr::__identifier(default)>   error;
+      const dbgprint<dpfltr::error>   error;
       const dbgprint<dpfltr::warning> warning;
       const dbgprint<dpfltr::trace>   trace;
       const dbgprint<dpfltr::info>    info;
-  #else
-  #ifndef __BCPLUSPLUS__
-      const dbgprint<dpfltr::__identifier(default)>   error;
-      const dbgprint<dpfltr::__identifier(default)>   warning;
-      const dbgprint<dpfltr::__identifier(default)>   trace;
-      const dbgprint<dpfltr::__identifier(default)>   info;
-  #else
-      const dbgprint<dpfltr::__identifier(default)>   error = {};
-      const dbgprint<dpfltr::__identifier(default)>   warning = {};
-      const dbgprint<dpfltr::__identifier(default)>   trace = {};
-      const dbgprint<dpfltr::__identifier(default)>   info = {};
-  #endif
+#else
+      const dbgprint<dpfltr::error>   error;
+      const dbgprint<dpfltr::error>   warning;
+      const dbgprint<dpfltr::error>   trace;
+      const dbgprint<dpfltr::error>   info;
 #endif
 
-      static __forceinline
+      static inline
         void bp()
       {
-      #ifdef NTL__DEBUG
+#if defined(_DEBUG) || defined(DBG)
         intrinsic::debugbreak();
-      #endif
+#endif
       }
 
-    }//namespace dbg
+    }//namespace dbg 
 
 
   }//namespace nt
 }//namespace ntl
-
-#ifdef _M_X64
-# pragma comment(linker, "/alternatename:abort=debug_abort")
-#else
-# pragma comment(linker, "/alternatename:_abort=_debug_abort")
-#endif
-
-extern "C" inline void __cdecl debug_abort()
-{
-  ntl::intrinsic::debugbreak();
-}
-
-//static const void* __dummyref = reinterpret_cast<const void*>(debug_abort);
 
 #endif // NTL__NT_DEBUG

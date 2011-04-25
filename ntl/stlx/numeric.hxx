@@ -1,25 +1,24 @@
 /**\file*********************************************************************
- *                                                                     \brief
- *  26 Numerics library [numerics]
- *
- ****************************************************************************
- */
+*                                                                     \brief
+*  Numerics library [25 lib.numerics]
+*
+****************************************************************************
+*/
+
 #ifndef NTL__STLX_NUMERICS
 #define NTL__STLX_NUMERICS
-#pragma once
 
 #include "iterator.hxx"
 
-namespace std
-{
- /**\defgroup  lib_numeric ************ 26 Numerics library [numerics]
-  *@{
-  **/
+
+namespace std {
+
+// 26.6 Generalized numeric operations [numeric.ops]
 
   // 26.6.1 Accumulate [accumulate]
   template <class InputIterator, class T>
   __forceinline
-  T
+  T 
     accumulate(InputIterator first, InputIterator last, T init)
   {
     while(first != last){
@@ -32,7 +31,7 @@ namespace std
   // 26.6.1 Accumulate [accumulate]
   template <class InputIterator, class T, class BinaryOperation>
   __forceinline
-  T
+  T 
     accumulate(InputIterator first, InputIterator last, T init, BinaryOperation binary_op)
   {
     while(first != last){
@@ -42,7 +41,5 @@ namespace std
     return init;
   }
 
-  /**@} lib_numeric */
 } // namespace std
-
 #endif // NTL__STLX_NUMERICS

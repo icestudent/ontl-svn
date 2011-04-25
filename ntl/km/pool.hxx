@@ -4,9 +4,9 @@
  *
  ****************************************************************************
  */
+
 #ifndef NTL__KM_POOL
 #define NTL__KM_POOL
-#pragma once
 
 #include "../cstddef"
 
@@ -14,9 +14,8 @@
 #define NTL__POOL_TAG 'LTN_'  // _NTL
 #endif
 
-#ifndef NTL__NO_AUTOLINK
-# pragma comment(lib,    "ntoskrnl.lib")
-#endif
+#pragma comment(linker, "/subsystem:native,5")
+#pragma comment(lib,    "ntoskrnl.lib")
 
 namespace ntl {
 namespace km {
@@ -43,14 +42,14 @@ enum pool_type
 
 
 NTL__EXTERNAPI
-__noalias
-void * __restrict __stdcall
+__declspec(restrict) __declspec(noalias)
+void * __stdcall
   ExAllocatePoolWithTag(pool_type, size_t, unsigned long tag);
 
 NTL__EXTERNAPI
-__noalias
+__declspec(noalias)
 void __stdcall
-  ExFreePoolWithTag(void * p, unsigned long tag);
+  ExFreePoolWithTag(void * __restrict p, unsigned long tag); 
 
 
 template<pool_type PoolType = PagedPool>
@@ -59,17 +58,17 @@ class pool
   ///////////////////////////////////////////////////////////////////////////
   public:
 
-    __noalias
+    __declspec(restrict) __declspec(noalias)
     static __forceinline
-    void * __restrict alloc(size_t size, unsigned long tag = NTL__POOL_TAG)
-    {
+    void * alloc(size_t size, unsigned long tag = NTL__POOL_TAG)
+    { 
       return ExAllocatePoolWithTag(PoolType, size, tag);
     }
 
-    __noalias
+    __declspec(noalias)
     static __forceinline
     void free(void * const p, unsigned long tag = NTL__POOL_TAG)
-    {
+    { 
       ExFreePoolWithTag(p, tag);
     }
 

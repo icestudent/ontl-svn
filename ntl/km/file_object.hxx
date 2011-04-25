@@ -4,9 +4,9 @@
  *
  ****************************************************************************
  */
+
 #ifndef NTL__KM_FILE_OBJECT
 #define NTL__KM_FILE_OBJECT
-#pragma once
 
 #include "device_object.hxx"
 
@@ -66,9 +66,9 @@ struct file_object
   {
     return DeviceObject->get_attached_device();
   }
-
+  
 } ; // struct file_object
-//STATIC_ASSERT(sizeof(file_object) == 0x70 + sizeof(kspin_lock) + sizeof(list_entry) + sizeof(void *));
+STATIC_ASSERT(sizeof(file_object) == 0x70 + sizeof(kspin_lock) + sizeof(list_entry) + sizeof(void *));
 
 }//namspace km
 }//namespace ntl

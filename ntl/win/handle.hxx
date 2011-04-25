@@ -4,22 +4,21 @@
  *
  ****************************************************************************
  */
+
+
 #ifndef NTL__WIN_HANDLE
 #define NTL__WIN_HANDLE
-#pragma once
 
 #include "windef.hxx"
 #include "../nt/handle.hxx"
 
 namespace ntl {
 namespace win {
-/**\addtogroup  winapi_types_support *** Win32 API support library **********
- *@{*/
 
 
 using nt::legacy_handle;
 
-static const legacy_handle null_handle = 0;
+static const legacy_handle null_handle;
 
 static inline legacy_handle current_process()
 {
@@ -71,7 +70,7 @@ int __stdcall
 
 static __forceinline
 int close(legacy_handle handle)
-{
+{ 
   return CloseHandle(handle);
 }
 
@@ -80,13 +79,13 @@ namespace aux {
 
 __forceinline
 void close(legacy_handle handle)
-{
+{ 
   nt::close(handle);
 }
 
 __forceinline
 legacy_handle duplicate(legacy_handle handle)
-{
+{ 
   return nt::duplicate(handle);
 }
 
@@ -94,7 +93,7 @@ legacy_handle duplicate(legacy_handle handle)
 
 typedef basic_handle<legacy_handle, aux::close, aux::duplicate> handle;
 
-/**@} winapi_types_support */
+
 }//namespace win
 }//namespace ntl
 

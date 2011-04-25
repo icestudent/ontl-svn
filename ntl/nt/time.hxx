@@ -4,20 +4,16 @@
  *
  ****************************************************************************
  */
+
 #ifndef NTL__NT_TIME
 #define NTL__NT_TIME
-#pragma once
 
+#include "../stdint.h"
 #include "basedef.hxx"
 #include "shared_data.hxx"
 
 namespace ntl {
 namespace nt {
-
-  enum timer_type {
-    NotificationTimer,
-    SynchronizationTimer
-  };
 
   struct time_fields
   {
@@ -31,6 +27,7 @@ namespace nt {
     int16_t Weekday;     // range [0..6] == [Sunday..Saturday]
   };
 
+typedef system_time::type systime_t;
 typedef systime_t file_time;
 
 static const systime_t system_time_resolution = system_time::resolution;
@@ -40,8 +37,8 @@ systime_t inline query_system_time()
   return user_shared_data::instance().SystemTime.get();
 }
 
-NTL__EXTERNAPI
-ntstatus __stdcall
+NTL__EXTERNAPI 
+ntstatus __stdcall 
   NtQuerySystemTime(systime_t* SystemTime);
 
 NTL__EXTERNAPI

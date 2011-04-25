@@ -1,12 +1,13 @@
 /**\file*********************************************************************
-  *                                                                     \brief
-  *  Debugger support
-  *
-  ****************************************************************************
-  */
+*                                                                     \brief
+*  Debugger support
+*
+****************************************************************************
+*/
+
+
 #ifndef NTL__KM_DEBUG
 #define NTL__KM_DEBUG
-#pragma once
 
 #include "basedef.hxx"
 #include "string.hxx"
@@ -38,7 +39,7 @@ namespace ntl {
 #pragma warning(push)
 #pragma warning(disable:4100)
 
-#ifdef NTL__DEBUG
+#if defined(_DEBUG) || defined(DBG)
 #	define KdBreakPointWithStatus() DbgBreakPointWithStatus(X)
 #else
 #	define KdBreakPointWithStatus()

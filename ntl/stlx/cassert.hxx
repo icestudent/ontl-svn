@@ -4,100 +4,46 @@
  *
  ****************************************************************************
  */
-#ifndef NTL__STLX_CASSERT
-//#define NTL__STLX_CASSERT//done below
-
-#ifndef NTL__STLX_CSTDDEF
-#include "cstddef.hxx"
-#endif
-
-namespace ntl
-{
-  typedef void (*assert_handler)(const char* expr, const char* file, int line);
-
-  __declspec(selectany) assert_handler __assert_handler = 0;
-
-  inline assert_handler set_assert_handler(assert_handler handler)
-  {
-    assert_handler const a = __assert_handler;
-    __assert_handler = handler;
-    return a;
-  }
-} // ntl
-
-/// Custom \c assert handler routine
-typedef ntl::assert_handler __assert_handler;
-
-/** Sets a custom \c assert handler */
-inline __assert_handler __set_assert_handler(__assert_handler handler)
-{
-  return ntl::set_assert_handler(handler);
-}
-
-/** \c assert caller */
-inline void __ntl_assert(const char* expr, const char* file, int line)
-{
-  ntl::assert_handler handler = ntl::__assert_handler;
-  if(handler)
-    handler(expr, file, line);
-  else
-    __debugbreak();
-}
-
-#endif//#ifndef NTL__STLX_CASSERT
-
-
-/// ISO C 7.2/1 The assert macro is redefined according to the current state
-///             of NDEBUG each time that <assert.h> is included.
-#undef assert
-
-/// \c assert macros
-#ifdef NDEBUG
-  #define assert(expr) __noop
-  #define _assert_msg(msg) __noop
-  #define _assert_string(msg) __noop
-#else
-  #define assert(expr) \
-    if ( !!(expr) ); else if(ntl::__assert_handler)\
-      __ntl_assert("Assertion ("#expr") failed in "__func__,__FILE__,__LINE__);\
-      else __debugbreak();\
-    ((void)0)
-#define _assert_msg(msg) \
-  if(ntl::__assert_handler)\
-    __ntl_assert("Assertion (" msg ") failed in "__func__,__FILE__,__LINE__);\
-  else __debugbreak();\
-      ((void)0)
-#define _assert_string(msg) \
-  if(ntl::__assert_handler)\
-  __ntl_assert(msg,__FILE__,__LINE__);\
-  else __debugbreak();\
-  ((void)0)
-#endif
 
 #ifndef NTL__STLX_CASSERT
 #define NTL__STLX_CASSERT
 
-#ifdef _MSC_VER
-namespace std 
-{
-  namespace __
-  {
-#pragma warning(push)
-#pragma warning(disable:4127)//conditional expression is constant
-    extern "C" inline void __cdecl purecall_handler(void)
-    {
-      assert("pure virtual function called");
-    }
-#pragma warning(pop)
-    static void (__cdecl *__pchandler__)() = &purecall_handler;
-  }
-}
-#ifdef _M_X64
-# pragma comment(linker, "/alternatename:_purecall=purecall_handler")
-#else
-# pragma comment(linker, "/alternatename:__purecall=_purecall_handler")
+//namespace std {
+
+#ifdef _DEBUG
+#define NTL__DEBUG
 #endif
 
-#endif // msc
-  
+
+#if defined NTL__DEBUG || !defined NDEBUG
+#define __ntl_assert(__msg, __line)\
+  { const char * volatile __assertion_failure; __assertion_failure = (__msg);\
+    unsigned volatile __assertion_failure_at_line; __assertion_failure_at_line = (__line);\
+    __debugbreak(); }
+#endif
+
+
+#ifdef NTL__DEBUG
+  #define _Assert(expr) \
+    if ( !!(expr) ); else \
+    __ntl_assert("NTL Assertion ("#expr") failed in "__FUNCSIG__" //"__FILE__,__LINE__);\
+    ((void)0)
+#else
+  #define _Assert(expr)
+#endif
+
+/// ISO C 7.2/1 The assert macro is redefined according to the current state
+///             of NDEBUG each time that <assert.h> is included.
+#undef assert
+#ifdef NDEBUG
+  #define assert(expr) ((void)0)
+#else
+  #define assert(expr) \
+    if ( !!(expr) ); else \
+    __ntl_assert("Assertion ("#expr") failed in "__FUNCSIG__" //"__FILE__,__LINE__);\
+    ((void)0)
+#endif
+
+//}//namespace std
+
 #endif//#ifndef NTL__STLX_CASSERT

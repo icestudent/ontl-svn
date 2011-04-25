@@ -1,29 +1,32 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  Class template map [map]
+ *  Class template map [lib.map]
  *
  ****************************************************************************
  */
+
 #ifndef NTL__STLX_MAP
 #define NTL__STLX_MAP
-#pragma once
 
-#include "stdexcept_fwd.hxx"
-#include "ext/rbtree.hxx"
+#include "stdexcept.hxx"
+#include "functional.hxx"
+#include "memory.hxx"
+#include "utility.hxx"
+#include "rbtree.hxx"
 
 namespace std {
 
-/**\defgroup  lib_containers *********** 23 Containers library [containers]
-  *@{    Components to organize collections of information
+/**\defgroup  lib_containers *********** Containers library [23] ************
+  *@{ *    Components to organize collections of information
   **/
 
-/**\defgroup  lib_associative *********** 23.3 Associative containers [associative]
-  *@{    Provide an ability for fast retrieval of data based on keys.
+/**\defgroup  lib_associative ********** Associative containers [23.3] ******
+  *@{ *    Provide an ability for fast retrieval of data based on keys.
   **/
 
-/// [23.3.1 map]
+/// [23.3.1 lib.map]
 /// supports unique keys (contains at most one of each key value)
-  template
+  template 
     <
     class Key,
     class T,
@@ -32,36 +35,22 @@ namespace std {
     >
   class map;
 
-  namespace __
+  namespace detail
   {
     template <class Key,
               class T,
               class Compare,
               class Allocator
               >
-    class value_compare:
+    class value_compare: 
       public binary_function<pair<const Key, T>, pair<const Key, T>, bool>
     {
     public:
       typedef pair<const Key, T> value_type;
 
-      __forceinline
       value_compare(const value_compare& x)
         :comp(x.comp)
       {}
-
-      #ifdef NTL__CXX_RV
-      __forceinline
-      value_compare(value_compare&& x)
-        :comp(move(x.comp))
-      {}
-
-      __forceinline
-      value_compare& operator=(value_compare&& c) { comp = move(c.comp); return *this; }
-      #endif
-
-      __forceinline
-      value_compare& operator=(const value_compare& c) { comp = c.comp; return *this; }
 
       __forceinline
       bool operator()(const value_type& x, const value_type& y) const
@@ -69,51 +58,53 @@ namespace std {
         return comp(x.first, y.first);
       }
 
+
     friend class std::map<Key, T, Compare, Allocator>;
     protected:
       Compare comp;
       value_compare(Compare c) : comp(c) {}
       value_compare();
+      value_compare& operator=(const value_compare&);
     };
-  } // __
+  } // detail
 
 template <class Key,
           class T,
           class Compare = less<Key>,
-          class Allocator = allocator<pair</*const*/ Key, T> > >
+          class Allocator = allocator<pair<const Key, T> > >
 class map:
-  protected std::ext::tree::rb_tree<pair</*const*/ Key, T>, __::value_compare<Key, T, Compare, Allocator>, Allocator>
+  protected tree::rb_tree::rb_tree<pair<const Key, T>, detail::value_compare<Key, T, Compare, Allocator>, Allocator>
 {
   ///////////////////////////////////////////////////////////////////////////
-  typedef __::value_compare<Key, T, Compare, Allocator>  value_compare;
-  typedef std::ext::tree::rb_tree<pair</*const*/ Key, T>, value_compare, Allocator> tree_type;
-  typedef typename tree_type::node node;
+  typedef tree::rb_tree::rb_tree<pair<const Key, T>, detail::value_compare<Key, T, Compare, Allocator>, Allocator> tree_type;
+  typedef tree_type::node node;
   public:
 
     ///\name  types
-    typedef Key                                       key_type;
-    typedef T                                         mapped_type;
-    typedef pair</*const*/ Key, T>                        value_type;
-    typedef Compare                                   key_compare;
+    typedef Key                                   key_type;
+    typedef T                                     mapped_type;
+    typedef pair<const Key, T>                    value_type;
+    typedef Compare                               key_compare;
 
-    typedef Allocator                                 allocator_type;
-    typedef typename
-      Allocator::template rebind<value_type>::other   allocator;
+    typedef detail::value_compare
+      <Key, T, Compare, Allocator>                value_compare;
 
-    typedef typename  allocator::pointer              pointer;
-    typedef typename  allocator::const_pointer        const_pointer;
-    typedef typename  allocator::reference            reference;
-    typedef typename  allocator::const_reference      const_reference;
-    typedef typename  allocator::size_type            size_type;
-    typedef typename  allocator::difference_type      difference_type;
+    typedef Allocator                             allocator_type;
+    typedef typename  Allocator::reference        reference;
+    typedef typename  Allocator::const_reference  const_reference;
 
-    typedef typename tree_type::iterator              iterator;
-    typedef typename tree_type::const_iterator        const_iterator;
+    typedef typename tree_type::iterator          iterator;
+    typedef typename tree_type::const_iterator    const_iterator;
 
-    typedef typename tree_type::reverse_iterator       reverse_iterator;
-    typedef typename tree_type::const_reverse_iterator const_reverse_iterator;
+    typedef typename tree_type::reverse_iterator        reverse_iterator;
+    typedef typename tree_type::const_reverse_iterator  const_reverse_iterator;
 
-public:
+    typedef typename  Allocator::size_type        size_type;
+    typedef typename  Allocator::difference_type  difference_type;
+    typedef typename  Allocator::pointer          pointer;
+    typedef typename  Allocator::const_pointer    const_pointer;
+
+
     ///\name 23.3.1.1 construct/copy/destroy:
     explicit map(const Compare& comp = Compare(), const Allocator& a = Allocator())
       :val_comp_(comp), tree_type(val_comp_, a)
@@ -130,37 +121,17 @@ public:
     }
 
     map(const map<Key, T, Compare, Allocator> & x)
-      :val_comp_(x.val_comp_), tree_type(static_cast<const tree_type&>(x))
-    {}
-
-#ifdef NTL__CXX_RV
-    map(map<Key,T,Compare,Allocator>&& x)
-      // Compare must be a CopyConstructible
       :val_comp_(x.val_comp_), tree_type(val_comp_, x.get_allocator())
-    {
-      swap(x);
-    };
+    {}
+
+#ifdef NTL__CXX
+    map(map<Key,T,Compare,Allocator>&& x);
 #endif
-
-    map(const Allocator& a)
-      :val_comp_(Compare()), tree_type(val_comp_, a)
-    {}
-
-    map(const map& x, const Allocator& a)
-      :val_comp_(x.val_comp_), tree_type(val_comp_, a)
-    {}
-
-#ifdef NTL__CXX_RV
-    map(map&& x, const Allocator& a)
-      :val_comp_(x.val_comp_), tree_type(val_comp_, a)
-    {}
+    map(const Allocator&);
+    map(const map&, const Allocator&);
+#ifdef NTL__CXX
+    map(map&&, const Allocator&);
 #endif
-
-    map(initializer_list<value_type> il, const Compare comp = Compare(), const Allocator& a = Allocator())
-      :val_comp_(comp), tree_type(val_comp_, a)
-    {
-      tree_type::insert_range(il.begin(), il.end());
-    }
 
     ~map(){}
 
@@ -172,22 +143,9 @@ public:
       }
       return *this;
     }
-
-#ifdef NTL__CXX_RV
-    map<Key,T,Compare,Allocator>& operator=(map<Key,T,Compare,Allocator>&& x)
-    {
-      if(this != &x){
-        clear();
-        swap(x);
-      }
-      return *this;
-    }
+#ifdef NTL__CXX
+    map<Key,T,Compare,Allocator>& operator=(map<Key,T,Compare,Allocator>&& x);
 #endif
-
-    map& operator=(initializer_list<value_type> il)
-    {
-      return *this = map(il);
-    }
 
     using tree_type::get_allocator;
     using tree_type::begin;
@@ -216,67 +174,41 @@ public:
       return iter->second;
     }
 
-#ifdef NTL__CXX_RV
-    T& operator[](key_type&& x)
-    {
-      iterator iter = find(x);
-      if(iter == end())
-        iter = insert(value_type(x, mapped_type())).first;
-      return iter->second;
-    }
+#ifdef NTL__CXX
+    T& operator[](key_type&& x);
 #endif
 
     T& at(const key_type& x) __ntl_throws(out_of_range)
     {
-      iterator i = find(x);
-      if(i == end())
-        __throw_out_of_range("specified key isn't exists in the map");
-      return i->second;
+      iterator iter = find(x);
+      if(iter == end())
+        __ntl_throw(out_of_range(__FUNCTION__));
+      return iter->second;
     }
 
     const T& at(const key_type& x) const __ntl_throws(out_of_range)
     {
-      const_iterator i = const_cast<map*>(this)->find(x);
-      if(i == end())
-        __throw_out_of_range("specified key isn't exists in the map");
-      return i->second;
+      const_iterator iter = find(x);
+      if(iter == end())
+        __ntl_throw(out_of_range(__FUNCTION__));
+      return iter->second;
     }
 
     // modifiers:
-#ifdef NTL__CXX_VT
+#ifdef NTL__CXX
     template <class... Args> pair<iterator, bool> emplace(Args&&... args);
     template <class... Args> iterator emplace(const_iterator position, Args&&... args);
+    template <class P> pair<iterator, bool> insert(P&& x);
+    template <class P>
+    iterator insert(const_iterator position, P&&);
 #endif
-
-#ifdef NTL__CXX_RV
-    std::pair<iterator, bool> insert(const value_type& x)
+    template <class InputIterator>
+    void insert(InputIterator first, InputIterator last)
     {
-      return tree_type::insert_impl(tree_type::construct_node(x));
-    }
-
-    iterator insert(const_iterator /*position*/, const value_type& x)
-    {
-      // TODO: implement fast insert function based on position
-      return tree_type::insert_impl(tree_type::construct_node(x)).first;
-    }
-
-    template<class P>
-    std::pair<iterator, bool> insert(P&& x)
-    {
-      return tree_type::insert_reference(std::forward<P>(x));
-    }
-    template<class P>
-    iterator insert(const_iterator /*position*/, P&& x)
-    {
-      // TODO: implement fast insert function based on position
-      return tree_type::insert_reference(std::forward<P>(x)).first;
-    }
-#endif
-
-    __forceinline
-    void insert(initializer_list<value_type> il)
-    {
-      tree_type::insert_range(il.begin(), il.end());
+      while(first != last){
+        insert(*first);
+        ++first;
+      }
     }
 
     size_type erase(const key_type& x)
@@ -286,25 +218,14 @@ public:
       iterator val = find(x);
       return val == end() ? 0 : (erase(val), 1);
     }
-
-#ifdef NTL__CXX_RV
-    void swap(map<Key,T,Compare,Allocator>&& x)
-    {
-      if(this != &x){
-        tree_type::swap(forward<map>(x));
-        using std::swap;
-        swap(val_comp_, x.val_comp_);
-      }
-    }
-#endif
-#if !defined(NTL__CXX_RV) || defined(NTL__CXX_RVFIX)
+    
+#ifdef NTL__CXX
+    void swap(map<Key,T,Compare,Allocator>&&);
+#else
     void swap(map<Key,T,Compare,Allocator>& x)
     {
-      if(this != &x){
-        tree_type::swap(x);
-        using std::swap;
-        swap(val_comp_, x.val_comp_);
-      }
+      tree_type::swap(x);
+      swap(val_comp_, x.val_comp_);
     }
 #endif
 
@@ -316,12 +237,11 @@ public:
     iterator find(const key_type& x)
     {
       node* p = tree_type::root_;
-      while ( p )
-      {
-        if ( val_comp_.comp(x, p->elem.first) )
-          p = p->child[tree_type::left];
+      while(p){
+        if(val_comp_.comp(x, p->elem.first))
+          p = p->u.s.left;
         else if(val_comp_.comp(p->elem.first, x))
-          p = p->child[tree_type::right];
+          p = p->u.s.right;
         else
           return tree_type::make_iterator(p);
       }
@@ -338,52 +258,42 @@ public:
       return find(x) != end() ? 1 : 0;
     }
 
-    iterator        lower_bound(const key_type& x)        { return equal_range(x).second; }
-    const_iterator  lower_bound(const key_type& x) const  { return equal_range(x).second; }
-    iterator        upper_bound(const key_type& x)        { return equal_range(x).first;  }
-    const_iterator  upper_bound(const key_type& x) const  { return equal_range(x).first;  }
+    iterator        lower_bound(const key_type& x)        { return equal_range(x)->second; }
+    const_iterator  lower_bound(const key_type& x) const  { return equal_range(x)->second; }
+    iterator        upper_bound(const key_type& x)        { return equal_range(x)->first;  }
+    const_iterator  upper_bound(const key_type& x) const  { return equal_range(x)->first;  }
 
     pair<iterator,iterator> equal_range(const key_type& x)
     {
-      // find a node with value which are equal or nearest to the x
-      node* p = tree_type::root_;
-      while ( p )
-      {
-        if ( val_comp_(value_type(x, mapped_type()), p->elem) )
-        {
-          if(p->child[tree_type::left])
-            p = p->child[tree_type::left];
-          else
-          {
-            iterator re(tree_type::make_iterator(p));
+      // find a node with value which are equal or nearest to the x 
+      node* p = root_;
+      while(p){
+        if(val_comp_(x, p->elem)){
+          if(p->left){
+            p = p->left;
+          }else{
+            iterator re(p, this);
             return make_pair(re, re); // is a closest nodes
           }
-        }
-        else if ( val_comp_(p->elem, value_type(x, mapped_type())) ) // greater
-          p = p->child[tree_type::right];
+        }else if(val_comp_(p->elem, x)) // greater
+          p = p->right;
         else
-          return make_pair(tree_type::make_iterator(p),
-              tree_type::make_iterator(tree_type::next(p, tree_type::right)));
+          return make_pair(iterator(p, this), iterator(next(p), this));
       }
-      iterator re(tree_type::make_iterator(nullptr));
+      iterator re(NULL, this);
       return make_pair(re, re);
     }
 
     pair<const_iterator,const_iterator> equal_range(const key_type& x) const
     {
-      return const_cast<map*>(this)->equal_range(x);
+      return equal_range(x);
     }
 
-    friend bool operator==(const map<Key,T,Compare,Allocator>& x, const map<Key,T,Compare,Allocator>& y)
+    friend bool operator==(const map<Key,T,Compare,Allocator>& x,
+      const map<Key,T,Compare,Allocator>& y)
     {
       return static_cast<const tree_type&>(x) == static_cast<const tree_type&>(y);
     }
-
-    friend bool operator< (const map<Key,T,Compare,Allocator>& x, const map<Key,T,Compare,Allocator>& y)
-    {
-      return static_cast<const tree_type&>(x) < static_cast<const tree_type&>(y);
-    }
-      
 
   private:
     value_compare val_comp_;
@@ -391,54 +301,58 @@ public:
 }; //class template map
 
 
+#if 0
+template <class Key, class T, class Compare, class Allocator>
+bool operator==(const map<Key,T,Compare,Allocator>& x,
+                const map<Key,T,Compare,Allocator>& y);
 
 template <class Key, class T, class Compare, class Allocator>
-inline bool operator!=(const map<Key,T,Compare,Allocator>& x, const map<Key,T,Compare,Allocator>& y)
-{
-  return rel_ops::operator !=(x,y);
-}
+bool operator< (const map<Key,T,Compare,Allocator>& x,
+                const map<Key,T,Compare,Allocator>& y);
 
 template <class Key, class T, class Compare, class Allocator>
-inline bool operator> (const map<Key,T,Compare,Allocator>& x, const map<Key,T,Compare,Allocator>& y)
-{
-  return rel_ops::operator >(x,y);
-}
+bool operator!=(const map<Key,T,Compare,Allocator>& x,
+                const map<Key,T,Compare,Allocator>& y);
 
 template <class Key, class T, class Compare, class Allocator>
-inline bool operator>=(const map<Key,T,Compare,Allocator>& x, const map<Key,T,Compare,Allocator>& y)
-{
-  return rel_ops::operator >=(x,y);
-}
-
+bool operator> (const map<Key,T,Compare,Allocator>& x,
+                const map<Key,T,Compare,Allocator>& y);
 
 template <class Key, class T, class Compare, class Allocator>
-inline bool operator<=(const map<Key,T,Compare,Allocator>& x, const map<Key,T,Compare,Allocator>& y)
-{
-  return rel_ops::operator <=(x,y);
-}
-
+bool operator>=(const map<Key,T,Compare,Allocator>& x,
+                const map<Key,T,Compare,Allocator>& y);
 
 template <class Key, class T, class Compare, class Allocator>
-void swap(map<Key,T,Compare,Allocator>& x, map<Key,T,Compare,Allocator>& y) { x.swap(y); }
-
-#ifdef NTL__CXX_RV
-template <class Key, class T, class Compare, class Allocator>
-void swap(map<Key,T,Compare,Allocator>&& x, map<Key,T,Compare,Allocator>& y) { x.swap(y); }
-
-template <class Key, class T, class Compare, class Allocator>
-void swap(map<Key,T, Compare, Allocator>& x, map<Key,T, Compare, Allocator>&& y) { x.swap(y); }
+bool operator<=(const map<Key,T,Compare,Allocator>& x,
+                const map<Key,T,Compare,Allocator>& y);
 #endif
 
 template <class Key, class T, class Compare, class Allocator>
-struct constructible_with_allocator_suffix< map<Key, T, Compare, Allocator> >
-  :false_type
+void swap(map<Key,T,Compare,Allocator>& x,
+          map<Key,T,Compare,Allocator>& y)
+{
+  x.swap(y);
+}
+
+#ifdef NTL__CXX
+template <class Key, class T, class Compare, class Allocator>
+void swap(map<Key,T,Compare,Allocator&& x, map<Key,T,Compare,Allocator>& y);
+
+template <class Key, class T, class Compare, class Allocator>
+void swap(map<Key,T,Compare,Allocator& x, map<Key,T,Compare,Allocator>&& y);
+
+#endif
+
+template <class Key, class T, class Compare, class Alloc>
+struct constructible_with_allocator_suffix< map<Key, T, Compare, Alloc> >
+  :true_type 
 {};
 
-/// [23.3.2 multimap]
+/// [23.3.2 lib.multimap]
+#if 0
 template <class Key, class T, class Compare = less<Key>, class Allocator = allocator<pair<const Key, T> > >
 class multimap;
 
-#if 0
 template <class Key, class T, class Compare, class Allocator>
 bool operator==(const multimap<Key,T,Compare,Allocator>& x,
                 const multimap<Key,T,Compare,Allocator>& y);
@@ -466,18 +380,6 @@ bool operator<=(const multimap<Key,T,Compare,Allocator>& x,
 template <class Key, class T, class Compare, class Allocator>
 void swap(multimap<Key,T,Compare,Allocator>& x,
           multimap<Key,T,Compare,Allocator>& y);
-template <class Key, class T, class Compare, class Allocator>
-void swap(multimap<Key,T,Compare,Allocator&& x,
-          multimap<Key,T,Compare,Allocator>& y);
-template <class Key, class T, class Compare, class Allocator>
-void swap(multimap<Key,T,Compare,Allocator& x,
-          multimap<Key,T,Compare,Allocator>&& y);
-
-template <class Key, class T, class Compare, class Allocator>
-struct constructible_with_allocator_suffix<
-  multimap<Key, T, Compare, Allocator> >
-  : false_type { };
-
 #endif
 ///@}
 /**@} lib_associative */

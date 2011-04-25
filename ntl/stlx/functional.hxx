@@ -1,92 +1,37 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  20.7 Function objects [function.objects]
+ *  20.5 Function objects [lib.function.objects]
  *
  ****************************************************************************
  */
+
 #ifndef NTL__STLX_FUNCTIONAL
 #define NTL__STLX_FUNCTIONAL
-#pragma once
 
-#ifndef NTL__STLX_TYPE_TRAITS
 #include "type_traits.hxx"
-#endif
-
-#ifndef NTL__STLX_CUCHAR
-#include "cuchar.hxx"   // for hash<>
-#endif
-#ifndef NTL__STLX_ITERATOR
-#include "iterator.hxx" // for iterator_traits which used by fnv hash
-#endif
-#include "typeinfo.hxx" // for hash<type_index>
 
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4820) // X bytes padding added...
 #endif
 
-namespace std 
-{
-/**\addtogroup  lib_utilities ********** 20 General utilities library [utilities]
+namespace std {
+
+/**\addtogroup  lib_utilities ********* General utilities library [20] ******
  *@{*/
 
-/**\addtogroup  lib_function_objects *** 20.7 Function objects [function.objects]
- *  Function objects are objects with an \c operator() defined
- *@{*/
-
-/**\defgroup  lib_func_def ************* 20.7.01 Definitions [func.def]
+/**\defgroup  lib_function_objects ***** Function objects [20.5] ************
  *
- *  The following definitions apply to this Clause:
- *  - A <em>call signature</em> is the name of a return type followed by a parenthesized comma-separated %list of zero or
- *  more argument types.
- *  - A <em>callable type</em> is a pointer to function, a pointer to member function, a pointer to member data, or a class
- *  type whose objects can appear immediately to the left of a function call operator.
- *  - A <em>callable object</em> is an object of a callable type.
- *  - A <em>call wrapper type</em> is a type that holds a callable object and supports a call operation that forwards to that
- *  object.
- *  - A <em>call wrapper</em> is an object of a call wrapper type.
- *  - A <em>target object</em> is the callable object held by a call wrapper.
- **/
-
-/**\defgroup  lib_func_require ************* 20.7.02 Requirements [func.require]
-
-  Define <tt>INVOKE(f, t1, t2, ..., tN)</tt> as follows:
-  - <tt>(t1.*f)(t2, ..., tN)</tt> when \p f is a pointer to a member function of a class \c T and \p t1 is an object of
- type \c T or a reference to an object of type \c T or a reference to an object of a type derived from \c T;
-  - <tt>((*t1).*f)(t2, ..., tN)</tt> when \p f is a pointer to a member function of a class \c T and \p t1 is not one of
- the types described in the previous item;
-  - <tt>t1.*f</tt> when \p f is a pointer to member data of a class \c T and \p t1 is an object of type \c T or a reference to
- an object of type \c T or a reference to an object of a type derived from \c T;
-  - <tt>(*t1).*f</tt> when \p f is a pointer to member data of a class \c T and \p t1 is not one of the types described in
- the previous item;
-  - <tt>f(t1, t2, ..., tN)</tt> in all other cases.
- 
- Define <tt>INVOKE(f, t1, t2, ..., tN, R)</tt> as <tt>INVOKE(f, t1, t2, ..., tN)</tt> implicitly converted to \c R.
- 
- If a call wrapper (20.7.1) has a <em>weak result type</em> the type of its member type \c result_type is based on the
- type \c T of the wrapper's target object (20.7.1):
-  - if \c T is a function, reference to function, or pointer to function type, \c result_type shall be a synonym
- for the return type of \c T;
-  - if \c T is a pointer to member function, \c result_type shall be a synonym for the return type of \c T;
-  - if \c T is a class type with a member type \c result_type, then result_type shall be a synonym for
- <tt>T::result_type</tt>;
-  - otherwise \c result_type shall not be defined.
- 
- Every call wrapper (20.7.1) shall be CopyConstructible. A <em>simple call wrapper</em> is a call wrapper that is
- CopyAssignable and whose copy constructor and assignment operator do not throw exceptions. A <em>forwarding
- call wrapper</em> is a call wrapper that can be called with an argument %list.
-
- @note in a typical implementation forwarding call wrappers have an overloaded function call operator of the form
- \code
- template<class... ArgTypes>
- R operator()(ArgTypes&&... args) cv-qual;
- \endcode
- **/
+ *    Function objects are objects with an operator() defined
+ *@{
+ */
 
 #pragma region lib_base
-/**\defgroup  lib_base ***************** 20.7.03 Base [base]
- *  provided to simplify the typedefs of the argument and result types
- *@{*/
+/**\defgroup  lib_base ***************** Base [20.5.3] **********************
+ *
+ *    provided to simplify the typedefs of the argument and result types
+ *@{
+ */
 
 template <class Arg, class Result>
 struct unary_function
@@ -103,14 +48,80 @@ struct binary_function
   typedef Result  result_type;
 };
 
-/**@} lib_base */
+/**@} lib_base
+ */
+#pragma endregion
+
+#pragma region lib_refwrap
+/**\defgroup  lib_refwrap ***************** reference_wrapper [20.5.5] *******
+ *
+ *    reference_wrapper<T> is a CopyConstructible and Assignable wrapper 
+ *    around a reference to an object of type T.
+ *@{
+ */
+
+template <class T>
+class reference_wrapper
+//: public unary_function<T1, R> // see below
+//: public binary_function<T1, T2, R> // see below
+{
+  ///////////////////////////////////////////////////////////////////////////
+  public :
+
+    // types
+    typedef T type;
+    //typedef -- result_type; // Not always defined
+
+    // construct/copy/destroy
+    explicit reference_wrapper(T&) __ntl_nothrow;
+    reference_wrapper(const reference_wrapper<T>& x) __ntl_nothrow;
+
+    // assignment
+    reference_wrapper& operator=(const reference_wrapper<T>& x) __ntl_nothrow;
+
+    // access
+    operator T& () const __ntl_nothrow;
+    T& get() const __ntl_nothrow;
+
+#if 0
+    // invocation
+    template <class T1, class T2, ..., class TN>
+    typename result_of<T(T1, T2, ..., TN)>::type
+      operator() (T1&, T2&, ..., TN&) const
+    {
+    // Returns: INVOKE (get(), a1, a2, ..., aN). ([3.3])
+      return get()(t1);
+    }
+#endif
+
+  ///////////////////////////////////////////////////////////////////////////
+  private:
+
+    T* ptr;
+
+};
+
+
+template <class T>
+inline
+reference_wrapper<T> ref(T& t) __ntl_nothrow
+{
+  return reference_wrapper<T>(t);
+}
+
+template <class T> reference_wrapper<const T> cref(const T&) __ntl_nothrow;
+template <class T> reference_wrapper<T> ref(reference_wrapper<T>) __ntl_nothrow;
+template <class T> reference_wrapper<const T> cref(reference_wrapper<T>) __ntl_nothrow;
+/**@} lib_refwrap
+ */
 #pragma endregion
 
 #pragma region lib_arithmetic_operations
-
-/**\defgroup  lib_arithmetic_operations *** 20.7.06 Arithmetic operations [arithmetic.operations]
+/**\defgroup  lib_arithmetic_operations * Arithmetic operations [20.5.6] ****
+ *
  *    functors for all of the arithmetic operators
- *@{*/
+ *@{
+ */
 
 template <class T>
 struct plus : binary_function<T, T, T>
@@ -148,13 +159,16 @@ struct negate : unary_function<T, T>
   T operator()(const T& x) const { return - x; }
 };
 
-/**@} lib_arithmetic_operations */
+/**@} lib_arithmetic_operations
+ */
 #pragma endregion
 
-#pragma region lib_comparisons
-/**\defgroup  lib_comparisons ********** 20.7.07 Comparisons [comparisons]
+#pragma region lib_comparsions
+/**\defgroup  lib_comparisons ********** Comparisons [20.5.7] ***************
+ *
  *   functors for all of the comparison operators
- *@{*/
+ *@{
+ */
 
 template <class T>
 struct equal_to : binary_function<T, T, bool>
@@ -192,14 +206,16 @@ struct less_equal : binary_function<T, T, bool>
   bool operator()(const T& x, const T& y) const { return x <= y; }
 };
 
-/**@} lib_comparisons */
+/**@} lib_comparisons
+ */
 #pragma endregion
 
 #pragma region lib_logical_operations
-/**\defgroup  lib_logical_operations *** 20.7.08 Logical operations [logical.operations]
+/**\defgroup  lib_logical_operations *** Logical operations [20.5.8] ********
  *
  *   functors for all of the logical operators
- *@{*/
+ *@{
+ */
 
 template <class T>
 struct logical_and : binary_function<T, T, bool>
@@ -219,16 +235,18 @@ struct logical_not : unary_function<T, bool>
   bool operator()(const T& x) const { return ! x; }
 };
 
-/**@} lib_logical_operations */
+/**@} lib_logical_operations
+ */
 #pragma endregion
 
 #pragma region lib_bitwise_operations
-/**\defgroup  lib_bitwise_operations *** 20.7.09 Bitwise operations [bitwise.operations]
+/**\defgroup  lib_bitwise_operations *** Bitwise operations [20.5.9] *********
  *
  *   functors for all of the bitwise operators in the language
- *@{**/
+ *@{
+ **/
 
-template <class T> struct bit_and : binary_function<T,T,T>
+template <class T> struct bit_and : binary_function<T,T,T> 
 {
   T operator()(const T& x, const T& y) const
   {
@@ -244,21 +262,21 @@ template <class T> struct bit_or : binary_function<T,T,T>
   }
 };
 
-template <class T> struct bit_xor : binary_function<T,T,T>
+template <class T> struct bit_xor : binary_function<T,T,T> 
 {
   T operator()(const T& x, const T& y) const
   {
     return x ^ y;
   }
 };
-/**@} lib_bitwise_operations */
 #pragma endregion
 
 #pragma region lib_negators
-/**\defgroup  lib_negators ************* 20.7.10 Negators [negators]
+/**\defgroup  lib_negators ************* Negators [20.5.10] ******************
  *
  *   negators take a predicate and return its complement
- *@{*/
+ *@{
+ */
 
 template <class Predicate>
 class unary_negate
@@ -270,7 +288,7 @@ class unary_negate
     explicit unary_negate(const Predicate& pred) : pred(pred) {}
 
     bool operator()(const typename Predicate::argument_type& x) const
-    {
+    { 
       return ! pred(x);
     }
 };
@@ -307,19 +325,45 @@ binary_negate<Predicate> not2(const Predicate& pred)
   return binary_negate<Predicate>(pred);
 }
 
-/**@} lib_negators */
+/**@} lib_negators
+ */
 #pragma endregion
 
-#ifndef NTL__STLX_EXCLUDE_DEPRECATED
+#pragma region lib_bind
+/**\defgroup  lib_bind ***************** bind [20.5.11] *****************
+ *
+ *   The template function bind returns an object that binds a function object passed as an argument to additional arguments.
+ *@{
+ */
+#ifdef NTL__CXX
+
+template<class T> struct is_bind_expression;
+template<class T> struct is_placeholder;
+
+template<class Fn, class... Types>
+unspecified bind(Fn, Types...);
+template<class R, class Fn, class... Types>
+unspecified bind(Fn, Types...);
+
+namespace placeholders {
+  // M is the implementation-defined number of placeholders
+  extern unspecified _1;
+  extern unspecified _2;
+  extern unspecified _M;
+}
+
+#endif // NTL__CXX
+
+/**@} lib_bind
+  **/
+#pragma endregion
 
 #pragma region lib_binders
-/**\ingroup std_depr
- *@{*/
+/**\defgroup  lib_binders ************** Binders [D8] ******************
+ *@{
+ */
 
-/**\defgroup  lib_binders ************** D.8 Binders [depr.lib.binders]
- *@{*/
-
-/// D8.1 Class template binder1st [depr.lib.binder.1st]
+/// D8.1 Class template binder1st [lib.binder.1st]
 template <class Operation>
 class binder1st
 : public unary_function<typename Operation::second_argument_type,
@@ -334,7 +378,7 @@ class binder1st
               const typename Operation::first_argument_type& y)
     : op(x), value(y) {}
 
-    ///\note extended with remove_reference
+    ///\note extended with remove_reference 
     typename Operation::result_type
       operator()(const typename remove_reference<typename Operation::second_argument_type>::type& x) const
     {
@@ -342,7 +386,7 @@ class binder1st
     }
 };
 
-/// D8.2 bind1st [depr.lib.bind.1st]
+/// D8.2 bind1st [lib.bind.1st]
 template <class Operation, class T>
 inline
 binder1st<Operation>
@@ -351,7 +395,7 @@ binder1st<Operation>
   return binder1st<Operation>(op, typename Operation::first_argument_type(x));
 }
 
-/// D8.3 Class template binder2nd [depr.lib.binder.2nd]
+/// D8.3 Class template binder2nd [lib.binder.2nd]
 template <class Operation>
 class binder2nd
 : public unary_function<typename Operation::first_argument_type,
@@ -365,7 +409,7 @@ class binder2nd
     binder2nd(const Operation& x,
               const typename Operation::second_argument_type& y)
     : op(x), value(y) {}
-
+    
     typename Operation::result_type
       operator()(const typename Operation::first_argument_type& x) const
     {
@@ -380,7 +424,7 @@ class binder2nd
     }
 };
 
-/// D8.4 bind2nd [depr.lib.bind.2nd]
+/// D8.4 bind2nd [lib.bind.2nd]
 template <class Operation, class T>
 inline
 binder2nd<Operation>
@@ -389,15 +433,14 @@ binder2nd<Operation>
   return binder2nd<Operation>(op, typename Operation::second_argument_type(x));
 }
 
-/**@} lib_binders */
-/**@} std_depr */
+/**@} lib_binders
+ */
 #pragma endregion
-#endif
 
 #pragma region lib_adaptors
-/**\defgroup  lib_function_pointer_adaptors 20.7.12 Adaptors for pointers to functions [function.pointer.adaptors]
- *  Allow pointers to (unary and binary) functions to work with function adaptors
- *@{*/
+/**\defgroup  lib_function_pointer_adaptors Adaptors for pointers to functions [20.5.12]
+ *@{
+ */
 
 template <class Arg, class Result>
 class pointer_to_unary_function : public unary_function<Arg, Result>
@@ -409,7 +452,7 @@ class pointer_to_unary_function : public unary_function<Arg, Result>
 };
 
 template <class Arg, class Result>
-inline pointer_to_unary_function<Arg,Result>
+pointer_to_unary_function<Arg,Result>
   ptr_fun(Result (*f)(Arg))
 {
   return pointer_to_unary_function<Arg, Result>(f);
@@ -432,13 +475,14 @@ pointer_to_binary_function<Arg1, Arg2, Result>
   return pointer_to_binary_function<Arg1,Arg2,Result>(f);
 }
 
-/**@} lib_function_pointer_adaptors */
+/**@} lib_function_pointer_adaptors
+ */
 #pragma endregion
 
 #pragma region lib_member_pointer_adaptors
-/**\defgroup  lib_member_pointer_adaptors 20.7.13 Adaptors for pointers to members [member.pointer.adaptors]
- *  The purpose of the following is to provide the same facilities for pointer to members as those provided for pointers to functions in 20.7.12.
- *@{*/
+/**\defgroup  lib_member_pointer_adaptors Adaptors for pointers to members [20.5.13]
+ *@{
+ */
 
 template <class Result, class T>
 class mem_fun_t : public unary_function<T*, Result>
@@ -501,7 +545,7 @@ mem_fun1_t<Result, T, A>
 }
 
 template <class Result, class T, class A>
-inline const_mem_fun1_t<Result, T, A>
+const_mem_fun1_t<Result, T, A>
   mem_fun(Result (T::*f)(A) const)
 {
   return const_mem_fun1_t<Result, T, A>(f);
@@ -575,16 +619,20 @@ const_mem_fun1_ref_t<Result, T, A>
   return const_mem_fun1_ref_t<Result, T, A>(f);
 }
 
-/**@} lib_member_pointer_adaptors */
+/**@} lib_member_pointer_adaptors
+ */
 #pragma endregion
 
-
 #pragma region unord.hash
-/**\addtogroup  lib_hash 20.7.16 Class template hash [unord.hash]
+// 20.5.16 Class template hash [unord.hash]
+/**\defgroup  lib_hash Class template hash [20.5.16]
  *
- * The unordered associative containers defied in clause 23.4 use specializations of hash as the default %hash function.
- *@{*/
-// 20.7.16, hash function base template:
+ * The unordered associative containers defied in clause 23.4 use specializations of hash as the default
+ * hash function.
+ *
+ *@{
+ */
+// 20.5.16, hash function base template:
 template <class T> struct hash;
 
 // Hash function specializations
@@ -592,8 +640,8 @@ template <> struct hash<bool>;
 template <> struct hash<char>;
 template <> struct hash<signed char>;
 template <> struct hash<unsigned char>;
-template <> struct hash<char16_t>;
-template <> struct hash<char32_t>;
+//template <> struct hash<char16_t>;
+//template <> struct hash<char32_t>;
 template <> struct hash<wchar_t>;
 template <> struct hash<short>;
 template <> struct hash<unsigned short>;
@@ -607,147 +655,25 @@ template <> struct hash<float>;
 template <> struct hash<double>;
 template <> struct hash<long double>;
 template<class T> struct hash<T*>;
-
-//template <> struct hash<std::string>; // in <string>
+//template <> struct hash<std::string>;
 //template <> struct hash<std::u16string>;
 //template <> struct hash<std::u32string>;
 //template <> struct hash<std::wstring>;
+//template <> struct hash<std::error_code>;
+//template <> struct hash<std::thread::id>;
 
-//template <> struct hash<std::error_code>; // in <system_error>
-//template <> struct hash<std::thread::id>; // in <thread>
-
-/// generic hash function delaration
 template<class T>
 struct hash: unary_function<T, size_t>
 {
-  size_t operator()(T val) const __ntl_nothrow;
+  size_t operator()(T val) const;
 };
 
-/// hash function implementation for pointers
-template<class T>
-struct hash<T*>: unary_function<T*, size_t>
-{
-  size_t operator()(T* val) const __ntl_nothrow
-  {
-    return reinterpret_cast<size_t>(val);
-  }
-};
-
-
-/// integer types hash function implementation
-#define NTL_HASH_IMPL(T) \
-template<> struct hash<T>: unary_function<T, size_t> \
-{ \
-  inline size_t operator()(argument_type val) const __ntl_nothrow \
-  { \
-    return static_cast<size_t>(val); \
-  } \
-}
-
-NTL_HASH_IMPL(bool);
-NTL_HASH_IMPL(char);
-NTL_HASH_IMPL(signed char);
-NTL_HASH_IMPL(unsigned char);
-NTL_HASH_IMPL(wchar_t);
-NTL_HASH_IMPL(short);
-NTL_HASH_IMPL(unsigned short);
-NTL_HASH_IMPL(int);
-NTL_HASH_IMPL(unsigned int);
-NTL_HASH_IMPL(long);
-NTL_HASH_IMPL(unsigned long);
-
-// NOTE: if sizeof(int64_t) > sizeof(size_t) we must use some hashing algorithm (e.g. FNV) to calculate hash value of the 64-bit data, 
-// but it can produce collision between hash algorithm result and "hash value" of the fundamental data.
-#if __SIZEOF_POINTER__ == 8
-NTL_HASH_IMPL(long long);
-NTL_HASH_IMPL(unsigned long long);
-#endif
-
-#ifdef NTL__CXX_CHARS
-NTL_HASH_IMPL(char16_t);
-NTL_HASH_IMPL(char32_t);
-#endif
-#undef NTL_HASH_IMPL
-
-namespace __
-{
-  /**
-   *	@brief FNV Hash Function
-   *
-   *  Fowler/Noll/Vo is a non-cryptographic hash function created by Glenn Fowler, Landon Curt Noll, and Phong Vo.
-   *
-   *  @see http://en.wikipedia.org/wiki/Fowler_Noll_Vo_hash
-   **/
-  template<typename hash_t, hash_t prime, hash_t seed = 0>
-  struct FNVHashT
-  {
-    static const hash_t prime_value = prime;
-    static const hash_t seed_value  = seed;
-
-    /** Data sequence hashing (octets) */
-    template<typename Iterator>
-    inline typename enable_if<sizeof(typename iterator_traits<Iterator>::value_type) == sizeof(uint8_t), hash_t>::type operator()(Iterator first, Iterator last) const
-    {
-      hash_t h = seed;
-      while(first != last){
-        h = h * prime ^ static_cast<hash_t>(*first);
-        ++first;
-      }
-      return h;
-    }
-
-    /** Data sequence hashing (large values) */
-    template<typename Iterator>
-    inline typename enable_if<(sizeof(typename iterator_traits<Iterator>::value_type) > sizeof(uint8_t)), hash_t>::type operator()(Iterator first, Iterator last) const
-    {
-      hash_t h = seed;
-      while(first != last){
-        size_t size = sizeof(*first);
-        for(const uint8_t* p = reinterpret_cast<const uint8_t*>(&*first); size--; p++)
-          h = h * prime ^ *p;
-        ++first;
-      }
-      return h;
-    }
-
-    /** Data buffer hashing (by octets) */
-    inline hash_t operator()(const void* data, size_t size) const
-    {
-      hash_t h = seed;
-      for(const uint8_t* p = reinterpret_cast<const uint8_t*>(data); size--; p++)
-        h = h * prime ^ *p;
-      return h;
-    }
-
-    static inline hash_t hash_op(const void* data, size_t size, hash_t h = seed)
-    {
-      for(const uint8_t* p = reinterpret_cast<const uint8_t*>(data); size--; p++)
-        h = h * prime ^ *p;
-      return h;
-    }
-
-    static inline hash_t hash_combine(hash_t hash1, hash_t hash2 = seed)
-    {
-      return  hash2 * prime ^ hash1;
-    }
-  };
-
-#ifndef _M_X64
-  /// FNV Hash implementation for 32-bit code.
-  typedef FNVHashT<size_t, 0x01000193, 2166136261UL> FNVHash;
-#else
-  /// FNV Hash implementation for 64-bit code.
-  typedef FNVHashT<size_t, 0x100000001B3, 14695981039346656037ULL> FNVHash;
-#endif
-}
-
-// TODO: floating point hash function implementation
-
-/**@} lib_hash */
 #pragma endregion
 
 /**@} lib_function_objects */
+
 /**@} lib_utilities */
+
 }//namespace std
 
 #ifdef _MSC_VER

@@ -1,12 +1,12 @@
 /**\file*********************************************************************
  *                                                                     \brief
- *  Win32 Application support
+ *  Win32 Application support 
  *
  ****************************************************************************
  */
+
 #ifndef NTL__WIN_WINAPP
 #define NTL__WIN_WINAPP
-#pragma once
 
 #include "win/application.hxx"
 #include "win/console.hxx"
@@ -17,12 +17,9 @@
 
 #pragma comment(linker, "/nodefaultlib:libc")
 #pragma comment(linker, "/nodefaultlib:libcmt")
-#pragma comment(linker, "/nodefaultlib:oldnames")
 
 namespace ntl {
 
-/**\addtogroup  winapi_types_support *** Win32 API support library **********
- *@{*/
 /**\addtogroup  application ****** Application support library **************
  *@{*/
 
@@ -48,7 +45,7 @@ int _Winapp_entry()
 
 
 /**@} application */
-/**@} winapi_types_support */
+
 
 }//namespace ntl
 

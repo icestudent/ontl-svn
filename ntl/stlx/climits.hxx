@@ -4,16 +4,16 @@
  *
  ****************************************************************************
  */
+
 #ifndef NTL__STLX_CLIMITS
 #define NTL__STLX_CLIMITS
-#pragma once
 
 namespace std {
 
-/**\addtogroup  lib_language_support *** 18 Language support library [language.support]
+/**\addtogroup  lib_language_support *** Language support library [18] ******
  *@{*/
 
-/**\addtogroup  lib_support_limits ***** 18.3 Implementation properties [support.limits]
+/**\defgroup  lib_support_limits ******* Implementation properties [18.2] ***
  *
  *    Characteristics of implementation dependent fundamental types
  *@{
@@ -38,7 +38,7 @@ namespace std {
 #endif
 
 #ifndef CHAR_MIN
-#if defined(_MSC_VER) || defined(__BCPLUSPLUS__) || defined(__GNUC__)
+#ifdef  _MSC_VER
   #ifndef _CHAR_UNSIGNED
     #define CHAR_MIN    SCHAR_MIN
     #define CHAR_MAX    SCHAR_MAX
@@ -78,7 +78,7 @@ namespace std {
 #endif
 
 #ifndef INT_MIN
-#define INT_MIN     (-INT_MAX-1)
+#define INT_MIN     (0-2147483648)
 #endif
 
 #ifndef INT_MAX
@@ -90,7 +90,7 @@ namespace std {
 #endif
 
 #ifndef LONG_MIN
-#define LONG_MIN    (-LONG_MAX-1L)
+#define LONG_MIN    (0-2147483648L)
 #endif
 
 #ifndef LONG_MAX
@@ -102,27 +102,15 @@ namespace std {
 #endif
 
 #ifndef LLONG_MAX
-  #if defined(_MSC_VER) || defined(__BCPLUSPLUS__)
-    #define LLONG_MAX   9223372036854775807i64
-  #elif defined(__GNUC__)
-    #define LLONG_MAX   __LONG_LONG_MAX__
-  #endif
+#define LLONG_MAX   9223372036854775807i64
 #endif
 
 #ifndef LLONG_MIN
-  //#if defined(_MSC_VER) || defined(__BCPLUSPLUS__)
-  //  #define LLONG_MIN   (-9223372036854775808i64)
-  //#elif defined(__GNUC__)
-    #define LLONG_MIN   (-LLONG_MAX-1)
-  //#endif
+#define LLONG_MIN   (-9223372036854775808i64)
 #endif
 
 #ifndef ULLONG_MAX
-  #if defined(_MSC_VER) || defined(__BCPLUSPLUS__)
-    #define ULLONG_MAX  0xffffffffffffffffui64
-  #elif defined(__GNUC__)
-    #define ULLONG_MAX  (LLONG_MAX * 2ULL + 1)
-  #endif
+#define ULLONG_MAX  0xffffffffffffffffui64
 #endif
 
 /**@} lib_support_limits */

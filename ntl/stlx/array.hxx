@@ -4,52 +4,26 @@
  *
  ****************************************************************************
  */
+
 #ifndef NTL__STLX_ARRAY
 #define NTL__STLX_ARRAY
-#pragma once
 
-#ifndef NTL__STLX_ITERATOR
 #include "iterator.hxx"
-#endif
-#include "stdexcept_fwd.hxx"
+#include "stdexcept.hxx"
 
-#include "tuple.hxx"
+namespace std {
 
-namespace std
-{
-
-/**\addtogroup  lib_containers ********* 23 Containers library [containers]
+/**\addtogroup  lib_containers ********* Containers library [23] ************
  *@{*/
 
-/**\addtogroup  lib_sequence *********** 23.2 Sequence containers [sequences]
+/**\addtogroup  lib_sequence *********** Sequences [23.2] *******************
  *@{*/
 
-  /**
-   *	@brief 23.2.1 Class template array [%array]
-   *
-   *  The header \<array\> defines a class template for storing fixed-size sequences of objects. An array supports
-   *  random access iterators. An instance of <tt>array<T, N></tt> stores \e N elements of type \e T, 
-   *  so that <tt>size() == N</tt> is an invariant.
-   *  The elements of an array are stored contiguously, meaning that if \c a is an <tt>array<T, N></tt> then
-   *  it obeys the %identity <tt>&a[n] == &a[0] + n</tt> for all <tt>0 <= n < N</tt>.
-   *
-   *  An array is an aggregate (8.5.1) that can be initialized with the syntax: <tt>array a<T, N> = { initializer-list };</tt>
-   *  where <i>initializer-list</i> is a comma separated %list of up to \e N elements whose types are convertible to \e T.
-   *
-   *  Unless otherwise specified, all array operations are as described in 23.1. Descriptions are provided here only
-   *  for operations on array that are not described in that Clause or for operations where there is additional
-   *  semantic information.
-   **/
+/// Class template array [6.2.2 tr.array.array]
+///@note  No explicit construct/copy/destroy for aggregate type
 template <class T, size_t N>
 struct array
 {
-  
-#ifdef NTL__ARRAY_BOOST_COMPATIBLE
-#define __elems elems
-#define __check_bounds  rangecheck
-    T* c_array() { return __elems; }
-#endif
-
     // types:
 
     typedef T &                                   reference;
@@ -62,12 +36,9 @@ struct array
     typedef std::reverse_iterator<iterator>       reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-    void fill(const T& u) 
-    {
-      fill_n(begin(), N, u);
-    }
+    void assign(const T& u) { *this = u; }
 
-    void swap(array<T, N> & y)
+    void swap( array<T, N> & y)
     {
       //swap_ranges(x.begin(), x.end(), y.begin() );
       for ( size_t i = 0; i != size(); ++i )
@@ -85,7 +56,7 @@ struct array
     const_reverse_iterator  rbegin() const
       { return const_reverse_iterator(end()); }
     reverse_iterator        rend()        { return reverse_iterator(begin()); }
-    const_reverse_iterator  rend() const
+    const_reverse_iterator  rend() const 
       { return const_reverse_iterator(begin()); }
 
     const_iterator cbegin() const { return begin(); }
@@ -97,7 +68,7 @@ struct array
 
     size_type size() const      { return N; }
     size_type max_size() const  { return N; }
-    bool empty() const          { return N != 0; }
+    bool empty() const          { return 0 != N; }
 
     ///\name  element access
 
@@ -118,8 +89,8 @@ struct array
 
     reference       front()       { return *begin(); }
     const_reference front() const { return *begin(); }
-    reference       back()        { return __elems[N-1]; }
-    const_reference back()  const { return __elems[N-1]; }
+    reference       back()        { return *(--end()); }
+    const_reference back()  const { return *(--end()); }
 
           T * data()        { return __elems; }
     const T * data() const  { return __elems; }
@@ -128,7 +99,7 @@ struct array
 
   // Types with private or protected data members are not aggregate
   //private:
-
+    
     /* vs2k5 debugger bug: it doesn't recognize `static const type`, we must use enum instead */
     //static const size_t __actual_size = N ? N : 1;
     enum { __actual_size = N ? N : 1 };
@@ -137,84 +108,47 @@ struct array
 
     void __check_bounds(size_type n) const __ntl_throws(out_of_range)
     {
-      if ( n > size() ) __throw_out_of_range();
+      if ( n > size() ) __ntl_throw (out_of_range());
     }
-
-#ifdef NTL__ARRAY_BOOST_COMPATIBLE
-#undef __elems
-#undef __check_bounds
-#endif
 
 };//struct array
 
 ///\name  Array comparisons
-template <class T, size_t N> inline bool operator== (const array<T,N>& x, const array<T,N>& y)
-{
-  return equal(x.cbegin(), x.cend(), y.cbegin());
-}
-
-template <class T, size_t N> inline bool operator!= (const array<T,N>& x, const array<T,N>& y)
-{
-  return rel_ops::operator !=(x, y);
-}
-
-template <class T, size_t N> inline bool operator< (const array<T,N>& x, const array<T,N>& y)
-{
-  return lexicographical_compare(x.cbegin(), x.cend(), y.cbegin(), y.cend());
-}
-
-template <class T, size_t N> inline bool operator> (const array<T,N>& x, const array<T,N>& y)
-{
-  return rel_ops::operator >(x, y);
-}
-
-template <class T, size_t N> inline bool operator<= (const array<T,N>& x, const array<T,N>& y)
-{
-  return rel_ops::operator <=(x, y);
-}
-
-template <class T, size_t N> inline bool operator>= (const array<T,N>& x, const array<T,N>& y)
-{
-  return rel_ops::operator >=(x, y);
-}
+template <class T, size_t N> bool operator== (const array<T,N>& x, const array<T,N>& y);
+template <class T, size_t N> bool operator!= (const array<T,N>& x, const array<T,N>& y);
+template <class T, size_t N> bool operator< (const array<T,N>& x, const array<T,N>& y);
+template <class T, size_t N> bool operator> (const array<T,N>& x, const array<T,N>& y);
+template <class T, size_t N> bool operator<= (const array<T,N>& x, const array<T,N>& y);
+template <class T, size_t N> bool operator>= (const array<T,N>& x, const array<T,N>& y);
 
 ///\name  Array specialized algorithms [6.2.2.2]
-template <class T, size_t N > inline void swap(array<T,N>& x, array<T,N>& y) { x.swap(y); }
-
-//////////////////////////////////////////////////////////////////////////
-///\name  Tuple interface to class template array [23.2.1.6]
-
-template <class T, size_t N> 
-struct tuple_size<array<T, N> >: integral_constant<size_t, N>
-{};
-
-template <size_t I, class T, size_t N>
-struct tuple_element<I, array<T, N> >
+template <class T, size_t N > void swap(array<T,N>& x, array<T,N>& y)
 {
-  static_assert(I < N, "I out of bounds");
-  typedef T type;
-};
+  x.swap(y);
+}
 
-template <size_t I, class T, size_t N>
-inline T& get(array<T, N>& a)
+///\name  Tuple interface to class template array [6.2.2.5]
+
+template <class T> class tuple_size; // forward declaration
+template <int I, class T> class tuple_element; // forward declaration
+template <class T, size_t N> struct tuple_size<array<T, N> >;
+template <int I, class T, size_t N> struct tuple_element<I, array<T, N> >;
+
+template <int I, class T, size_t N>
+T& 
+  get(array<T, N>& a)
 {
-  static_assert(I < N, "I out of bounds");
+  return a[I];
+}
+  
+template <int I, class T, size_t N>
+const T&
+  get(const array<T, N>& a)
+{
   return a[I];
 }
 
-template <size_t I, class T, size_t N>
-inline const T& get(const array<T, N>& a)
-{
-  static_assert(I < N, "I out of bounds");
-  return a[I];
-}
-///\}
-
-///\name 24.6.5 range access [iterator.range]
-template <class T, size_t N> inline T* begin(T (&v_array)[N]) { return v_array;     }
-template <class T, size_t N> inline T* end  (T (&v_array)[N]) { return v_array + N; }
-///\}
-
+///@}
 /**@} lib_sequence */
 /**@} lib_containers */
 
