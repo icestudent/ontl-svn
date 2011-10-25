@@ -1,10 +1,53 @@
-template<typename Type, size_t N = 0>
+#include <cstddef>
+
+template<typename T, typename _ = int>
 struct xshow_type
 {
-  char _[0];
+  char __[sizeof(_) == sizeof(char)];
 };
 
-#define SHOWT(T) xshow_type<T, __COUNTER__> _Join(__x_show_type, __COUNTER__);
+
+template<int value, typename _ = int>
+struct xshow_value
+{
+  char __[sizeof(_) == sizeof(char)];
+};
+template<__int64 value, typename _ = int>
+struct xshow_value64
+{
+  char _[sizeof(_) == sizeof(char)];
+};
+
+template<typename Type, size_t Size, size_t Align, typename _ = int>
+struct ShowTypeInfo 
+{
+  char __[sizeof(_) == sizeof(char)];
+};
+
+#define SHOW_TYPE(T) ShowTypeInfo<T,sizeof(T),__alignof(T)> _Join(__x_show_type_info, __COUNTER__);
+
+#define SHOWT(T) xshow_type<T> _Join(__x_show_type, __COUNTER__);
+#define SHOWV(V) xshow_value<V> _Join(__x_show_value, __COUNTER__);
+#define SHOWLV(V) xshow_value64<V> _Join(__x_show_value64, __COUNTER__);
+#define SIZEOF(T) SHOWV(sizeof(T));
+
+template<typename T>
+inline void __show_type(T)
+{
+  using namespace std;
+  SHOWT(T);
+}
+template<typename T>
+inline void __show_type()
+{
+  using namespace std;
+  SHOWT(T);
+}
+
+
+#define VERIFY(e) static_assert(e, #e)
+
+
 #pragma warning(disable:4101 4189)
 
 #include <type_traits>
@@ -26,7 +69,6 @@ template struct common_type<test_type1, test_type2>;
 template struct common_type<test_type1, test_type2, test_type3>;
 template struct common_type<test_type1, test_type2, test_type3, test_type4>;
 
-#define VERIFY(e) STATIC_ASSERT(e)
 
 #define JOIN( X, Y ) DO_JOIN( X, Y )
 #define DO_JOIN( X, Y ) DO_JOIN2(X,Y)
@@ -57,7 +99,7 @@ template struct common_type<test_type1, test_type2, test_type3, test_type4>;
   VERIFY( (is_same<JOIN(test_t,JOIN(uid,lcv)), \
   JOIN(test_t,JOIN(uid,lcv))>::value) );
 
-#ifdef NTL__CXX
+#ifdef NTL__CXX_RV_WHATIS
   typedef common_type<type1 &&>::type JOIN(test_t,JOIN(uid,r)); \
   VERIFY( (is_same<JOIN(test_t,JOIN(uid,r)), \
   JOIN(test_t,JOIN(uid,r))>::value) ); \
@@ -88,45 +130,113 @@ void test01()
   COMMON_TYPE_TEST_1(B, 4);
 }
 
-#define COMMON_TYPE_TEST_2_IMPL(type1, type2, type3, uid) \
+#define COMMON_TYPE_TEST_2_IMPL(type1, type2, expected, uid) \
   typedef common_type<type1, type2>::type  	JOIN(JOIN(test, uid),_t1); \
   typedef common_type<type2, type1>::type  	JOIN(JOIN(test, uid),_t2); \
-  VERIFY( (is_same<JOIN(JOIN(test, uid),_t1), type3>::value) ); \
-  VERIFY( (is_same<JOIN(JOIN(test, uid),_t2), type3>::value) )
+  static_assert( (is_same<JOIN(JOIN(test, uid),_t1), expected>::value), "must be \"" #expected "\" when common_type<" #type1 ", " #type2 ">"); \
+  static_assert( (is_same<JOIN(JOIN(test, uid),_t2), expected>::value), "must be \"" #expected "\" when common_type<" #type1 ", " #type2 ">" );
 
 #define NO_CV
 
-#define COMMON_TYPE_TEST_2(cv_qual, type1, type2, type3, uid) \
-  COMMON_TYPE_TEST_2_IMPL(cv_qual type1, type2, type3, uid); \
-  COMMON_TYPE_TEST_2_IMPL(cv_qual type1 &, type2, type3, JOIN(uid,l)); 
-  //COMMON_TYPE_TEST_2_IMPL(cv_qual type1 &&, type2, type3, JOIN(uid,r))
+#ifdef NTL__CXX_RV
 
-#define COMMON_TYPE_TEST_ALL_2(type1, type2, type3, uid) \
-  COMMON_TYPE_TEST_2(NO_CV, type1, type2, type3, JOIN(uid,0)); \
-  COMMON_TYPE_TEST_2(const, type1, type2, type3, JOIN(uid,1)); \
-  COMMON_TYPE_TEST_2(volatile, type1, type2, type3, JOIN(uid,2)); \
-  COMMON_TYPE_TEST_2(const volatile, type1, type2, type3, JOIN(uid,3))
+#define COMMON_TYPE_TEST_2(cv_qual, type1, type2, expected, uid) \
+  COMMON_TYPE_TEST_2_IMPL(cv_qual type1, type2, expected, uid) \
+  COMMON_TYPE_TEST_2_IMPL(cv_qual type1 &, type2, expected, JOIN(uid,l))\
+  COMMON_TYPE_TEST_2_IMPL(cv_qual type1 &&, type2, expected, JOIN(uid,r))
 
-template<class T, class U>
+#else
+
+#define COMMON_TYPE_TEST_2(cv_qual, type1, type2, expected, uid) \
+  COMMON_TYPE_TEST_2_IMPL(cv_qual type1, type2, expected, uid) \
+  COMMON_TYPE_TEST_2_IMPL(cv_qual type1 &, type2, expected, JOIN(uid,l))
+  //COMMON_TYPE_TEST_2_IMPL(cv_qual type1 &&, type2, expected, JOIN(uid,r))
+
+#endif
+
+#define COMMON_TYPE_TEST_ALL_2(type1, type2, expected, uid) \
+  COMMON_TYPE_TEST_2(NO_CV, type1, type2, expected, JOIN(uid,0)) \
+  COMMON_TYPE_TEST_2(const, type1, type2, expected, JOIN(uid,1)) \
+  COMMON_TYPE_TEST_2(volatile, type1, type2, expected, JOIN(uid,2)) \
+  COMMON_TYPE_TEST_2(const volatile, type1, type2, expected, JOIN(uid,3))
+
+//template<class T, class U>
+//struct xcommon_type
+//{
+//  //typedef T type;
+//  typedef typename remove_reference<typename remove_cv<
+//    typename conditional<(sizeof(T) < sizeof(U)), T, U>::type
+//    >::type>::type type;
+//};
+#ifdef NTL__CXX_TYPEOF
+template<class T, class U = void>
 struct xcommon_type
 {
-  //typedef T type;
-  typedef typename remove_reference<typename remove_cv<
-    typename conditional<(sizeof(T) < sizeof(U)), T, U>::type
-    >::type>::type type;
+  typedef decltype(true ? declval<T>() : declval<U>()) type;
 };
 
+template<class T>
+struct xcommon_type<T, void> { typedef T type; };
+#endif
+
+template<class T> T rv() { return T(); }
+
+template<class T, class U>
+struct ycommon_type
+{
+  //template<class T1>
+  //static char test(T1);
+  //template<class T2>
+  //static int  test(T2);
+  //static char test(T);
+  //static int  test(U);
+
+  //static typename add_rvalue_reference<T>::type __t();
+  //static typename add_rvalue_reference<U>::type __u();
+
+  //static T __t();
+  //static U __u();
+
+  //static const size_t __r = sizeof(
+  //    //test(true ? declval<T>() : declval<U>())
+  //    test(true ? __t() : __u())
+  //  );
+  //typedef typename conditional<__r == sizeof(char), T, U>::type type;
+  typedef typename std::__::select_type<T,U>::type type;
+
+};
+
+template<class T, class U, class R>
+static void yselect(R, const char* t, const char* u) {
+  SHOWT(R);
+  //cout << "select<" << t << ',' << u << ">::" << (is_same<R,T>::value ? t : u) << endl;
+}
+
+#define CT(T,U) yselect<T,U>(true ? rv<T>() : rv<U>(), #T, #U)
+
+
+#define STATIC_ASSERT2(e) typedef char _Join(_STATIC_ASSERT_, __COUNTER__) [(e)?1:-1]
 void test02()
 {
   bool test __attribute__((unused)) = true;
   using std::common_type;
   using std::is_same;
+  using std::is_const;
 
-  typedef common_type<int&>::type ct0;
-  typedef common_type<int&, const int>::type ct1;
-  typedef common_type<int, int&>::type ct2;
-  VERIFY((is_same<ct0, int&>::value));
-  VERIFY((is_const<ct1>::value == 0));
+  //typedef xcommon_type<int&>::type ct0;
+  //typedef xcommon_type<int&, const int>::type ct1;
+  //typedef xcommon_type<int, int&>::type ct2;
+
+  //__show_type<xcommon_type<int, int&>::type>();
+
+  //CT(const int, int);
+
+  //VERIFY((is_same< xcommon_type<const int, int>::type, int >::value));
+  //VERIFY((is_same< ycommon_type<const int, int>::type, int >::value));
+  
+  //COMMON_TYPE_TEST_2_IMPL(const int,int,int,1);
+
+#if 0
   VERIFY((is_same<ct1, int>::value));
   VERIFY((is_same<ct2, int>::value));
 
@@ -139,16 +249,17 @@ void test02()
 
   typedef common_type<const int, int>::type xct4;
   VERIFY((is_same<xct4, int>::value));
-
-#if 1
-  COMMON_TYPE_TEST_2(const , int, int, int, 0);
+#endif
+#if 0
+  //COMMON_TYPE_TEST_2(const , int, int, int, 0);
   COMMON_TYPE_TEST_ALL_2(int, int, int, 1);
   COMMON_TYPE_TEST_ALL_2(int, double, double, 2);
-  COMMON_TYPE_TEST_2(NO_CV, int, double, double, 2);
+  COMMON_TYPE_TEST_2(NO_CV, int, double, double, 6);
   COMMON_TYPE_TEST_2(NO_CV, A, A, A, 3);
   COMMON_TYPE_TEST_2(const, A, A, A, 4);
   COMMON_TYPE_TEST_2(NO_CV, B, A, A, 5);
 #endif
+
 }
 
 

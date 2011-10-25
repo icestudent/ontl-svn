@@ -39,6 +39,7 @@ struct xshow_value64
 
 
 // chrono
+//#define NTL__DOC
 #include <chrono>
 
 typedef std::common_type<std::time_t, int64_t>::type ct;
@@ -122,6 +123,7 @@ test03()
 
   time_point<system_clock> t1, t2;
   t1 += seconds(1);
+  t1 + seconds(1);
   VERIFY(t2.time_since_epoch() + seconds(1) == t1.time_since_epoch());
 
   t1 -= std::chrono::seconds(1);
@@ -445,7 +447,7 @@ test10()
 void
 test11()
 {
-  //std::chrono::duration<int> d1(1.0); // should fail
+  std::chrono::duration<int> d1(1.0); // should fail
 }
 
 void
@@ -453,8 +455,12 @@ test12()
 {
   using namespace std::chrono;
 
+  duration<int, milli> ms(3);
+  duration<int, micro> us = ms; // OK
+  //duration<int, milli> ms2 = us; // error
+
   duration<int, std::micro> d2(8);
-  duration<int, std::milli> d2_copy(d2);
+  //duration<int, std::milli> d2_copy(d2); // should fail
 }
 
 #if 0
