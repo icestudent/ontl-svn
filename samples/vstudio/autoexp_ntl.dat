@@ -12,6 +12,10 @@
 ; v 0.8 - added deque, queue
 ; v 0.9 - chrono types
 ; v 0.10- added iostreams
+; v 0.11- added fs::path
+; v 0.12- fixed set & map
+; v 0.13- added ntl::basic_file
+; v 0.14- unordered containers
 ;
 ;---------------------------------------------------------------
 ;
@@ -22,6 +26,10 @@
 ; predefined rules.
 ;
 ; For good examples, read the rules in this file.
+; Links:
+; http://www.virtualdub.org/blog/pivot/entry.php?id=120
+; http://garrys-brain.blogspot.com/2007/08/debugging-stlport-in-visual-studio.html
+; http://blog.gamedeff.com/?p=143
 ;
 ; To find what the debugger considers the type of a variable to
 ; be, add it to the Watch window and look at the Type column.
@@ -153,14 +161,14 @@ std::array<*> {
 std::vector<*>{
   children
   (
-	#(
-    #array
-    (
-      expr :  ($c.begin_)[$i],
-      size :  $c.end_-$c.begin_
-    ),
-	[raw]: [$e,!]
-	)
+		#(
+	    #array
+	    (
+	      expr :  ($c.begin_)[$i],
+	      size :  $c.end_-$c.begin_
+	    ),
+			[raw]: [$e,!]
+		)
   )
 
     preview
@@ -220,10 +228,10 @@ std::basic_string<char,*>{
 
 }
 
-std::basic_string<wchar_t,*>{
+std::basic_string<wchar_t,*>|std::basic_string<unsigned short,*>{
   preview
   (
-    #if($e.buffer_ == $e.str.end_)(
+    #if($e.length_ == 0)(
       "<empty>"
     ) #else (
       [$e.buffer_,su]
@@ -366,12 +374,11 @@ std::map<*>{
   (
     #(
       [raw]: [$c,!],
-      #tree
-      (
+      #tree(
           head : $c.root_,
           size : $c.count_,
-          left : left,
-          right : right
+          left : left_,
+          right : right_
       ) : $e.elem
     )
   )
@@ -379,18 +386,14 @@ std::map<*>{
   preview
   (
     #(
-      "[",
-      $e.count_,
-      "](",
-
+      "[",$e.count_,"](",
       #tree
       (
         head : $c.root_,
         size : $c.count_,
-        left : left,
-        right : right
+        left : left_,
+        right : right_
       ) : $e.elem,
-
       ")"
     )
   )
@@ -686,8 +689,8 @@ std::set<*>{
       (
           head : $c.root_,
           size : $c.count_,
-          left : left,
-          right : right
+          left : left_,
+          right : right_
       ) : $e.elem
     )
   )
@@ -703,8 +706,8 @@ std::set<*>{
       (
         head : $c.root_,
         size : $c.count_,
-        left : left,
-        right : right
+        left : left_,
+        right : right_
       ) : $e.elem,
 
       ")"
@@ -1015,11 +1018,36 @@ std::basic_fstream<*> {
 }
 
 ;------------------------------------------------------------------------------
+;  tr2::files
+;------------------------------------------------------------------------------
+std::tr2::files::path {
+  preview
+  (
+    $e.s
+  )
+
+  stringview
+  (
+    $e.s
+  )
+
+  children
+  (
+    #([raw]: [$e,!],  #array( expr: $e.s.buffer_[$i], size: $e.s.length_))
+  )
+}
+
+;------------------------------------------------------------------------------
 ;  NTL Types
 ;------------------------------------------------------------------------------
 ntl::basic_handle<*> {
 	preview ( $e.h )
 	children ( $e.h )
+}
+
+ntl::basic_file<*>{
+	preview ( $e.f )
+	children ( $e.f )
 }
 
 ntl::nt::file_handler {
@@ -1040,6 +1068,104 @@ ntl::km::file_handler {
 			[raw]:  [$e,!],
 			handle: $e.h,
 			iosb:   $e.iosb
+		)
+	)
+}
+
+;------------------------------------------------------------------------------
+;  hashes
+;------------------------------------------------------------------------------
+std::hash<*>{
+	preview ( "hash" )
+	children ( #array(expr: 0, size: 0) )
+}
+
+;------------------------------------------------------------------------------
+;  comparisons
+;------------------------------------------------------------------------------
+std::equal_to<*>{ preview ( "equal_to" ) children ( #array (expr: 0, size: 0) ) }
+std::not_equal_to<*>{ preview ( "not_equal_to" ) children ( #array (expr: 0, size: 0) ) }
+std::greater<*>{ preview ( "greater" ) children ( #array (expr: 0, size: 0) ) }
+std::less<*>{ preview ( "less" ) children ( #array (expr: 0, size: 0) ) }
+std::greater_equal<*>{ preview ( "greater_equal" ) children ( #array (expr: 0, size: 0) ) }
+std::less_equal<*>{ preview ( "less_equal" ) children ( #array (expr: 0, size: 0) ) }
+
+;------------------------------------------------------------------------------
+;  unordered containers
+;------------------------------------------------------------------------------
+
+std::ext::hashtable::chained_hashtable<*>::node {
+	preview ( $e.elem )
+	children (
+		#(
+			hash_key: $e.hkey,
+			value: $e.elem
+		)
+	)
+}
+
+std::ext::hashtable::chained_hashtable<*>::bucket_type {
+	preview (
+    #if($e.size == 0)(
+      "<empty>"
+		) #else (
+			#( "[",$e.size,"]  ", 
+
+	        #list
+	        (
+	          head : $e.elems,
+		        size : $e.size,
+	          next : next
+	        ) : $e
+
+			)
+		)
+	)
+	children (
+    #(
+      [raw]: [$c,!],
+      #if($c.size == 0) (
+        #array(expr: 0, size: 0)
+      ) #else (
+    		#(
+					count: $e.size,
+					bucket: $e.hash,
+					dirty: $e.dirty,
+
+	        #list
+	        (
+	          head : $e.elems,
+		        size : $e.size,
+	          next : next
+	        ) : $e
+
+  			)
+      )
+    )
+	)
+}
+
+
+std::unordered_set<*>|std::unordered_map<*> {
+	preview (
+    #if($e.count_ == 0)(
+      "<empty>"
+		) #else (
+			#( "[",$e.count_,"]" )
+		)
+	)
+	children (
+		#(
+			[raw]: [$e,!],
+			count: $e.count_,
+			space: ($e.buckets_.second - $e.buckets_.first),
+			load: #($e.count_/($e.buckets_.second - $e.buckets_.first)),
+			hash: $e.hash_,
+			eq: $e.equal_,
+			#array (
+				size: ($e.buckets_.second - $e.buckets_.first),
+				expr: ($e.buckets_.first)[$i]
+			)
 		)
 	)
 }

@@ -1,5 +1,5 @@
 // TODO: find this path dynamic
-var NtlBasePath = "/ontl/branches/devel/ntl";
+var NtlBasePath = "f:/VX Studio/Visual Studio/VSLibraries/common/ontl/branches/devel/ntl";
 
 function OnFinish(selProj, selObj) {
 	try {

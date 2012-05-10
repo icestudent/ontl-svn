@@ -22,7 +22,7 @@ namespace uniqueptr_test {
   struct base { virtual ~base() {} };
   struct derived : base {};
 
-#ifdef NTL__CXX_RV
+#ifdef NTL_CXX_RV
   void
     test01()
   {
@@ -55,7 +55,7 @@ namespace uniqueptr_test {
   struct B0 { virtual ~B0() {} };
   struct D : public B0 {};
 
-#ifdef NTL__CXX_RV
+#ifdef NTL_CXX_RV
   void
     test04()
   {
@@ -325,7 +325,7 @@ namespace uniqueptr_test {
     {
       dbg::trace(__func__"\n");
     }
-#ifdef NTL__CXX_RV
+#ifdef NTL_CXX_RV
     my_delete(my_delete&&)
     {
       dbg::trace(__func__"\n");
@@ -354,7 +354,7 @@ namespace uniqueptr_test {
     {
       dbg::trace(__func__"\n");
     }
-#ifdef NTL__CXX_RV
+#ifdef NTL_CXX_RV
     my_delete(my_delete&&)
     {
       dbg::trace(__func__"\n");
@@ -388,7 +388,7 @@ namespace uniqueptr_test {
     unique_ptr<int[], D> p2(new int[1], d); // D must be CopyConstructible
     unique_ptr<int[], D&> p3(new int[1], d); // p3 holds a reference to d
 
-#if !defined(NTL__CXX_RV) || 0
+#if !defined(NTL_CXX_RV) || 0
     unique_ptr<int[], const D&> p4(new int[1], D()); // error: rvalue deleter object combined with reference deleter type
 #endif
     unique_ptr<int[], const D&> p5(new int[1], d); // p5 holds a const reference to d
@@ -421,7 +421,7 @@ namespace uniqueptr_test {
 
   void main()
   {
-#ifdef NTL__CXX_RV
+#ifdef NTL_CXX_RV
     test01();
     test04();
     test05();

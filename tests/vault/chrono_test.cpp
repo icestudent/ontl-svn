@@ -39,7 +39,7 @@ struct xshow_value64
 
 
 // chrono
-//#define NTL__DOC
+//#define NTL_DOC
 #include <chrono>
 
 typedef std::common_type<std::time_t, int64_t>::type ct;

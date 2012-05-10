@@ -99,7 +99,7 @@ template struct common_type<test_type1, test_type2, test_type3, test_type4>;
   VERIFY( (is_same<JOIN(test_t,JOIN(uid,lcv)), \
   JOIN(test_t,JOIN(uid,lcv))>::value) );
 
-#ifdef NTL__CXX_RV_WHATIS
+#ifdef NTL_CXX_RV_WHATIS
   typedef common_type<type1 &&>::type JOIN(test_t,JOIN(uid,r)); \
   VERIFY( (is_same<JOIN(test_t,JOIN(uid,r)), \
   JOIN(test_t,JOIN(uid,r))>::value) ); \
@@ -138,7 +138,7 @@ void test01()
 
 #define NO_CV
 
-#ifdef NTL__CXX_RV
+#ifdef NTL_CXX_RV
 
 #define COMMON_TYPE_TEST_2(cv_qual, type1, type2, expected, uid) \
   COMMON_TYPE_TEST_2_IMPL(cv_qual type1, type2, expected, uid) \
@@ -168,7 +168,7 @@ void test01()
 //    typename conditional<(sizeof(T) < sizeof(U)), T, U>::type
 //    >::type>::type type;
 //};
-#ifdef NTL__CXX_TYPEOF
+#ifdef NTL_CXX_TYPEOF
 template<class T, class U = void>
 struct xcommon_type
 {

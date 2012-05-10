@@ -161,7 +161,7 @@ void deleter(A* p) { delete p; }
   }
 
   
-  #ifdef NTL__CXX_RV
+  #ifdef NTL_CXX_RV
   int
     test05()
   {
@@ -523,7 +523,7 @@ void deleter(A* p) { delete p; }
     bool test __attribute__((unused)) = true;
 
     std::unique_ptr<A> a;
-#ifndef NTL__CXX_RV
+#ifndef NTL_CXX_RV
     //std::shared_ptr<A> p0(a); // do not write this with RV
 #endif
     std::shared_ptr<A> p(move(a));
@@ -650,7 +650,7 @@ namespace sharedptr_test {
     test03();
     test04();
     
-    #ifdef NTL__CXX_RV
+    #ifdef NTL_CXX_RV
     test05();
     #endif
     test06();
