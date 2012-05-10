@@ -371,22 +371,6 @@
 						<Filter
 							Name="network"
 							>
-							<File
-								RelativePath=".\stlx\ext\tr2\buffer.hxx"
-								>
-							</File>
-							<File
-								RelativePath=".\stlx\ext\tr2\io_service.hxx"
-								>
-							</File>
-							<File
-								RelativePath=".\stlx\ext\tr2\network.hxx"
-								>
-							</File>
-							<File
-								RelativePath=".\stlx\ext\tr2\timer.hxx"
-								>
-							</File>
 						</Filter>
 					</Filter>
 					<Filter
