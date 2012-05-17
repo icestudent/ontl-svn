@@ -8,18 +8,31 @@
 // set to 1 to check compile-time errors
 #define CT_FAIL 0
 
-template<int value>
+template<typename T, typename _ = int>
+struct xshow_type
+{
+  char _[sizeof(_) == sizeof(char)];
+};
+
+template<int value, typename _ = int>
 struct xshow_value
 {
-  char _[0];
+  char _[sizeof(_) == sizeof(char)];
 };
-template<unsigned __int64 value>
-struct xshow_value2
+
+template<__int64 value, typename _ = int>
+struct xshow_value64
 {
-  char _[0];
+  char _[sizeof(_) == sizeof(char)];
 };
-#define SHOWV(V) xshow_value<V> __x_show_value;
-#define SHOWLV(V) xshow_value2<V> __x_show_value2;
+
+#define _PasteToken(x,y) x##y
+#define _Join(x,y) _PasteToken(x,y)
+
+#define SHOWR(...) xshow_type<__VA_ARGS__> _Join(__x_show_type, __COUNTER__);
+#define SHOWT(...) xshow_type<__VA_ARGS__> _Join(__x_show_type, __COUNTER__);
+#define SHOWV(...) xshow_value<__VA_ARGS__> _Join(__x_show_value, __COUNTER__);
+#define SHOWLV(...) xshow_value64<__VA_ARGS__> _Join(__x_show_value64, __COUNTER__);
 
 #include <cstdint>
 

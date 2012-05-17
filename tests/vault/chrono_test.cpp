@@ -9,33 +9,31 @@
 
 #include <ratio>
 
-template<typename T>
+template<typename T, typename _ = int>
 struct xshow_type
 {
-  char _[0];
+  char _[sizeof(_) == sizeof(char)];
 };
 
-template<std::ratio_t N, std::ratio_t D>
-struct xshow_type<std::ratio<N,D>>
-{
-  char _[0];
-};
-
-template<int value>
+template<int value, typename _ = int>
 struct xshow_value
 {
-  char _[0];
+  char _[sizeof(_) == sizeof(char)];
 };
 
-template<__int64 value>
+template<__int64 value, typename _ = int>
 struct xshow_value64
 {
-  char _[0];
+  char _[sizeof(_) == sizeof(char)];
 };
 
+#define _PasteToken(x,y) x##y
+#define _Join(x,y) _PasteToken(x,y)
+
+#define SHOWR(...) xshow_type<__VA_ARGS__> _Join(__x_show_type, __COUNTER__);
 #define SHOWT(...) xshow_type<__VA_ARGS__> _Join(__x_show_type, __COUNTER__);
-#define SHOWV(V) xshow_value<V> _Join(__x_show_value, __COUNTER__);
-#define SHOWLV(V) xshow_value64<V> _Join(__x_show_value64, __COUNTER__);
+#define SHOWV(...) xshow_value<__VA_ARGS__> _Join(__x_show_value, __COUNTER__);
+#define SHOWLV(...) xshow_value64<__VA_ARGS__> _Join(__x_show_value64, __COUNTER__);
 
 
 // chrono
