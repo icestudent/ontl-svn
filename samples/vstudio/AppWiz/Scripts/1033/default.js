@@ -14,13 +14,6 @@ function OnFinish(selProj, selObj) {
 		wizard.AddSymbol("NICE_SAFE_PROJECT_NAME", strSafeProjectName.substr(0, 1).toUpperCase() + strSafeProjectName.substr(1))
 		wizard.AddSymbol("UPPERCASE_SAFE_PROJECT_NAME", strSafeProjectName.toUpperCase());
 
-		// Set current year symbol
-		var d = new Date();
-		var nYear = 0;
-		nYear = d.getFullYear();
-		if (nYear >= 2003)
-			wizard.AddSymbol("NTL_CURRENT_YEAR", nYear);
-
 		// Set app type symbols
 
 		// Set view symbols
@@ -259,13 +252,17 @@ function AddConfigurations(proj, strProjectName) {
 			
 			// Property sheets
 			var WizardVersion = wizard.FindSymbol('WIZARD_VERSION');
-			var sheets = NtlBasePath + "/ntl-props.vsprops";
+			var wizardVersion = parseFloat(WizardVersion);
+			var vsprops = wizardVersion >= 10 ? "props" : "vsprops";
+			
+			var sheets = NtlBasePath + "/ntl-props." + vsprops;
 			if(WizardVersion == "8.0")
-				sheets += ";" + NtlBasePath + "/ntl-x86-8.vsprops";
+				sheets += ";" + NtlBasePath + "/ntl-x86-8." + vsprops;
 			else
-				sheets += ";" + NtlBasePath + "/ntl-x86.vsprops";
+				sheets += ";" + NtlBasePath + "/ntl-x86." + vsprops;
+			
 			if(wizard.FindSymbol("NTL_APPTYPE_DRIVER"))
-				sheets += ";" + NtlBasePath + "/ntl-km.vsprops";
+				sheets += ";" + NtlBasePath + "/ntl-km." + vsprops;
 			
 			try {
 				config.InheritedPropertySheets = sheets;

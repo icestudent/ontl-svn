@@ -1,21 +1,23 @@
 ; AutoExp.Dat - templates for automatically expanding data (with NTL support)
 ; Copyright(c) Microsoft Corporation. All Rights Reserved.
 ;
-; v 0.1 - supports basic_string, list, vector, stack, auto_ptr, pair
-; v 0.2 - added bitset
-; v 0.3 - added set & map
-; v 0.4 - array, rbtree, negators
-; v 0.5 - unique_ptr, shared_ptr
-; v 0.6 - forward_list
-; v 0.6a- some fixes
-; v 0.7 - added char16_t
-; v 0.8 - added deque, queue
-; v 0.9 - chrono types
-; v 0.10- added iostreams
-; v 0.11- added fs::path
-; v 0.12- fixed set & map
-; v 0.13- added ntl::basic_file
-; v 0.14- unordered containers
+; v 0.1  - supports basic_string, list, vector, stack, auto_ptr, pair
+; v 0.2  - added bitset
+; v 0.3  - added set & map
+; v 0.4  - array, rbtree, negators
+; v 0.5  - unique_ptr, shared_ptr
+; v 0.6  - forward_list
+; v 0.6a - some fixes
+; v 0.7  - added char16_t
+; v 0.8  - added deque, queue
+; v 0.9  - chrono types
+; v 0.10 - added iostreams
+; v 0.11 - added fs::path
+; v 0.12 - fixed set & map
+; v 0.13 - added ntl::basic_file
+; v 0.14 - unordered containers
+; v 0.15 - string_ref
+; v 0.16 - initializer_list
 ;
 ;---------------------------------------------------------------
 ;
@@ -284,6 +286,54 @@ std::basic_string<*>::iterator|std::basic_string<*>::const_iterator{
   )
 }
 
+
+
+
+;------------------------------------------------------------------------------
+;  std::string_ref
+;------------------------------------------------------------------------------
+std::basic_string_ref<char,*>{
+  preview
+  (
+    #if($e.len == 0)(
+      "<empty>"
+    ) #else (
+      [$e.p,s]
+    )
+  )
+  stringview
+  (
+    [$e.p,sb]
+  )
+  children
+  (
+    #([raw]: [$e,!],  #array( expr: $e.p[$i], size: $e.len))
+  )
+}
+std::basic_string_ref<wchar_t,*>|std::basic_string_ref<unsigned short,*>|std::basic_string_ref<std::char16_t,*>{
+  preview
+  (
+    #if($e.len == 0)(
+      "<empty>"
+    ) #else (
+      [$e.p,su]
+    )
+  )
+  stringview
+  (
+    [$e.p,sub]
+  )
+  children
+  (
+    #([raw]: [$e,!],  #array( expr: $e.p[$i], size: $e.len))
+  )
+}
+
+
+
+
+
+
 std::pair<*>{
   preview
   (
@@ -451,7 +501,6 @@ std::list<*,*>{
       #list
       (
         head : $e.head.next,
-        size : $e.size_,
         next : next
       ) : ((std::list<$T1,$T2>::node*)&$e)->elem
     )
@@ -459,17 +508,16 @@ std::list<*,*>{
 
   preview
   (
-    #(
-      "[",
-      $e.size_,
-      "](",
-      #list
-      (
-        head : $e.head.next,
-        size : $e.size_,
-        next : next
-      ) : ((std::list<$T1,$T2>::node*)&$e)->elem,
-      ")"
+		#if ($e.head.next == &($e.head)) ("<empty>") #else (
+			#(
+	      "(",
+	      #list
+	      (
+	        head : $e.head.next,
+	        next : next
+	      ) : ((std::list<$T1,$T2>::node*)&$e)->elem,
+	      ")"
+	  	)
     )
   )
 }
@@ -1169,6 +1217,42 @@ std::unordered_set<*>|std::unordered_map<*> {
 		)
 	)
 }
+
+
+
+;------------------------------------------------------------------------------
+;  std::initializer_list
+;------------------------------------------------------------------------------
+std::initializer_list<*> {
+  preview (
+    #(
+      "[",
+      $e.end_-$e.begin_,
+      "](",
+      #array(expr: $e.begin_[$i], size: $e.end_-$e.begin_),
+      ")"
+    )
+  )
+
+  children (
+    ; Just like an actual array.
+    #array(expr: $e.begin_[$i], size: $e.end_-$e.begin_)
+  )
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ; This section lets you define your own errors for the HRESULT display.
 ; You need to list the error code in unsigned decimal, followed by the message.
