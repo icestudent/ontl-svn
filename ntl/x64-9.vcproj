@@ -479,7 +479,11 @@
 						>
 					</File>
 					<File
-						RelativePath=".\stlx\string.hxx"
+						RelativePath=".\stlx\stdstring.hxx"
+						>
+					</File>
+					<File
+						RelativePath=".\stlx\string_ref.hxx"
 						>
 					</File>
 					<File
