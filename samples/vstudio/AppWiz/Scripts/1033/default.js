@@ -1,5 +1,5 @@
 // TODO: find this path dynamic
-var NtlBasePath = "f:/VX Studio/Visual Studio/VSLibraries/common/ontl/branches/devel/ntl";
+var NtlBasePath = "f:/usr/lib/common/ontl/branches/devel/ntl";
 
 function OnFinish(selProj, selObj) {
 	try {
@@ -185,7 +185,7 @@ function AddConfigurations(proj, strProjectName) {
 			if (wizard.FindSymbol("NTL_APPTYPE_DLL"))
 				config.ConfigurationType = typeDynamicLibrary;
 
-			config.IntermediateDirectory = '$(PlatformName)\\$(ConfigurationName)';
+			//config.IntermediateDirectory = '$(PlatformName)\\$(ConfigurationName)';
 			config.OutputDirectory = '$(PlatformName)\\$(ConfigurationName)';
 
 			// Compiler settings
@@ -209,6 +209,8 @@ function AddConfigurations(proj, strProjectName) {
 			
 			if (wizard.FindSymbol("NTL_RUNTIME_EXC"))
 				CLTool.ExceptionHandling = cppExceptionHandlingYes;
+			if (wizard.FindSymbol("NTL_RUNTIME_FLT"))
+				CLTool.EnableEnhancedInstructionSet = enhancedInstructionSetTypeSIMD;	// we have no sse2 library support
 			
 
 			var strDefines = GetPlatformDefine(config);

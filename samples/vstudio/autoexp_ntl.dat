@@ -287,6 +287,27 @@ std::basic_string<*>::iterator|std::basic_string<*>::const_iterator{
 }
 
 
+std::basic_string<unsigned char,*>{
+  preview
+  (
+    #if($e.length_ == 0)(
+      "<empty>"
+    ) #else (
+      [$e.buffer_,mb]
+    )
+  )
+
+  stringview
+  (
+    [$e.buffer_,sb]
+  )
+
+  children
+  (
+    #([raw]: [$e,!],  #array( expr: $e.buffer_[$i], size: $e.length_))
+  )
+
+}
 
 
 ;------------------------------------------------------------------------------
